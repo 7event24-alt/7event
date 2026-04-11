@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Trabalho - 7event{% endblock %}
+{% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} Trabalho{% endblock %}
+
+{% block header_pre_actions %}
+<a href="{% url 'jobs:list' %}" class="text-gray-600 hover:text-primary p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Voltar">
+    <i class="fas fa-arrow-left"></i>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-800">Dados do Trabalho</h3>
+        </div>
+        <div class="p-6">
+            {% if form.non_field_errors %}
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex items-center gap-2 text-red-700">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="font-medium">Erro no formulário</span>
+                </div>
+                {% for error in form.non_field_errors %}
+                <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Cliente, Tipo de Serviço e Título -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+                        <div class="flex gap-2">
+                            {{ form.client }}
+                            <button type="button" onclick="quickCreateClient()" class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-gray-600 transition-colors" title="Criar cliente rápido">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        {% if form.client.errors %}
+                        <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.client.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.event_type.label }}</label>
+                        {{ form.event_type }}
+                        {% if form.event_type.errors %}
+                        <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.event_type.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Título do Trabalho *</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.title.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if object %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.status.label }}</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.status.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+<!-- Data do Evento -->
+                    <div class="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-200">
+                        <h4 class="text-sm font-semibold text-primary uppercase tracking-wide mb-4 flex items-center gap-2">
+                            <i class="fas fa-calendar-alt"></i> Data do Evento
+                        </h4>
+                        
+                        <div class="mb-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="single_day" {% if object and object.is_single_day %}checked{% endif %} {% if not object %}checked{% endif %} class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                <span class="text-sm text-gray-700">Trabalho de 1 dia</span>
+                            </label>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.start_date.label }} *</label>
+                                {{ form.start_date }}
+                            </div>
+                            <div id="end_date_container" {% if not object or object.is_single_day %}style="display:none"{% endif %}>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.end_date.label }}</label>
+                                {{ form.end_date }}
+                            </div>
+                        </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.start_time.label }}</label>
+                            {{ form.start_time }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.end_time.label }}</label>
+                            {{ form.end_time }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Local e Descrição -->
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>
+                            {{ form.location.label }}
+                        </label>
+                        {{ form.location }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-align-left text-gray-400 mr-1"></i>
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                    </div>
+                </div>
+                
+                <!-- Cachê -->
+                <div class="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-200">
+                    <h4 class="text-sm font-semibold text-primary uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <i class="fas fa-money-bill-wave"></i> Cachê
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.cache.label }}</label>
+                            {{ form.cache }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.payment_type.label }}</label>
+                            {{ form.payment_type }}
+                        </div>
+                    </div>
+                    
+                    <div id="payment_advance_fields" class="mt-4" style="display: none;">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data do Pagamento</label>
+                            {{ form.payment_date }}
+                        </div>
+                    </div>
+                    
+                    <div id="payment_full_fields" class="mt-4" style="display: none;">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data do Pagamento</label>
+                            {{ form.payment_date }}
+                        </div>
+                    </div>
+                    
+                    <div id="payment_partial_fields" class="mt-4 space-y-4" style="display: none;">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Valor Total</label>
+                                {{ form.payment_total }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Valor Parcial</label>
+                                {{ form.payment_partial_value }}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Data Pagamento Parcial</label>
+                                {{ form.payment_partial_date }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Valor Restante</label>
+                                {{ form.payment_remaining_value }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Pagamento Restante</label>
+                            {{ form.payment_remaining_date }}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.payment_status.label }}</label>
+                        {{ form.payment_status }}
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <a href="{% url 'jobs:list' %}" class="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-5 py-2.5 bg-primary hover:bg-secondary text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cliente Rápido -->
+<div id="clientModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div class="flex justify-between items-center p-5 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Novo Cliente</h3>
+            <button onclick="closeClientModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <form id="quickClientForm" class="p-5 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                <input type="text" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="Nome do cliente" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Telefone *</label>
+                <input type="text" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="(00) 00000-0000" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                <input type="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="email@exemplo.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">CPF/CNPJ</label>
+                <input type="text" name="document" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="CPF ou CNPJ">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeClientModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-4 py-2 bg-primary hover:bg-secondary text-white rounded-lg transition-colors text-sm font-medium">
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('single_day').addEventListener('change', function() {
+    const endDateContainer = document.getElementById('end_date_container');
+    if(this.checked) {
+        endDateContainer.style.display = 'none';
+        document.getElementById('id_end_date').value = '';
+    } else {
+        endDateContainer.style.display = 'block';
+    }
+});
+
+document.getElementById('id_payment_type').addEventListener('change', function() {
+    document.querySelectorAll('[id$="_fields"]').forEach(el => el.style.display = 'none');
+    if(this.value === 'advance') document.getElementById('payment_advance_fields').style.display = 'block';
+    else if(this.value === 'full') document.getElementById('payment_full_fields').style.display = 'block';
+    else if(this.value === 'partial') document.getElementById('payment_partial_fields').style.display = 'block';
+});
+
+{% if object %}
+document.getElementById('id_payment_type').dispatchEvent(new Event('change'));
+{% endif %}
+
+function quickCreateClient() {
+    document.getElementById('clientModal').classList.remove('hidden');
+}
+
+function closeClientModal() {
+    document.getElementById('clientModal').classList.add('hidden');
+}
+
+document.getElementById('quickClientForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('{% url "clients:quick_create" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {'X-CSRFToken': '{{ csrf_token }}'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.id) {
+            const select = document.getElementById('id_client');
+            const option = new Option(data.name, data.id, true, true);
+            select.add(option);
+            closeClientModal();
+        }
+    });
+});
+</script>
+{% endblock %}

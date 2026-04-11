@@ -1,0 +1,44 @@
+{% load currency_tags %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="font-semibold text-gray-800">Trabalhos Recentes</h3>
+        <a href="{% url 'jobs:list' %}" class="text-sm text-primary hover:underline">Ver todos</a>
+    </div>
+    <div class="overflow-x-auto">
+        {% if recent_jobs %}
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-600 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left font-medium">Título</th>
+                    <th class="px-4 py-3 text-left font-medium hidden md:table-cell">Cliente</th>
+                    <th class="px-4 py-3 text-left font-medium hidden sm:table-cell">Data</th>
+                    <th class="px-4 py-3 text-left font-medium">Status</th>
+                    <th class="px-4 py-3 text-left font-medium hidden lg:table-cell">Pagto</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for job in recent_jobs %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <a href="{% url 'jobs:detail' job.pk %}" class="text-primary font-medium hover:underline">{{ job.title }}</a>
+                    </td>
+                    <td class="px-4 py-3 hidden md:table-cell text-gray-600">{{ job.client.name }}</td>
+                    <td class="px-4 py-3 hidden sm:table-cell text-gray-600">{{ job.start_date|date:"d/m/Y" }}</td>
+                    <td class="px-4 py-3">
+                        {% include 'components/badge_status.html' with status=job.status type='job' %}
+                    </td>
+                    <td class="px-4 py-3 hidden lg:table-cell">
+                        {% include 'components/badge_status.html' with status=job.payment_status type='payment' %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <i class="fas fa-calendar-times text-4xl mb-3 opacity-50"></i>
+            <p>Nenhum trabalho recente.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>

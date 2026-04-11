@@ -1,0 +1,26 @@
+{% load currency_tags %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="text-lg font-semibold text-gray-800">Resumo Financeiro</h3>
+    </div>
+    <div class="p-4 space-y-3">
+        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+            <span class="text-gray-600">Receita Recebida</span>
+            <span class="font-semibold text-green-600">{{ revenue_received|brl }}</span>
+        </div>
+        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+            <span class="text-gray-600">Receita Pendente</span>
+            <span class="font-semibold text-yellow-600">{{ revenue_pending|brl }}</span>
+        </div>
+        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+            <span class="text-gray-600">Despesas do Mês</span>
+            <span class="font-semibold text-red-600">{{ monthly_expenses|brl }}</span>
+        </div>
+        <div class="flex justify-between items-center pt-2">
+            <span class="text-gray-900 font-medium">Saldo do Mês</span>
+            <span class="font-bold text-lg {% if monthly_balance >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ monthly_balance|brl }}
+            </span>
+        </div>
+    </div>
+</div>

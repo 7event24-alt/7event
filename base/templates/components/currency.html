@@ -1,0 +1,6 @@
+<span class="{% if color %}
+  {% if value < 0 %}text-red-600{% elif value > 0 %}text-green-600{% else %}text-gray-500{% endif %}
+{% else %}text-gray-800{% endif %}
+{% if size == 'lg' %}text-xl font-bold{% elif size == 'sm' %}text-sm{% else %}font-medium{% endif %}">
+  R$ {{ value|floatformat:2 }}
+</span>

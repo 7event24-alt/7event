@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Agenda - 7event{% endblock %}
+{% block page_title %}Agenda de Eventos{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'jobs:create' %}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+    <i class="fas fa-plus"></i> <span class="hidden sm:inline">Novo Trabalho</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-6">
+    <!-- Calendar -->
+    <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-3 py-3 lg:px-6 lg:py-4 bg-gradient-to-r from-primary to-secondary flex flex-wrap items-center justify-between gap-2 lg:gap-4">
+            <div class="flex items-center gap-2 lg:gap-4">
+                <button id="prevMonth" class="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 id="currentMonth" class="text-base lg:text-xl font-semibold text-white min-w-[140px] lg:min-w-[200px] text-center">{{ month_name }} {{ year }}</h2>
+                <button id="nextMonth" class="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="flex items-center gap-1 lg:gap-2">
+                <button id="addJobBtn" class="bg-primary text-white px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg hover:bg-secondary transition text-sm" title="Criar trabalho">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button id="todayBtn" class="bg-white text-primary px-2 lg:px-4 py-1.5 lg:py-2 rounded-lg font-medium hover:bg-gray-100 transition text-xs lg:text-sm flex items-center gap-1">
+                    <i class="fas fa-calendar-day"></i><span class="hidden sm:inline">Hoje</span>
+                </button>
+                <select id="viewSelector" class="px-2 lg:px-3 py-1.5 border border-white/30 rounded-lg text-xs lg:text-sm bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white">
+                    <option value="dayGridMonth">Mês</option>
+                    <option value="timeGridWeek">Semana</option>
+                    <option value="listMonth">Lista</option>
+                </select>
+            </div>
+        </div>
+        <div id="calendar" class="p-2 lg:p-4"></div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
+        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Próximos Eventos</h3>
+        <div class="space-y-2 lg:space-y-3 max-h-64 lg:max-h-96 overflow-y-auto">
+            {% for job in upcoming_jobs %}
+            <a href="{% url 'jobs:detail' job.id %}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition border-l-4" style="border-left-color: {{ job.status_color }}">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-primary text-white flex flex-col items-center justify-center flex-shrink-0">
+                        <span class="text-xs font-bold">{{ job.start_date|date:"d" }}</span>
+                        <span class="text-[10px] font-medium uppercase">{{ job.start_date|date:"M" }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-800 truncate">{{ job.title }}</div>
+                        <div class="text-sm text-gray-500 truncate">{{ job.client.name }}</div>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">Nenhum evento próximo</p>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Filtros</h4>
+            <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="pending" checked class="filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <span class="text-sm text-gray-600">Pendente</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="confirmed" checked class="filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <span class="text-sm text-gray-600">Confirmado</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="completed" checked class="filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <span class="text-sm text-gray-600">Concluído</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="cancelled" checked class="filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <span class="text-sm text-gray-600">Cancelado</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+<style>
+.fc .fc-toolbar-title { font-size: 1.25rem !important; }
+.fc .fc-button { background: #1e3a5f !important; border-color: #1e3a5f !important; }
+.fc .fc-button:hover { background: #2d5a8a !important; }
+.fc .fc-daygrid-event { background: #1e3a5f; border: none; padding: 2px 6px; border-radius: 4px; color: white !important; }
+.fc .fc-event { cursor: pointer; color: white !important; }
+.fc .fc-event .fc-event-main { color: white !important; }
+
+/* Mobile optimizations */
+@media (max-width: 1024px) {
+    .fc .fc-toolbar { flex-direction: column !important; gap: 0.5rem !important; }
+    .fc .fc-toolbar-title { font-size: 1rem !important; }
+    .fc .fc-daygrid-day { min-height: 40px !important; }
+    .fc .fc-daygrid-day-top { flex-direction: row !important; }
+    .fc .fc-daygrid-day-number { font-size: 0.75rem !important; padding: 2px !important; }
+    .fc .fc-daygrid-event { font-size: 0.65rem !important; padding: 1px 2px !important; }
+    .fc .fc-col-header-cell { padding: 4px !important; }
+    .fc .fc-col-header-cell-cushion { font-size: 0.7rem !important; }
+    .fc-theme-standard td, .fc-theme-standard th { padding: 2px !important; }
+}
+
+@media (max-width: 640px) {
+    .fc .fc-toolbar { gap: 0.25rem !important; }
+    .fc .fc-toolbar-title { font-size: 0.9rem !important; min-width: 140px !important; }
+    .fc .fc-button { padding: 0.25rem 0.5rem !important; font-size: 0.75rem !important; }
+    .fc .fc-day { min-height: 35px !important; }
+    .fc .fc-daygrid-day-number { font-size: 0.7rem !important; }
+    .fc .fc-daygrid-event { font-size: 0.6rem !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 100% !important; display: block !important; }
+    .fc .fc-daygrid-event .fc-event-main { font-size: 0.6rem !important; }
+    .fc .fc-scrollgrid { font-size: 0.7rem !important; }
+    .fc .fc-scrollgrid td, .fc .fc-scrollgrid th { padding: 1px !important; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    var allEvents = [];
+    var calendarEl = document.getElementById('calendar');
+    console.log('Calendar element:', calendarEl);
+    
+    function fetchEvents(info, successCallback, failureCallback) {
+        console.log('Fetching events...');
+        
+        fetch('/agenda/api/eventos/', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+        .then(function(response) {
+            console.log('Response status:', response.status);
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Error: ' + response.status);
+        })
+        .then(function(data) {
+            console.log('Events received:', data.length, data);
+            allEvents = data;
+            var filtered = filterEvents(allEvents);
+            successCallback(filtered);
+        })
+        .catch(function(error) {
+            console.error('Fetch error:', error);
+            failureCallback(error);
+        });
+    }
+    
+    function filterEvents(events) {
+        var checkedStatuses = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(function(cb) {
+            return cb.value;
+        });
+        
+        return events.filter(function(event) {
+            return checkedStatuses.includes(event.status);
+        });
+    }
+    
+    function refreshCalendarEvents() {
+        if (typeof calendar === 'undefined' || allEvents.length === 0) return;
+        var filtered = filterEvents(allEvents);
+        calendar.getEvents().forEach(function(event) {
+            event.remove();
+        });
+        filtered.forEach(function(eventData) {
+            calendar.addEvent(eventData);
+        });
+    }
+    
+    var calendar;
+    
+    function getUrlParams() {
+        var params = {};
+        var queryString = window.location.search.substring(1);
+        var pairs = queryString.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            if (pair[0]) {
+                params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+        }
+        return params;
+    }
+    
+    function getInitialDate() {
+        var params = getUrlParams();
+        var year = params.year ? parseInt(params.year) : new Date().getFullYear();
+        var month = params.month ? parseInt(params.month) - 1 : new Date().getMonth();
+        console.log('Initial date:', year, month, new Date(year, month, 1));
+        return new Date(year, month, 1);
+    }
+    
+    if (calendarEl) {
+        var initialDate = getInitialDate();
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'pt-br',
+            headerToolbar: false,
+            initialDate: initialDate,
+            eventSources: [fetchEvents],
+            eventClick: function(info) {
+                window.location.href = '/trabalhos/' + info.event.id + '/';
+            },
+            dateClick: function(info) {
+                var date = info.date;
+                var year = date.getFullYear();
+                var month = String(date.getMonth() + 1).padStart(2, '0');
+                var day = String(date.getDate()).padStart(2, '0');
+                window.location.href = '/agenda/dia/' + year + '/' + month + '/' + day + '/';
+            },
+            height: 'auto'
+        });
+        calendar.render();
+        
+        document.getElementById('prevMonth').addEventListener('click', function() {
+            calendar.prev();
+            updateMonthDisplay(calendar);
+        });
+        document.getElementById('nextMonth').addEventListener('click', function() {
+            calendar.next();
+            updateMonthDisplay(calendar);
+        });
+        document.getElementById('todayBtn').addEventListener('click', function() {
+            calendar.today();
+            updateMonthDisplay(calendar);
+        });
+        document.getElementById('addJobBtn').addEventListener('click', function() {
+            var date = calendar.getDate();
+            var dateStr = date.toISOString().split('T')[0];
+            window.location.href = '/trabalhos/novo/?date=' + dateStr;
+        });
+        document.getElementById('viewSelector').addEventListener('change', function() {
+            calendar.changeView(this.value);
+        });
+        
+        function updateMonthDisplay(calendar) {
+            var date = calendar.getDate();
+            var monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('currentMonth').textContent = monthNames[date.getMonth()] + ' ' + date.getFullYear();
+        }
+        
+        updateMonthDisplay(calendar);
+        
+        document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
+            checkbox.addEventListener('change', refreshCalendarEvents);
+        });
+    }
+});
+</script>
+{% endblock %}

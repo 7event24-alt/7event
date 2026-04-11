@@ -1,0 +1,445 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}7event{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a5f',
+                        secondary: '#2d5a8a',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/jquery.inputmask.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        // Initialize input masks - only if Inputmask is available
+        (function() {
+            if (typeof Inputmask === 'undefined') return;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                Inputmask({ mask: '(99) 99999-9999' }).mask(document.querySelectorAll('[data-mask="phone"]'));
+                Inputmask({ mask: '(99) 9999-9999' }).mask(document.querySelectorAll('[data-mask="phone-fixed"]'));
+                Inputmask({ mask: '99.999.999/9999-99' }).mask(document.querySelectorAll('[data-mask="cnpj"]'));
+                Inputmask({ mask: '999.999.999-99' }).mask(document.querySelectorAll('[data-mask="cpf"]'));
+                Inputmask({ mask: '99999-999' }).mask(document.querySelectorAll('[data-mask="cep"]'));
+            });
+        })();
+    </script>
+</head>
+<body>
+    {% block body %}
+        {% if user.is_authenticated %}
+            <div class="flex h-screen overflow-hidden">
+                <!-- Desktop sidebar: always visible on lg -->
+                <aside class="hidden lg:block w-64 flex-shrink-0 bg-primary text-white">
+                    {% include 'partials/sidebar_content.html' %}
+                </aside>
+                
+                <!-- Mobile sidebar: slides in -->
+                <aside id="sidebar-mobile" class="fixed inset-y-0 left-0 z-50 w-64 bg-primary text-white -translate-x-full transition-transform duration-300 lg:hidden">
+                    {% include 'partials/sidebar_content.html' %}
+                </aside>
+                
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    <!-- Header -->
+                    <header class="bg-white shadow-sm border-b border-gray-200">
+                        <div class="flex items-center justify-between px-4 py-3 lg:px-6">
+                            <div class="flex items-center gap-4">
+                                <button class="lg:hidden p-2 rounded-md hover:bg-gray-100" onclick="toggleSidebar()">
+                                    <i class="fas fa-bars text-gray-600 text-lg"></i>
+                                </button>
+                                
+                                <!-- Logo 7event (global) -->
+                                <a href="{% url 'dashboard:home' %}" class="flex items-center gap-3 hover:opacity-80 transition">
+                                    <img src="{% static 'img/logo7event.png' %}" alt="7event" class="h-10">
+                                </a>
+                                <div class="hidden lg:flex items-center gap-2 text-sm text-gray-500">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <span>{% now "d/m/Y" %}</span>
+                                    <i class="far fa-clock ml-1"></i>
+                                    <span>{% now "H:i" %}</span>
+                                </div>
+                            </div>
+
+                            <!-- Search Bar -->
+                            <form action="{% url 'dashboard:search' %}" method="get" class="hidden md:block flex-1 max-w-md mx-4">
+                                <div class="relative">
+                                    <input type="text" 
+                                           name="q"
+                                           placeholder="Buscar trabalhos, clientes..." 
+                                           class="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                                    >
+                                    <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    {% if request.GET.q %}
+                                    <a href="{% url 'dashboard:search' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </form>
+
+                            <!-- Right Side -->
+                            <div class="flex items-center gap-2">
+                                <!-- Notifications Dropdown -->
+                                <div class="relative" id="notificationsDropdown">
+                                    <button onclick="toggleNotifications()" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <i class="fas fa-bell text-gray-600 text-lg"></i>
+                                        <span id="notificationBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">0</span>
+                                    </button>
+                                    
+                                    <div id="notificationsMenu" class="hidden absolute right-0 top-12 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+                                        <div class="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                            <span class="font-semibold text-gray-800 text-sm">Notificações</span>
+                                            <a href="{% url 'accounts:notifications' %}" class="text-xs text-primary hover:underline">Ver todas</a>
+                                        </div>
+                                        <div id="notificationsList" class="max-h-80 overflow-y-auto">
+                                            <div class="p-4 text-center text-gray-500 text-sm">Carregando...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- User Menu -->
+                                <div class="relative group">
+                                    <button class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                        {% if user.photo %}
+                                            <img src="{{ user.photo.url }}" alt="Foto" class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200">
+                                        {% else %}
+                                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="hidden sm:block text-left">
+                                            <p class="text-sm font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                                            <p class="text-xs text-gray-500">{{ user.role|default:"Admin" }}</p>
+                                        </div>
+                                        <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                    </button>
+                                    
+                                    <!-- Dropdown -->
+                                    <div class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                        <div class="px-4 py-3 border-b border-gray-100">
+                                            <p class="text-sm font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                                            <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                        </div>
+                                        <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <i class="fas fa-user-circle text-gray-400 w-5"></i>
+                                            <span class="text-sm">Meu Perfil</span>
+                                        </a>
+                                        <!-- Configurações removido temporarily
+                                        <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <i class="fas fa-cog text-gray-400 w-5"></i>
+                                            <span class="text-sm">Configurações</span>
+                                        </a>
+                                        -->
+                                        <a href="{% url 'accounts:password_change' %}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors">
+                                            <i class="fas fa-lock text-gray-400 w-5"></i>
+                                            <span class="text-sm">Alterar Senha</span>
+                                        </a>
+                                        <div class="border-t border-gray-100 mt-2 pt-2">
+                                            <a href="{% url 'accounts:logout_simple' %}" class="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors">
+                                                <i class="fas fa-sign-out-alt w-5"></i>
+                                                <span class="text-sm">Sair</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <!-- Breadcrumb -->
+                    {% block breadcrumb %}{% endblock %}
+                    
+                    <!-- Page Title -->
+                    <div class="bg-white px-4 lg:px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                {% block header_pre_actions %}{% endblock %}
+                                <h2 class="text-xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h2>
+                            </div>
+                            {% block header_actions %}{% endblock %}
+                        </div>
+                    </div>
+                    
+                    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6">
+                        {% block content %}{% endblock %}
+                    </main>
+                </div>
+            </div>
+            <div class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        {% else %}
+            {% block login_content %}{% endblock %}
+        {% endif %}
+    {% endblock %}
+    {% block scripts %}{% endblock %}
+    
+    <script>
+    function toggleSidebar() {
+        document.getElementById('sidebar-mobile').classList.toggle('-translate-x-full');
+        document.getElementById('sidebarOverlay').classList.toggle('hidden');
+    }
+    
+    function toggleNotifications() {
+        const menu = document.getElementById('notificationsMenu');
+        menu.classList.toggle('hidden');
+        loadNotifications();
+        loadUnreadCount();
+    }
+    
+    function loadUnreadCount() {
+        fetch('/accounts/notificacoes/api/contagem/')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('notificationBadge');
+                console.log('Contagem carregada:', data.unread_count);
+                if (data.unread_count > 0) {
+                    badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            })
+            .catch(error => console.error('Erro contagem:', error));
+    }
+    
+    // Carregar contagem ao carregar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Carregando contagem...');
+        loadUnreadCount();
+        // Atualizar a cada 30 segundos
+        setInterval(loadUnreadCount, 30000);
+    });
+    
+    function loadNotifications() {
+        fetch('/accounts/notificacoes/api/')
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('notificationsList');
+                const badge = document.getElementById('notificationBadge');
+                
+                if (data.notifications.length > 0) {
+                    let html = '';
+                    data.notifications.forEach(function(n) {
+                        const icon = getNotificationIcon(n.notification_type);
+                        const bgClass = getNotificationBg(n.notification_type);
+                        const textClass = getNotificationText(n.notification_type);
+                        
+                        // Store notification data in data attributes
+                        html += '<div class="notification-item p-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer ' + (n.is_read ? '' : ' bg-blue-50') + '" data-id="' + n.id + '" data-url="' + n.action_url + '">' +
+                            '<div class="flex items-start gap-3">' +
+                            '<span class="w-8 h-8 rounded-full flex items-center justify-center text-xs ' + bgClass + ' ' + textClass + '">' +
+                            '<i class="fas fa-' + icon + '"></i>' +
+                            '</span>' +
+                            '<div class="flex-1 min-w-0">' +
+                            '<p class="text-sm font-medium text-gray-800 truncate">' + n.title + '</p>' +
+                            '<p class="text-xs text-gray-500 truncate">' + n.message + '</p>' +
+                            '<p class="text-xs text-gray-400 mt-1">' + n.timesince + '</p>' +
+                            '</div>' +
+                            '<div class="flex items-center gap-2">' +
+                            (n.is_read ? '' : '<span class="w-2 h-2 bg-blue-500 rounded-full"></span>') +
+                            '</div>' +
+                            '</div>' +
+                            '</div>';
+                    });
+                    list.innerHTML = html;
+                    
+                    // Add click handlers using event delegation
+                    list.querySelectorAll('.notification-item').forEach(function(item) {
+                        item.addEventListener('click', function(e) {
+                            var notifId = this.getAttribute('data-id');
+                            var url = this.getAttribute('data-url');
+                            console.log('Click NO item detectado!', notifId, url);
+                            handleNotificationClick(e, notifId, url);
+                        });
+                    });
+                    
+                    // Also add global catch-all to debug
+                    list.onclick = function(e) {
+                        console.log('Click no list!', e.target);
+                    };
+                } else {
+                    list.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Nenhuma notificação</div>';
+                }
+                
+                // Atualizar badge
+                if (data.unread_count > 0) {
+                    badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                document.getElementById('notificationsList').innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Erro ao carregar</div>';
+            });
+    }
+    
+    function getNotificationIcon(type) {
+        const icons = {
+            'job': 'briefcase',
+            'client': 'users',
+            'service': 'tools',
+            'expense': 'receipt',
+            'quote': 'file-invoice-dollar',
+            'system': 'bell'
+        };
+        return icons[type] || 'bell';
+    }
+    
+function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function handleNotificationClick(event, notificationId, url) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('handleNotificationClick chamado', notificationId, url);
+        
+        // Get CSRF from cookie - try both formats
+        var csrfToken = null;
+        var cookies = document.cookie.split(';');
+        
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf('csrftoken') !== -1) {
+                csrfToken = cookie.split('=')[1];
+                break;
+            }
+        }
+        
+        console.log('CSRF Token result:', csrfToken);
+        
+        // Marcar como lida
+        fetch('/accounts/notificacoes/marcar-lida/' + notificationId + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+            },
+            credentials: 'same-origin'
+        }).then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.log('Error response:', text);
+                    throw new Error('HTTP ' + response.status);
+                });
+            }
+            return response.json();
+        }).then(data => {
+            console.log('Resposta mark_as_read:', data);
+            
+            // Atualizar badge
+            loadUnreadCount();
+            console.log('Badge atualizada!');
+            
+            // Redirect
+            window.location.href = url;
+        }).catch(err => console.error('Erro:', err));
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function getNotificationBg(type) {
+        const bgs = {
+            'job': 'bg-primary/10',
+            'client': 'bg-green-100',
+            'service': 'bg-purple-100',
+            'expense': 'bg-red-100',
+            'quote': 'bg-yellow-100',
+            'system': 'bg-gray-100'
+        };
+        return bgs[type] || 'bg-gray-100';
+    }
+    
+    function getNotificationText(type) {
+        const texts = {
+            'job': 'text-primary',
+            'client': 'text-green-600',
+            'service': 'text-purple-600',
+            'expense': 'text-red-600',
+            'quote': 'text-yellow-600',
+            'system': 'text-gray-600'
+        };
+        return texts[type] || 'text-gray-600';
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('notificationsDropdown');
+        const menu = document.getElementById('notificationsMenu');
+        if (!dropdown.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+    </script>
+    
+    <!-- Toast Messages -->
+    {% if messages %}
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {% for message in messages %}
+        <div class="toast-message px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in {% if message.tags == 'error' %}bg-red-500 text-white{% elif message.tags == 'success' %}bg-green-500 text-white{% elif message.tags == 'warning' %}bg-yellow-500 text-white{% else %}bg-blue-500 text-white{% endif %}">
+            <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            <span class="text-sm font-medium">{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-80">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+    </style>
+    <script>
+        setTimeout(() => {
+            const container = document.getElementById('toast-container');
+            if (container) container.style.opacity = '0';
+            setTimeout(() => container?.remove(), 300);
+        }, 5000);
+    </script>
+    {% endif %}
+</body>
+</html>

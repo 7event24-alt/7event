@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Meu Perfil - 7event{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Profile Header -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post" enctype="multipart/form-data" id="photoForm" class="hidden">
+            {% csrf_token %}
+            <input type="file" name="photo" id="photoInput" accept="image/*">
+        </form>
+        <div class="flex flex-col sm:flex-row items-center gap-6">
+            <label for="photoInput" class="cursor-pointer relative group">
+                {% if user.photo %}
+                <img src="{{ user.photo.url }}" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-primary transition">
+                {% else %}
+                <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-gray-200 group-hover:border-primary transition">
+                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                </div>
+                {% endif %}
+                <div class="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition">
+                    <i class="fas fa-camera text-sm"></i>
+                </div>
+            </label>
+            <div class="text-center sm:text-left">
+                <h1 class="text-2xl font-bold text-gray-800">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="text-gray-500">{{ user.email }}</p>
+                <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
+                    {% if user.role %}
+                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-briefcase mr-1"></i>{{ user.role }}
+                    </span>
+                    {% endif %}
+                    {% if user.is_account_admin %}
+                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-crown mr-1"></i>Administrador
+                    </span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Clique na foto para alterar</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column - Forms -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Personal Info -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-user text-primary"></i>
+                        Informações Pessoais
+                    </h2>
+                    <button type="button" id="editInfoBtn" onclick="toggleEditMode()" class="text-primary hover:text-secondary text-sm font-medium flex items-center gap-1">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <!-- Display Mode -->
+                    <div id="displayMode" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-500 mb-1">Nome</label>
+                                <p class="font-medium text-gray-800">{{ user.first_name|default:"-" }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-500 mb-1">Sobrenome</label>
+                                <p class="font-medium text-gray-800">{{ user.last_name|default:"-" }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-500 mb-1">Email</label>
+                            <p class="font-medium text-gray-800">{{ user.email }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-500 mb-1">Telefone</label>
+                                <p class="font-medium text-gray-800">{{ user.phone|default:"-" }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-500 mb-1">Profissão/Cargo</label>
+                                <p class="font-medium text-gray-800">{{ user.role|default:"-" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode -->
+                    <form method="post" id="editForm" class="space-y-5 hidden">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <p>Por favor, corrija os erros abaixo.</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                <span class="text-red-500 text-sm">{{ form.first_name.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                <span class="text-red-500 text-sm">{{ form.last_name.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <span class="text-red-500 text-sm">{{ form.email.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.phone.label }}</label>
+                                {{ form.phone }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.role.label }}</label>
+                                {{ form.role }}
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-2">
+                            <button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-secondary transition flex items-center gap-2">
+                                <i class="fas fa-save"></i> Salvar
+                            </button>
+                            <button type="button" onclick="toggleEditMode()" class="bg-gray-500 text-white px-5 py-2.5 rounded-lg hover:bg-gray-600 transition flex items-center gap-2">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-primary"></i>
+                        Segurança
+                    </h2>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <p class="text-gray-600 mb-4">Para alterar sua senha, clique no botão abaixo:</p>
+                    <a href="{% url 'accounts:password_change' %}" class="inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-key"></i> Alterar Senha
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Info -->
+        <div class="space-y-6">
+            <!-- Company Info -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-building text-primary"></i>
+                        Empresa
+                    </h2>
+                </div>
+                <div class="p-4 lg:p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-500">Nome</label>
+                        <p class="font-medium text-gray-800">{{ user.account.name }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-500">Plano</label>
+                        <p class="font-medium text-gray-800">{{ user.account.get_plan_display }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-500">Usuários</label>
+                        <p class="font-medium text-gray-800">{{ user.account.user_count }} / {{ user.account.max_users }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-bolt text-primary"></i>
+                        Acesso Rápido
+                    </h2>
+                </div>
+                <div class="p-4 lg:p-6">
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'clients:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
+                            <i class="fas fa-users text-lg mb-1"></i>
+                            <span class="text-xs font-medium">Clientes</span>
+                        </a>
+                        <a href="{% url 'jobs:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
+                            <i class="fas fa-briefcase text-lg mb-1"></i>
+                            <span class="text-xs font-medium">Jobs</span>
+                        </a>
+                        <a href="{% url 'quote:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
+                            <i class="fas fa-file-invoice-dollar text-lg mb-1"></i>
+                            <span class="text-xs font-medium">Orçamentos</span>
+                        </a>
+                        <a href="{% url 'expenses:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
+                            <i class="fas fa-receipt text-lg mb-1"></i>
+                            <span class="text-xs font-medium">Despesas</span>
+                        </a>
+                        <a href="{% url 'services:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
+                            <i class="fas fa-concierge-bell text-lg mb-1"></i>
+                            <span class="text-xs font-medium">Serviços</span>
+                        </a>
+                        <a href="{% url 'agenda:home' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
+                            <i class="fas fa-calendar-alt text-lg mb-1"></i>
+                            <span class="text-xs font-medium">Agenda</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.getElementById('photoInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        
+        if (!file.type.match('image.*')) {
+            alert('Por favor, selecione uma imagem (JPEG, PNG, GIF)');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('photo_only', '1');
+        
+        fetch('{% url "accounts:profile" %}', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success:', data);
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro: ' + error.message);
+        });
+    }
+});
+
+function toggleEditMode() {
+    const displayMode = document.getElementById('displayMode');
+    const editForm = document.getElementById('editForm');
+    const editBtn = document.getElementById('editInfoBtn');
+    
+    if (displayMode.classList.contains('hidden')) {
+        displayMode.classList.remove('hidden');
+        editForm.classList.add('hidden');
+        editBtn.innerHTML = '<i class="fas fa-edit"></i> Editar';
+    } else {
+        displayMode.classList.add('hidden');
+        editForm.classList.remove('hidden');
+        editBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+    }
+}
+</script>
+{% endblock %}

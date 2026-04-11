@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Plano - 7event{% endblock %}
+{% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} Plano{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'admin_panel:plan_list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Voltar
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <h3 class="card-title">Dados do Plano</h3>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="label">{{ form.type.label }} *</label>
+                    {{ form.type }}
+                </div>
+                <div class="form-group">
+                    <label class="label">{{ form.name.label }} *</label>
+                    {{ form.name }}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="label">{{ form.description.label }}</label>
+                {{ form.description }}
+            </div>
+            
+            <div class="form-section">
+                <h4>Limites</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="label">{{ form.max_users.label }}</label>
+                        {{ form.max_users }}
+                    </div>
+                    <div class="form-group">
+                        <label class="label">{{ form.max_clients.label }}</label>
+                        {{ form.max_clients }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="label">{{ form.max_jobs.label }}</label>
+                        {{ form.max_jobs }}
+                    </div>
+                    <div class="form-group">
+                        <label class="label">{{ form.max_expenses.label }}</label>
+                        {{ form.max_expenses }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="label">{{ form.max_agenda_events.label }}</label>
+                        {{ form.max_agenda_events }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h4>Preços</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="label">{{ form.price_monthly.label }}</label>
+                        {{ form.price_monthly }}
+                    </div>
+                    <div class="form-group">
+                        <label class="label">{{ form.price_quarterly.label }}</label>
+                        {{ form.price_quarterly }}
+                    </div>
+                    <div class="form-group">
+                        <label class="label">{{ form.price_semester.label }}</label>
+                        {{ form.price_semester }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="checkbox-label">
+                    {{ form.is_active }}
+                    <span class="checkmark"></span>
+                    <span class="checkbox-text">Plano Ativo</span>
+                </label>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'admin_panel:plan_list' %}" class="btn btn-outline">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--color-gray-50);
+    border-radius: 8px;
+}
+.form-section h4 {
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+.checkbox-label input { display: none; }
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-gray-400);
+    border-radius: 4px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.checkbox-label input:checked + .checkmark {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+.checkbox-label input:checked + .checkmark::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+}
+.checkbox-text {
+    font-size: 0.9rem;
+    color: var(--color-gray-700);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}7event - Sair{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1><img src="{% static 'img/logo7eventbranco.png' %}" alt="7event" style="height: 50px;"></h1>
+                <p>Sistema de Gestão de Eventos</p>
+            </div>
+            
+            <div class="login-card" style="text-align: center;">
+                <h2>Sair da Conta</h2>
+                <p style="margin-bottom: 20px;">Tem certeza que deseja sair?</p>
+                
+                <form method="get" action="{% url 'accounts:logout_simple' %}">
+                    <button type="submit" class="btn btn-primary" style="margin-right: 10px;">
+                        <i class="fas fa-sign-out-alt"></i> Sim, sair
+                    </button>
+                    <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancelar
+                    </a>
+                </form>
+            </div>
+            
+            <p class="copyright">© 2025 7event - Sistema de Gestão de Eventos</p>
+        </div>
+    </div>
+</body>
+</html>

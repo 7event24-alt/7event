@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-gradient-primary { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+    </style>
+</head>
+<body style="background-color: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div class="bg-gradient-primary" style="padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0;">7event</h1>
+            <p style="color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px;">Sistema de Gestão de Eventos</p>
+        </div>
+        
+        <!-- Conteúdo -->
+        <div style="padding: 40px 30px;">
+            {% block content %}{% endblock %}
+        </div>
+        
+        <!-- Footer -->
+        <div style="background-color: #f9fafb; padding: 20px 30px; text-align: center;">
+            <p style="color: #9ca3af; font-size: 14px; margin: 0;">© 2024 7event - Sistema de Gestão de Eventos</p>
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">Este email foi enviado automaticamente, não responda.</p>
+        </div>
+    </div>
+</body>
+</html>

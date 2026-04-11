@@ -1,0 +1,51 @@
+{% load currency_tags %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4 lg:p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Total de Trabalhos</p>
+                <p class="text-2xl lg:text-3xl font-bold text-blue-600">{% if jobs_total > 0 %}{{ jobs_total }}{% else %}--{% endif %}</p>
+            </div>
+            <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-briefcase text-blue-600"></i>
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">{% if jobs_this_month > 0 %}{{ jobs_this_month }} este mês{% else %}--{% endif %}</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-4 lg:p-6 border-l-4 border-amber-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Pendentes</p>
+                <p class="text-2xl lg:text-3xl font-bold text-amber-500">{% if jobs_pending > 0 %}{{ jobs_pending }}{% else %}--{% endif %}</p>
+            </div>
+            <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-clock text-amber-500"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-4 lg:p-6 border-l-4 border-emerald-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Confirmados</p>
+                <p class="text-2xl lg:text-3xl font-bold text-emerald-500">{% if jobs_confirmed > 0 %}{{ jobs_confirmed }}{% else %}--{% endif %}</p>
+            </div>
+            <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                <i class="fas fa-check text-emerald-500"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-4 lg:p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Concluídos</p>
+                <p class="text-2xl lg:text-3xl font-bold text-purple-500">{% if jobs_completed > 0 %}{{ jobs_completed }}{% else %}--{% endif %}</p>
+            </div>
+            <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <i class="fas fa-check-double text-purple-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
