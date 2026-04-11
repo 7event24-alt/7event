@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Cliente - 7event{% endblock %}
+{% block page_title %}Excluir Cliente{% endblock %}
+
+{% block header_pre_actions %}
+<a href="{% url 'clients:detail' client.pk %}" class="text-gray-600 hover:text-primary p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Voltar">
+    <i class="fas fa-arrow-left"></i>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+            <h3 class="text-lg font-semibold text-red-800">Confirmar Exclusão</h3>
+        </div>
+        <div class="p-6">
+            <p class="text-gray-700 mb-2">Tem certeza que deseja excluir o cliente <strong>{{ client.name }}</strong>?</p>
+            <p class="text-red-600 text-sm">Esta ação não pode ser desfeita.</p>
+            
+            <div class="flex justify-end gap-3 mt-6">
+                <a href="{% url 'clients:detail' client.pk %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    Cancelar
+                </a>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium">
+                        Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

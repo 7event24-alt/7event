@@ -1,0 +1,32 @@
+{% extends 'emails/base.html' %}
+
+{% block content %}
+<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Olá <strong>{{ user.first_name|default:user.username }}</strong>!</p>
+
+<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Seja muito bem-vindo ao <strong>7event</strong> - Sistema de Gestão de Eventos!</p>
+
+<div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 15px;">Seus dados de acesso:</h3>
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;"><strong>Login:</strong> {{ user.email }}</p>
+</div>
+
+<h3 style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 15px;">Agora você pode:</h3>
+
+<ul style="color: #6b7280; font-size: 14px; line-height: 1.8; margin-bottom: 20px; padding-left: 20px;">
+    <li>Gerenciar seus clientes</li>
+    <li>Criar e acompanhar trabalhos</li>
+    <li>Controlar despesas</li>
+    <li>Gerenciar orçamento e financeiro</li>
+    <li>E muito mais!</li>
+</ul>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ login_url|default:'https://7event.com.br' }}" class="bg-gradient-primary" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Acessar minha conta
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px; margin-top: 30px;">Dúvidas? Entre em contato com nosso suporte.</p>
+
+<p style="color: #374151; font-size: 14px; margin-top: 20px;">Atenciosamente,<br><strong>Equipe 7event</strong></p>
+{% endblock %}

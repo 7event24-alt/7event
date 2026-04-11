@@ -1,0 +1,28 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="font-semibold text-gray-800">Próximos Eventos</h3>
+        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{% if upcoming_events_count > 0 %}{{ upcoming_events_count }} eventos{% else %}--{% endif %}</span>
+    </div>
+    <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+        {% if upcoming_events %}
+            {% for event in upcoming_events %}
+            <div class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50">
+                <div class="w-12 h-12 rounded-lg bg-primary text-white flex flex-col items-center justify-center flex-shrink-0">
+                    <span class="text-xs font-bold">{{ event.start_date|date:"d" }}</span>
+                    <span class="text-xs font-medium uppercase">{{ event.start_date|date:"M" }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-800 truncate">{{ event.title }}</p>
+                    <p class="text-sm text-gray-500 truncate">{{ event.client.name }} - {{ event.location|default:"Local não definido" }}</p>
+                </div>
+                {% include 'components/badge_status.html' with status=event.status type='job' %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <i class="fas fa-calendar text-4xl mb-3 opacity-50"></i>
+            <p>Nenhum evento próximo.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>

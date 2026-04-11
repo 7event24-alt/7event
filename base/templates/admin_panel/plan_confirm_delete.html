@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Plano - 7event{% endblock %}
+{% block page_title %}Excluir Plano{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'admin_panel:plan_list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Voltar
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <div class="card-header">
+        <h3 class="card-title">Confirmar Exclusão</h3>
+    </div>
+    <div class="card-body">
+        <p>Tem certeza que deseja excluir o plano <strong>{{ plan.name }}</strong>?</p>
+        <p style="color: var(--color-danger); margin-top: 0.5rem;">Esta ação não pode ser desfeita.</p>
+        
+        <form method="post" class="form-actions">
+            {% csrf_token %}
+            <a href="{% url 'admin_panel:plan_list' %}" class="btn btn-outline">Cancelar</a>
+            <button type="submit" class="btn btn-danger">Excluir</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

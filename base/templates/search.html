@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Busca - 7event{% endblock %}
+
+{% block page_title %}Resultados da Busca{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'dashboard:home' %}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+    <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Voltar</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Search Box -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <form action="{% url 'dashboard:search' %}" method="get" class="flex gap-2">
+            <div class="flex-1 relative">
+                <input type="text" 
+                       name="q" 
+                       value="{{ query }}" 
+                       placeholder="Buscar trabalhos, clientes, serviços..."
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                       autofocus
+                >
+                <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <button type="submit" class="px-6 py-3 bg-primary hover:bg-secondary text-white rounded-lg transition-colors text-sm font-medium">
+                Buscar
+            </button>
+        </form>
+    </div>
+
+    {% if has_searched %}
+        {% if query %}
+            <div class="mb-4">
+                <p class="text-gray-600">
+                    {% if total_results > 0 %}
+                        Encontramos <span class="font-semibold text-primary">{{ total_results }}</span> resultado{{ total_results|pluralize }} para "<span class="font-semibold">{{ query }}</span>"
+                    {% else %}
+                        Nenhum resultado para "<span class="font-semibold">{{ query }}</span>"
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+
+        {% if total_results > 0 %}
+            <!-- Jobs Section -->
+            {% if jobs_count > 0 %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+                <button onclick="toggleSection('jobs')" class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <i class="fas fa-briefcase text-primary"></i>
+                        </span>
+                        <span class="font-semibold text-gray-800">Trabalhos</span>
+                        <span class="px-2 py-0.5 bg-primary text-white text-xs rounded-full">{{ jobs_count }}</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="jobs-arrow"></i>
+                </button>
+                <div id="jobs-section" class="divide-y divide-gray-100">
+                    {% for job in jobs %}
+                    <a href="{% url 'jobs:detail' job.id %}" class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">{{ job.title }}</h4>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {% if job.client %}<i class="fas fa-user mr-1"></i>{{ job.client.name }}{% endif %}
+                                    {% if job.location %}• <i class="fas fa-map-marker-alt mr-1"></i>{{ job.location }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                {% if job.cache %}
+                                <p class="font-semibold text-primary">R$ {{ job.cache|floatformat:2 }}</p>
+                                {% endif %}
+                                {% if job.start_date %}
+                                <p class="text-sm text-gray-500">{{ job.start_date|date:"d/m/Y" }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Clients Section -->
+            {% if clients_count > 0 %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+                <button onclick="toggleSection('clients')" class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                            <i class="fas fa-users text-green-600"></i>
+                        </span>
+                        <span class="font-semibold text-gray-800">Clientes</span>
+                        <span class="px-2 py-0.5 bg-green-500 text-white text-xs rounded-full">{{ clients_count }}</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="clients-arrow"></i>
+                </button>
+                <div id="clients-section" class="divide-y divide-gray-100">
+                    {% for client in clients %}
+                    <a href="{% url 'clients:detail' client.id %}" class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">{{ client.name }}</h4>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {% if client.email %}<i class="fas fa-envelope mr-1"></i>{{ client.email }}{% endif %}
+                                    {% if client.phone %}• <i class="fas fa-phone mr-1"></i>{{ client.phone }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-gray-400">{{ client.jobs_count }} trabalho{{ client.jobs_count|pluralize }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Services Section -->
+            {% if services_count > 0 %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+                <button onclick="toggleSection('services')" class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <i class="fas fa-tools text-purple-600"></i>
+                        </span>
+                        <span class="font-semibold text-gray-800">Serviços</span>
+                        <span class="px-2 py-0.5 bg-purple-500 text-white text-xs rounded-full">{{ services_count }}</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="services-arrow"></i>
+                </button>
+                <div id="services-section" class="divide-y divide-gray-100">
+                    {% for service in services %}
+                    <a href="{% url 'services:list' %}" class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">{{ service.name }}</h4>
+                                <p class="text-sm text-gray-500 mt-1">{{ service.description|truncatechars:80 }}</p>
+                            </div>
+                            <div class="text-right">
+                                {% if service.estimated_total %}
+                                <p class="font-semibold text-primary">R$ {{ service.estimated_total|floatformat:2 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quotes Section -->
+            {% if quotes_count > 0 %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+                <button onclick="toggleSection('quotes')" class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+                            <i class="fas fa-file-invoice-dollar text-yellow-600"></i>
+                        </span>
+                        <span class="font-semibold text-gray-800">Orçamentos</span>
+                        <span class="px-2 py-0.5 bg-yellow-500 text-white text-xs rounded-full">{{ quotes_count }}</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="quotes-arrow"></i>
+                </button>
+                <div id="quotes-section" class="divide-y divide-gray-100">
+                    {% for quote in quotes %}
+                    <a href="{% url 'quote:detail' quote.id %}" class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">{{ quote.title }}</h4>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {% if quote.client %}<i class="fas fa-user mr-1"></i>{{ quote.client.name }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                {% if quote.total %}
+                                <p class="font-semibold text-primary">R$ {{ quote.total|floatformat:2 }}</p>
+                                {% endif %}
+                                <span class="text-xs {% if quote.is_accepted %}text-green-500{% else %}text-gray-400{% endif %}">
+                                    {% if quote.is_accepted %}Aceito{% elif quote.is_sent %}Enviado{% else %}Rascunho{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Expenses Section -->
+            {% if expenses_count > 0 %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+                <button onclick="toggleSection('expenses')" class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                            <i class="fas fa-receipt text-red-600"></i>
+                        </span>
+                        <span class="font-semibold text-gray-800">Despesas</span>
+                        <span class="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{{ expenses_count }}</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="expenses-arrow"></i>
+                </button>
+                <div id="expenses-section" class="divide-y divide-gray-100">
+                    {% for expense in expenses %}
+                    <a href="{% url 'expenses:list' %}" class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-gray-800">{{ expense.get_category_display }}</h4>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {% if expense.job %}<i class="fas fa-briefcase mr-1"></i>{{ expense.job.title }}{% endif %}
+                                    {% if expense.description %}• {{ expense.description|truncatechars:40 }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-red-600">R$ {{ expense.value|floatformat:2 }}</p>
+                                <p class="text-xs text-gray-400">{{ expense.date|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- No Results -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i class="fas fa-search text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Nenhum resultado encontrado</h3>
+                <p class="text-gray-500 mb-4">Tente buscar com outros termos ou verificar a ortografia</p>
+                <div class="text-sm text-gray-400 space-y-1">
+                    <p><i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Sugestões:</p>
+                    <p>• Use palavras-chave mais simples</p>
+                    <p>• Busque pelo nome do cliente ou trabalho</p>
+                    <p>• Verifique se o item existe na sua conta</p>
+                </div>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Initial State -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <i class="fas fa-search text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Busca Global</h3>
+            <p class="text-gray-500">Digite no campo acima para buscar em toda a sua conta</p>
+            <div class="mt-4 text-sm text-gray-400 grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                <div class="flex items-center gap-2"><i class="fas fa-briefcase text-primary"></i> Trabalhos</div>
+                <div class="flex items-center gap-2"><i class="fas fa-users text-green-600"></i> Clientes</div>
+                <div class="flex items-center gap-2"><i class="fas fa-tools text-purple-600"></i> Serviços</div>
+                <div class="flex items-center gap-2"><i class="fas fa-file-invoice-dollar text-yellow-600"></i> Orçamentos</div>
+                <div class="flex items-center gap-2"><i class="fas fa-receipt text-red-600"></i> Despesas</div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleSection(section) {
+    const content = document.getElementById(section + '-section');
+    const arrow = document.getElementById(section + '-arrow');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.classList.remove('-rotate-90');
+        arrow.classList.add('rotate-0');
+    } else {
+        content.style.display = 'none';
+        arrow.classList.remove('rotate-0');
+        arrow.classList.add('-rotate-90');
+    }
+}
+</script>
+{% endblock %}

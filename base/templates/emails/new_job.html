@@ -1,0 +1,37 @@
+{% extends 'emails/base.html' %}
+
+{% block content %}
+<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Olá <strong>{{ user.first_name|default:user.username }}</strong>!</p>
+
+<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Um novo trabalho foi criado:</p>
+
+<div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <h3 style="color: #374151; font-size: 18px; font-weight: 600; margin-bottom: 15px;">{{ job.title }}</h3>
+    
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">
+        <strong style="color: #374151;">Cliente:</strong> {{ job.client.name|default:"Sem cliente" }}
+    </p>
+    
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">
+        <strong style="color: #374151;">Data:</strong> {{ job.start_date|date:"d/m/Y" }}
+    </p>
+    
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">
+        <strong style="color: #374151;">Local:</strong> {{ job.location|default:"Não definido" }}
+    </p>
+    
+    {% if job.cache %}
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">
+        <strong style="color: #374151;">Valor:</strong> R$ {{ job.cache|floatformat:2 }}
+    </p>
+    {% endif %}
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ job_url|default:'https://7event.com.br/trabalhos/'|add:job.id|add:'/' }}" class="bg-gradient-primary" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Ver detalhes do trabalho
+    </a>
+</div>
+
+<p style="color: #374151; font-size: 14px; margin-top: 20px;">Atenciosamente,<br><strong>Equipe 7event</strong></p>
+{% endblock %}

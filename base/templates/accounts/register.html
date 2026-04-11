@@ -1,0 +1,251 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}7event - Cadastro{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a5f',
+                        secondary: '#2d5a8a',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .bg-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0KV-uNj-loGnPp5R2pRaH0UWas-tNSZ_YzA&s');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative">
+    <div class="bg-wrapper"></div>
+    <div class="absolute inset-0 bg-primary/80 backdrop-blur-md"></div>
+    <div class="w-full max-w-md relative z-10">
+        <div class="bg-white rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+            <div class="bg-primary p-8 text-center rounded-t-2xl">
+                <img src="{% static 'img/logo7eventbranco.png' %}" alt="7event" class="h-12 mx-auto mb-2">
+                <p class="text-white/80 text-sm">Sistema de Gestão de Eventos</p>
+            </div>
+            
+            <div class="p-8">
+                <h2 class="text-2xl font-bold text-gray-800 text-center mb-2">Criar Conta</h2>
+                <p class="text-gray-500 text-sm text-center mb-6">Preencha os dados abaixo para se cadastrar</p>
+                
+                {% if form.non_field_errors %}
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex items-center gap-2 text-red-700">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {% for error in form.non_field_errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.first_name.label }} *</label>
+                            <input type="text" name="first_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.first_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Seu nome" required>
+                            {% if form.first_name.errors %}
+                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.first_name.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.last_name.label }} *</label>
+                            <input type="text" name="last_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.last_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Sobrenome" required>
+                            {% if form.last_name.errors %}
+                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.last_name.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.email.label }} *</label>
+                        <input type="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.email.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com" required>
+                        {% if form.email.errors %}
+                        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.email.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.phone.label }} *</label>
+                        <input type="text" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.phone.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="(00) 00000-0000" required>
+                        {% if form.phone.errors %}
+                        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.phone.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.company_name.label }}</label>
+                        <input type="text" name="company_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.company_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Nome da sua empresa ou organização">
+                        {% if form.company_name.errors %}
+                        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.company_name.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.role.label }}</label>
+                        <select name="role" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.role.errors %}border-red-500 focus:ring-red-500{% endif %}">
+                            <option value="">Selecione uma função</option>
+                            {% for value, label in form.role.field.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.role.errors %}
+                        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.role.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Senha *</label>
+                            <input type="password" name="password1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password1.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Senha" required>
+                            {% if form.password1.errors %}
+                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.password1.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar *</label>
+                            <input type="password" name="password2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password2.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Confirmar senha" required>
+                            {% if form.password2.errors %}
+                            <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.password2.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-user-plus"></i> Criar Conta
+                    </button>
+                </form>
+                
+                <!-- Modal de Confirmação de Email -->
+                <div id="emailConfirmModal" class="hidden fixed inset-0 z-50">
+                    <!-- Overlay -->
+                    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeEmailConfirmModal()"></div>
+                    
+                    <!-- Container do Modal -->
+                    <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+                        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+                            <!-- Botão Fechar -->
+                            <button type="button" onclick="closeEmailConfirmModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                            
+                            <!-- Ícone -->
+                            <div class="text-center mb-4">
+                                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto">
+                                    <i class="fas fa-envelope text-2xl text-indigo-600"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Texto -->
+                            <h3 class="text-xl font-bold text-gray-800 text-center mb-2">Confirme seu email</h3>
+                            <p class="text-gray-600 text-center mb-6">
+                                O email <span id="confirmEmail" class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-semibold"></span> está correto?
+                                <br><span class="text-sm text-gray-500">Você receberá um link de verificação neste endereço.</span>
+                            </p>
+                            
+                            <!-- Botões -->
+                            <div class="flex gap-3">
+                                <button type="button" onclick="cancelConfirm()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                                    Não, corrigir
+                                </button>
+                                <button type="button" onclick="confirmEmail()" class="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-secondary font-medium">
+                                    Sim, continuar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                    // Funções do Modal de Confirmação de Email
+                    function showEmailConfirmModal() {
+                        const email = document.querySelector('input[name="email"]').value;
+                        if (!email) {
+                            document.querySelector('form').submit();
+                            return;
+                        }
+                        document.getElementById('confirmEmail').textContent = email;
+                        document.getElementById('emailConfirmModal').classList.remove('hidden');
+                    }
+                    
+                    function closeEmailConfirmModal() {
+                        document.getElementById('emailConfirmModal').classList.add('hidden');
+                    }
+                    
+                    function confirmEmail() {
+                        document.querySelector('form').submit();
+                    }
+                    
+                    function cancelConfirm() {
+                        closeEmailConfirmModal();
+                        document.querySelector('input[name="email"]').focus();
+                    }
+                    
+                    // Interceptar submit
+                    document.querySelector('form').addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        showEmailConfirmModal();
+                    });
+                </script>
+                
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    <p>Já tem conta? <a href="{% url 'accounts:login' %}" class="text-primary hover:underline font-medium">Entrar</a></p>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-8 py-4 text-center">
+                <p class="text-xs text-gray-500">© 2025 7event - Sistema de Gestão de Eventos</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

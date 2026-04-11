@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Orçamento - {{ quote.title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.5; padding: 40px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1e3a5f; }
+        .logo { font-size: 24px; font-weight: bold; color: #1e3a5f; }
+        .company-info { text-align: right; font-size: 12px; color: #666; }
+        
+        .quote-title { background: #1e3a5f; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .quote-title h1 { font-size: 24px; margin-bottom: 5px; }
+        .quote-title p { font-size: 14px; opacity: 0.9; }
+        
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .info-box { background: #f9fafb; padding: 15px; border-radius: 8px; }
+        .info-box h3 { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        .info-box p { font-size: 16px; font-weight: 500; }
+        
+        .section { margin-bottom: 25px; }
+        .section h2 { font-size: 16px; color: #1e3a5f; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { background: #f3f4f6; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; }
+        td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+        th.text-right, td.text-right { text-align: right; }
+        
+        .totals { background: #1e3a5f; padding: 20px; border-radius: 8px; color: white; }
+        .totals table { margin-bottom: 0; color: white; }
+        .totals td { border: none; padding: 8px; }
+        .totals .total-final { font-size: 22px; font-weight: bold; }
+        
+        .notes { background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 20px; }
+        .notes h3 { font-size: 14px; color: #92400e; margin-bottom: 8px; }
+        
+        .signature { margin-top: 40px; display: flex; justify-content: space-between; }
+        .signature-box { width: 45%; text-align: center; border-top: 1px solid #333; padding-top: 10px; }
+        
+        .footer-brand { margin-top: 40px; text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+        .footer-brand p { font-size: 12px; color: #666; margin-bottom: 10px; }
+        .footer-brand img { height: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><strong>{{ company.name }}</strong></div>
+        <div class="company-info">
+            {% if company.cnpj %}<p>CNPJ: {{ company.cnpj }}</p>{% endif %}
+            {% if company.email %}<p>{{ company.email }}</p>{% endif %}
+            {% if company.phone %}<p>{{ company.phone }}</p>{% endif %}
+        </div>
+    </div>
+    
+    <div class="quote-title">
+        <h1>ORÇAMENTO</h1>
+        <p>{{ quote.title }} - {{ quote.created_at|date:"d/m/Y" }}</p>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-box">
+            <h3>Cliente</h3>
+            <p>{{ quote.client.name|default:"Não especificado" }}</p>
+            {% if quote.client.email %}<p style="font-size: 12px; color: #666;">{{ quote.client.email }}</p>{% endif %}
+            {% if quote.client.phone %}<p style="font-size: 12px; color: #666;">{{ quote.client.phone }}</p>{% endif %}
+        </div>
+    </div>
+    
+    {% if quote.description %}
+    <div class="section">
+        <h2>Descrição</h2>
+        <p style="white-space: pre-line;">{{ quote.description }}</p>
+    </div>
+    {% endif %}
+    
+    {% if services %}
+    <div class="section">
+        <h2>Serviços</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Serviço</th>
+                    <th class="text-right">Qtd</th>
+                    <th class="text-right">Valor Unit.</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in services %}
+                <tr>
+                    <td>
+                        <strong>{{ s.service.name }}</strong>
+                        {% if s.service.description %}
+                        <br><span style="font-size: 11px; color: #666;">{{ s.service.description }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ s.quantity }}</td>
+                    <td class="text-right">R$ {{ s.unit_price|floatformat:2 }}</td>
+                    <td class="text-right">R$ {{ s.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if expenses %}
+    <div class="section">
+        <h2>Despesas</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th class="text-right">Qtd</th>
+                    <th class="text-right">Unit.</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td>{{ expense.description }}</td>
+                    <td class="text-right">{{ expense.quantity }}</td>
+                    <td class="text-right">R$ {{ expense.unit_price|floatformat:2 }}</td>
+                    <td class="text-right">R$ {{ expense.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <div class="totals">
+        <table>
+            <tr>
+                <td style="font-size: 16px;">TOTAL DO ORÇAMENTO</td>
+                <td class="text-right total-final">R$ {{ quote.total|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    {% if quote.notes %}
+    <div class="notes">
+        <h3>Observações</h3>
+        <p>{{ quote.notes|linebreaks }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="signature">
+        <div class="signature-box">
+            <p>Assinatura do Cliente</p>
+            <p style="font-size: 12px; margin-top: 5px;">Data: ___/___/________</p>
+        </div>
+        <div class="signature-box">
+            <p>Assinatura do Fornecedor</p>
+            <p style="font-size: 12px; margin-top: 5px;">Data: ___/___/________</p>
+        </div>
+    </div>
+    
+    <div class="footer-brand">
+        <p>Desenvolvido por</p>
+        <img src="{{ logo_url }}" alt="7event">
+    </div>
+</body>
+</html>
