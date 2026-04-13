@@ -1,25 +1,52 @@
 {% extends 'emails/base.html' %}
 
 {% block content %}
-<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Olá <strong>{{ user.first_name|default:user.username }}</strong>!</p>
-
-<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Obrigado por se cadastrar no <strong>7event</strong> - Sistema de Gestão de Eventos.</p>
-
-<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Para começar a usar sua conta, precisamos confirmar seu endereço de email.</p>
-
-<div style="text-align: center; margin: 30px 0;">
-    <a href="{{ verification_url }}" class="bg-gradient-primary" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Confirmar meu email
-    </a>
-</div>
-
-<p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 10px;">Ou copie e cole este link no seu navegador:</p>
-
-<p style="color: #6366f1; word-break: break-all; font-size: 14px; background: #f3f4f6; padding: 12px; border-radius: 6px; margin: 10px 0;">{{ verification_url }}</p>
-
-<div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
-    <p style="color: #92400e; font-size: 14px; margin: 0;">⚠️ Este link expira em 24 horas. Solicite um novo link se necessário.</p>
-</div>
-
-<p style="color: #6b7280; font-size: 14px; margin-top: 30px;">Se você não criou esta conta, ignore este email.</p>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td style="font-family: Arial, sans-serif; color: #374151; font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
+            <p>Olá <strong>{{ user.first_name|default:user.username }}</strong>!</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-family: Arial, sans-serif; color: #374151; font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
+            <p>Obrigado por se cadastrar no <strong>7Event</strong> - Sistema de Gestão de Eventos.</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-family: Arial, sans-serif; color: #374151; font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
+            <p>Para começar a usar sua conta, precisamos confirmar seu endereço de email.</p>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" style="padding: 30px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);">
+                        <a href="{{ verification_url }}" style="display: inline-block; color: #ffffff; padding: 16px 32px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, sans-serif;">Confirmar meu email</a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-family: Arial, sans-serif; color: #374151; font-size: 16px; line-height: 1.6; padding-bottom: 10px; padding-top: 20px;">
+            <p>Ou copie e cole este link no seu navegador:</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="color: #1e3a5f; word-break: break-all; font-size: 14px; background: #f3f4f6; padding: 12px; border-radius: 6px; margin: 10px 0; font-family: Arial, sans-serif;">
+            {{ verification_url }}
+        </td>
+    </tr>
+    <tr>
+        <td style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px; font-family: Arial, sans-serif;">
+            <p style="color: #92400e; font-size: 14px; margin: 0;">⚠️ Este link expira em 24 horas. Solicite um novo link se necessário.</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-family: Arial, sans-serif; color: #6b7280; font-size: 14px; padding-top: 30px;">
+            <p>Se você não criou esta conta, ignore este email.</p>
+        </td>
+    </tr>
+</table>
 {% endblock %}

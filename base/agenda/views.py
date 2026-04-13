@@ -30,6 +30,8 @@ class AgendaView(LoginRequiredMixin, View):
         first_day = datetime(year, month, 1)
         last_day = datetime(year, month, monthrange(year, month)[1])
 
+        status_filter = request.GET.get("status", "")
+
         jobs = (
             Job.objects.filter(
                 account=request.user.account,
@@ -39,6 +41,9 @@ class AgendaView(LoginRequiredMixin, View):
             .select_related("client")
             .order_by("start_date", "start_time")
         )
+
+        if status_filter:
+            jobs = jobs.filter(status=status_filter)
 
         prev_month = month - 1 if month > 1 else 12
         prev_year = year if month > 1 else year - 1
@@ -117,6 +122,7 @@ class AgendaView(LoginRequiredMixin, View):
             "calendar_weeks": calendar_weeks,
             "jobs": jobs,
             "upcoming_jobs": upcoming_jobs,
+            "status_filter": status_filter,
         }
 
         return render(request, self.template_name, context)

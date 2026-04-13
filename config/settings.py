@@ -62,7 +62,12 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-if os.environ.get("DATABASE_URL"):
+import socket
+
+hostname = socket.gethostname()
+is_production = hostname.startswith("ip-172") or hostname.startswith("ip-10")
+
+if is_production and os.environ.get("DATABASE_URL"):
     import dj_database_url
 
     DATABASES = {"default": dj_database_url.parse(os.environ.get("DATABASE_URL"))}
