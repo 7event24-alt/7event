@@ -133,6 +133,23 @@ class Job(models.Model):
         default=PaymentStatusJob.PENDING,
         verbose_name=_("Status de Pagamento"),
     )
+    workers = models.ManyToManyField(
+        "accounts.User",
+        related_name="assigned_jobs",
+        blank=True,
+        verbose_name="Trabalhadores",
+    )
+    approved_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_jobs",
+        verbose_name="Aprovado por",
+    )
+    approved_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="Data da Aprovação"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

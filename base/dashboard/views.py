@@ -22,7 +22,7 @@ class DashboardView(LoginRequiredMixin, View):
             return render(
                 request,
                 self.template_name,
-                {"error": "Você precisa estar associado a uma empresa. "},
+                {"error": "Você precisa estar associado a uma empresa."},
             )
 
         now = timezone.now()

@@ -1,8 +1,21 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob
+
+User = get_user_model()
 
 
 class JobForm(forms.ModelForm):
+    workers = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.CheckboxSelectMultiple(
+            attrs={
+                "class": "w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+            }
+        ),
+        required=False,
+        label="Trabalhadores",
+    )
     event_type = forms.ChoiceField(
         choices=[("", "Selecione o tipo de serviço...")] + list(EventType.choices),
         widget=forms.Select(
@@ -92,6 +105,7 @@ class JobForm(forms.ModelForm):
             "payment_remaining_date",
             "status",
             "payment_status",
+            # workers handled manually via JavaScript + POST
         ]
         widgets = {
             "client": forms.Select(
@@ -177,14 +191,23 @@ class JobForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
+        instance = kwargs.get("instance", None)
         super().__init__(*args, **kwargs)
 
         # Filtrar clientes apenas da empresa do usuário
         if user and hasattr(user, "account") and user.account:
             self.fields["client"].queryset = user.account.clients.all()
+            self.fields["workers"].queryset = User.objects.filter(
+                account=user.account
+            ).exclude(id=user.id)
+
+            # Se editando job existente, selecionar workers atuais
+            if instance and instance.workers.exists():
+                self.fields["workers"].initial = [w.id for w in instance.workers.all()]
         elif user:
             # Se não tem empresa vinculada, mostra só clientes que ele criou
             self.fields["client"].queryset = user.clients_created.all()
+            self.fields["workers"].queryset = User.objects.none()
 
         self.fields["end_date"].required = False
         self.fields["payment_type"].required = False

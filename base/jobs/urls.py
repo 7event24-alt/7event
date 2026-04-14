@@ -10,6 +10,7 @@ from .views import (
     JobConfirmView,
     JobCompleteView,
     JobCancelView,
+    JobApproveView,
 )
 
 app_name = "jobs"
@@ -26,5 +27,6 @@ urlpatterns = [
     path("<int:pk>/confirmar/", JobConfirmView.as_view(), name="confirm"),
     path("<int:pk>/concluir/", JobCompleteView.as_view(), name="complete"),
     path("<int:pk>/cancelar/", JobCancelView.as_view(), name="cancel"),
+    path("<int:pk>/aprovar/", JobApproveView.as_view(), name="approve"),
     path("api/", include(router.urls)),
 ]

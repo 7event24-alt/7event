@@ -1,6 +1,9 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import team_views
+from . import accept_invite_views
+from . import api_quick_worker
 
 app_name = "accounts"
 
@@ -51,4 +54,12 @@ urlpatterns = [
         views.mark_all_as_read,
         name="mark_all_read",
     ),
+    path("equipe/", team_views.team_list, name="team"),
+    path("equipe/novo/", team_views.team_create, name="team_create"),
+    path(
+        "accept-invite/<str:token>/",
+        accept_invite_views.accept_invite,
+        name="accept_invite",
+    ),
+    path("api/quick-worker/", api_quick_worker.quick_worker, name="quick_worker"),
 ]

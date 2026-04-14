@@ -371,6 +371,17 @@ class User(AbstractUser):
     verification_token = models.CharField(
         max_length=64, blank=True, verbose_name=_("Token de Verificação")
     )
+    invite_token = models.CharField(
+        max_length=64, blank=True, verbose_name=_("Token de Convite")
+    )
+    invited_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invited_users",
+        verbose_name=_("Convidado por"),
+    )
     is_blocked = models.BooleanField(default=False, verbose_name=_("Bloqueado"))
     blocked_reason = models.TextField(blank=True, verbose_name=_("Motivo do Bloqueio"))
     blocked_at = models.DateTimeField(
