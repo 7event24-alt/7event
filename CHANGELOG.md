@@ -2,6 +2,13 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.0.2] - 2026-04-15
+
+### Fix
+- Sistema de notificações: remove filtro de 24h que causava inconsistência entre badge e dropdown
+
+---
+
 ## [1.0.1] - 2026-04-15
 
 ### Feat

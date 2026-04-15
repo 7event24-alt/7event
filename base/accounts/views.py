@@ -190,16 +190,13 @@ def notifications(request):
 
 def notifications_api(request):
     from .models import Notification
-    from django.utils import timezone
-    from datetime import timedelta
 
     if not request.user.is_authenticated:
         return JsonResponse({"notifications": [], "unread_count": 0})
 
-    cutoff = timezone.now() - timedelta(hours=24)
     notifications_list = Notification.objects.filter(
-        user=request.user, is_read=False, created_at__gte=cutoff
-    ).order_by("-created_at")[:10]
+        user=request.user, is_read=False
+    ).order_by("-created_at")[:20]
 
     data = [
         {
@@ -215,9 +212,7 @@ def notifications_api(request):
         for n in notifications_list
     ]
 
-    unread_count = Notification.objects.filter(
-        user=request.user, is_read=False, created_at__gte=cutoff
-    ).count()
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
 
     return JsonResponse({"notifications": data, "unread_count": unread_count})
 
