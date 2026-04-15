@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "base.quote",
     "base.services",
     "base.plans",
+    "base.landingpage",
 ]
 
 MIDDLEWARE = [

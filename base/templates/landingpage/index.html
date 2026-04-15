@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7Event - Sistema de Gestão de Eventos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a5f',
+                        'primary-dark': '#152a45',
+                        'primary-light': '#2d5a8a',
+                        secondary: '#2d5a8a',
+                        gold: '#c9a227',
+                        'gold-light': '#dbb942',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; }
+        
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom gradient backgrounds */
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+        }
+        
+        .bg-gradient-gold {
+            background: linear-gradient(135deg, #c9a227 0%, #dbb942 100%);
+        }
+        
+        /* Glass effect for header */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        /* Animated float */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes float-delayed {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delayed { animation: float-delayed 7s ease-in-out infinite; }
+        
+        /* Gradient text */
+        .text-gradient {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Card hover effect */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(30, 58, 95, 0.15);
+        }
+        
+        /* Button shine effect */
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-shine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-shine:hover::before {
+            left: 100%;
+        }
+        
+        /* Pricing card popular */
+        .popular-tag {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- ==================== HEADER ==================== -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <!-- Logo -->
+                <a href="/" class="flex items-center gap-2">
+                    <img src="https://www.7event.com.br/static/img/logo7event.png" alt="7Event" class="h-8 md:h-10">
+                </a>
+                
+                <!-- Navigation - Desktop -->
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="#inicio" class="text-gray-600 hover:text-primary font-medium transition-colors">Início</a>
+                    <a href="#vantagens" class="text-gray-600 hover:text-primary font-medium transition-colors">Vantagens</a>
+                    <a href="#planos" class="text-gray-600 hover:text-primary font-medium transition-colors">Planos</a>
+                    <a href="#contato" class="text-gray-600 hover:text-primary font-medium transition-colors">Contato</a>
+                </nav>
+                
+                <!-- CTA Button -->
+                <div class="flex items-center gap-3">
+                    <a href="/accounts/login/" class="hidden sm:block text-gray-600 hover:text-primary font-medium transition-colors">
+                        Entrar
+                    </a>
+                    <a href="/accounts/register/" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                        Começar agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== HERO SECTION ==================== -->
+    <section id="inicio" class="pt-32 pb-20 md:pt-40 md:pb-32 bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <!-- Left Column - Text -->
+                <div class="text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Sistema de Gestão de Eventos #1
+                    </div>
+                    
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                        Organize eventos
+                        <span class="text-gradient block">como um profissional</span>
+                    </h1>
+                    
+                    <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0">
+                        A plataforma completa para gerenciar todos os aspectos do seu evento. Clientes, equipe, finanças e muito mais em um só lugar.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="/accounts/register/" class="bg-primary hover:bg-secondary text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all btn-shine shadow-lg hover:shadow-xl">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Começar agora
+                        </a>
+                        <a href="#contato" class="border-2 border-gray-300 hover:border-primary text-gray-700 hover:text-primary px-8 py-4 rounded-xl font-semibold text-lg transition-all">
+                            <i class="fas fa-comments mr-2"></i>
+                            Falar com equipe
+                        </a>
+                    </div>
+                    
+                    <!-- Trust badges -->
+                    <div class="mt-10 pt-8 border-t border-gray-200">
+                        <p class="text-sm text-gray-500 mb-4">Confiado por +500 profissionais</p>
+                        <div class="flex items-center justify-center lg:justify-start gap-6">
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <i class="fas fa-shield-alt text-xl"></i>
+                                <span class="text-sm">100% Seguro</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <i class="fas fa-clock text-xl"></i>
+                                <span class="text-sm">Suporte 24/7</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <i class="fas fa-check-circle text-xl"></i>
+                                <span class="text-sm">Gratuito para testar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Visual -->
+                <div class="relative hidden lg:block">
+                    <!-- Main dashboard image -->
+                    <div class="relative animate-float">
+                        <div class="bg-white rounded-2xl shadow-2xl p-4 border border-gray-100">
+                            <img src="https://www.7event.com.br/static/img/logo7event.png" alt="Dashboard 7Event" class="w-full h-auto rounded-xl">
+                        </div>
+                    </div>
+                    
+                    <!-- Floating cards -->
+                    <div class="absolute -top-8 -right-8 bg-white rounded-xl shadow-xl p-4 animate-float-delayed">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Evento Confirmado</p>
+                                <p class="text-xs text-gray-500">Casamento Silva</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-chart-line text-gold"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Receita do mês</p>
+                                <p class="text-lg font-bold text-green-600">R$ 45.000</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== BENEFITS SECTION ==================== -->
+    <section id="vantagens" class="py-20 md:py-28 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <span class="text-gold font-semibold text-sm uppercase tracking-wider">Por que escolher o 7Event?</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
+                    Tudo que você precisa para gérer eventos
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Uma plataforma completa que simplifica a gestão operacional, financeira e de relacionamento do seu evento.
+                </p>
+            </div>
+            
+            <!-- Benefits Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-users text-primary text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Gestão de Equipe</h3>
+                    <p class="text-gray-600">
+                        Convide trabalhadores, atribua funções e acompanhe o desempenho de toda a sua equipe em tempo real.
+                    </p>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <div class="w-14 h-14 bg-gold/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-hand-holding-usd text-gold text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Controle Financeiro</h3>
+                    <p class="text-gray-600">
+                        Acompanhe receitas, despesas e lucros por evento. Tenha uma visão clara da saúde financeira do seu negócio.
+                    </p>
+                </div>
+                
+                <!-- Card 3 -->
+                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-calendar-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Agenda Inteligente</h3>
+                    <p class="text-gray-600">
+                        Visualize todos os eventos em um calendário interativo. Nunca mais perca um compromisso importante.
+                    </p>
+                </div>
+                
+                <!-- Card 4 -->
+                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-file-invoice-dollar text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Orçamentos Profissionais</h3>
+                    <p class="text-gray-600">
+                        Crie orçamentos detalhados e envie para seus clientes de forma rápida e profissional.
+                    </p>
+                </div>
+                
+                <!-- Card 5 -->
+                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-bell text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Notificações Automáticas</h3>
+                    <p class="text-gray-600">
+                        Receba alertas sobre tudo que acontece nos seus eventos. Esteja sempre informado.
+                    </p>
+                </div>
+                
+                <!-- Card 6 -->
+                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
+                    <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-mobile-alt text-red-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Acesso Mobile</h3>
+                    <p class="text-gray-600">
+                        Gerencie seus eventos de qualquer lugar. Acesse pelo celular, tablet ou computador.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PRICING SECTION ==================== -->
+    <section id="planos" class="py-20 md:py-28 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <span class="text-gold font-semibold text-sm uppercase tracking-wider">Planos flexíveis</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-3 mb-4">
+                    Escolha o plano ideal para você
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Comece gratuitamente e upgrader quando precisar. Sem compromisso, sem mensalidade fixa para testar.
+                </p>
+            </div>
+            
+            <!-- Pricing Cards -->
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Basic Plan -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative card-hover">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Básico</h3>
+                        <p class="text-gray-500 text-sm">Para autônomos que estão começando</p>
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <span class="text-4xl font-bold text-gray-900">Grátis</span>
+                        <span class="text-gray-500">/para sempre</span>
+                    </div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Até 10 clientes</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Até 10 trabalhos</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>10 despesas</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Agenda básica</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Suporte por email</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="/accounts/register/" class="block text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-xl font-semibold transition-all">
+                        Começar Grátis
+                    </a>
+                </div>
+                
+                <!-- Professional Plan - HIGHLIGHTED -->
+                <div class="bg-white rounded-2xl shadow-2xl border-2 border-primary p-8 relative card-hover transform md:-translate-y-4">
+                    <div class="popular-tag bg-primary text-white px-4 py-1 rounded-full text-xs font-semibold">
+                        Mais Popular
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Profissional</h3>
+                        <p class="text-gray-500 text-sm">Para profissionais que precisam de mais</p>
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <span class="text-4xl font-bold text-gray-900">R$ 97</span>
+                        <span class="text-gray-500">/mês</span>
+                    </div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Clientes ilimitados</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Trabalhos ilimitados</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Despesas ilimitadas</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Agenda completa</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Orçamentos ilimitados</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Suporte prioritário</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="/accounts/register/" class="block text-center bg-primary hover:bg-secondary text-white py-4 rounded-xl font-semibold transition-all btn-shine">
+                        Escolher Profissional
+                    </a>
+                </div>
+                
+                <!-- Enterprise Plan -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative card-hover">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Business</h3>
+                        <p class="text-gray-500 text-sm">Para empresas que gerenciam equipe</p>
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <span class="text-4xl font-bold text-gray-900">R$ 197</span>
+                        <span class="text-gray-500">/mês</span>
+                    </div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Tudo do Profissional</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Até 10 usuários</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Gestão de equipe</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Relatórios avançados</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>API acesso</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Gerente de contas</span>
+                        </li>
+                    </ul>
+                    
+                    <a href="/accounts/register/" class="block text-center bg-gray-800 hover:bg-gray-900 text-white py-4 rounded-xl font-semibold transition-all">
+                        Falar com Consultor
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FINAL CTA SECTION ==================== -->
+    <section class="py-20 md:py-28 bg-gradient-primary">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+                Pronto para transformar sua gestão de eventos?
+            </h2>
+            <p class="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
+                Comece gratuitamente hoje mesmo. Sem compromisso, sem cartão de crédito. Teste todas as funcionalidades.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/accounts/register/" class="bg-white text-primary px-10 py-5 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-xl">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Criar conta grátis
+                </a>
+                <a href="#contato" class="border-2 border-white/30 text-white px-10 py-5 rounded-xl font-bold text-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    Agendar demonstração
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer id="contato" class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <!-- Brand -->
+                <div class="md:col-span-2">
+                    <img src="https://www.7event.com.br/static/img/logo7eventbranco.png" alt="7Event" class="h-10 mb-4">
+                    <p class="text-gray-400 mb-6 max-w-md">
+                        O sistema de gestão de eventos mais completo do mercado. Organize, controle e faça crescer seu negócio.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Links Rápidos</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#inicio" class="text-gray-400 hover:text-white transition-colors">Início</a></li>
+                        <li><a href="#vantagens" class="text-gray-400 hover:text-white transition-colors">Vantagens</a></li>
+                        <li><a href="#planos" class="text-gray-400 hover:text-white transition-colors">Planos</a></li>
+                        <li><a href="/accounts/register/" class="text-gray-400 hover:text-white transition-colors">Cadastrar</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contact -->
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Contato</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-gray-400">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:contato@7event.com.br" class="hover:text-white transition-colors">contato@7event.com.br</a>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-400">
+                            <i class="fab fa-whatsapp"></i>
+                            <a href="#" class="hover:text-white transition-colors">(11) 99999-9999</a>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-400">
+                            <i class="fas fa-clock"></i>
+                            <span>Seg a Sex: 9h às 18h</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Bottom -->
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-sm">
+                    © 2024 7Event. Todos os direitos reservados.
+                </p>
+                <div class="flex gap-6">
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors">Termos de Uso</a>
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors">Política de Privacidade</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
