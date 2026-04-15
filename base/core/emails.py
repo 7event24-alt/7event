@@ -68,6 +68,18 @@ def send_new_job_notification(user, job, job_url=None):
     return send_html_email_with_template(user.email, subject, html_message)
 
 
+def send_job_confirmation_to_client(job):
+    """Envia email de confirmação ao cliente quando o trabalho é confirmado"""
+    if not job.client or not job.client.email:
+        return False
+
+    subject = f"Trabalho Confirmado: {job.title}"
+
+    html_message = render_to_string("emails/job_confirmed.html", {"job": job})
+
+    return send_html_email_with_template(job.client.email, subject, html_message)
+
+
 def send_html_email_with_template(to_email, subject, html_message):
     """Função para enviar emails com template HTML"""
     try:

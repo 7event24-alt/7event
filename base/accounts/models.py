@@ -199,6 +199,9 @@ class Account(models.Model):
     notify_on_job_created = models.BooleanField(
         default=True, verbose_name=_("Notificar ao criar trabalho")
     )
+    notify_on_job_confirmed = models.BooleanField(
+        default=True, verbose_name=_("Notificar cliente ao confirmar trabalho")
+    )
     notify_on_client_created = models.BooleanField(
         default=True, verbose_name=_("Notificar ao criar cliente")
     )

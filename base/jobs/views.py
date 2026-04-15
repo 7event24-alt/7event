@@ -292,8 +292,16 @@ class JobDetailView(CompanyRequiredMixin, View):
 class JobConfirmView(CompanyRequiredMixin, View):
     def post(self, request, pk):
         job = get_object_or_404(Job, pk=pk, account=request.user.account)
-        job.status = JobStatus.CONFIRMED
-        job.save()
+
+        if job.status == JobStatus.PENDING:
+            job.status = JobStatus.CONFIRMED
+            job.save()
+
+            if job.account.notify_on_job_confirmed:
+                from base.core.emails import send_job_confirmation_to_client
+
+                send_job_confirmation_to_client(job)
+
         messages.success(request, "Trabalho confirmado com sucesso!")
         return redirect("jobs:detail", pk=job.pk)
 

@@ -146,6 +146,13 @@
                     </div>
                 </label>
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" name="notify_on_job_confirmed" {% if account.notify_on_job_confirmed %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <div>
+                        <span class="text-gray-800 font-medium">Trabalho confirmado</span>
+                        <p class="text-xs text-gray-500">Notificar cliente ao confirmar trabalho</p>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
                     <input type="checkbox" name="notify_on_client_created" {% if account.notify_on_client_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Cliente criado</span>

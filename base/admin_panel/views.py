@@ -261,6 +261,9 @@ class CompanyUpdateNotificationsView(LoginRequiredMixin, View):
         account.notify_on_job_created = (
             request.POST.get("notify_on_job_created") == "on"
         )
+        account.notify_on_job_confirmed = (
+            request.POST.get("notify_on_job_confirmed") == "on"
+        )
         account.notify_on_client_created = (
             request.POST.get("notify_on_client_created") == "on"
         )

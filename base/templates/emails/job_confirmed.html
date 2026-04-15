@@ -1,0 +1,72 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="color: #1f2937;">
+    <h2 style="color: #1e3a5f; margin-bottom: 20px;">Olá, {{ job.client.name }}!</h2>
+    
+    <p style="font-size: 16px; line-height: 1.6;">
+        Temos o prazer de informar que seu evento <strong>{{ job.title }}</strong> foi confirmado!
+    </p>
+    
+    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <h3 style="color: #1e3a5f; margin: 0 0 15px 0; font-size: 16px;">Detalhes do Evento</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Data:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ job.start_date|date:"d/m/Y" }}</td>
+            </tr>
+            {% if job.end_date %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Data de Término:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ job.end_date|date:"d/m/Y" }}</td>
+            </tr>
+            {% endif %}
+            {% if job.start_time %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Horário de Início:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ job.start_time }}</td>
+            </tr>
+            {% endif %}
+            {% if job.end_time %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Horário de Término:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ job.end_time }}</td>
+            </tr>
+            {% endif %}
+            {% if job.location %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Local:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ job.location }}</td>
+            </tr>
+            {% endif %}
+            {% if job.cache %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Valor:</td>
+                <td style="padding: 8px 0; color: #059669; font-size: 14px; font-weight: 500;">R$ {{ job.cache }}</td>
+            </tr>
+            {% endif %}
+            {% if job.event_type %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Tipo de Evento:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ job.get_event_type_display }}</td>
+            </tr>
+            {% endif %}
+            {% if job.description %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">Descrição:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px;">{{ job.description|linebreaks }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    
+    <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+        Se você tiver alguma dúvida ou precisar de mais informações, por favor, entre em contato conosco.
+    </p>
+    
+    <p style="font-size: 14px; color: #1f2937; margin-top: 20px;">
+        Atenciosamente,<br>
+        <strong>Equipe 7Event</strong>
+    </p>
+</div>
+{% endblock %}
