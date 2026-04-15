@@ -2,18 +2,17 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
-## [1.0.9] - 2026-04-15
+## [1.1.1] - 2026-04-15
 
 ### Fix
-- Error handlers simplificados para evitar redirect loops
-- Redirecionamento simples para "/" em produção
+- Error handlers simplificados - resposta simples em produção sem redirects
 
 ---
 
-## [1.0.8] - 2026-04-15
+## [1.1.0] - 2026-04-15
 
-### Feat
-- Landing page: novo design da hero com imagem phonehero.png
+### Fix
+- ALLOWED_HOSTS com fallback para produção
 - Cards de notificação distribuídos harmoniosamente com animações diferenciadas
 - Adicionadas notificações "Trabalho Confirmado" e "Orçamento Aceito"
 
