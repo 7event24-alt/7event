@@ -2,10 +2,26 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.0.6] - 2026-04-15
+
+### Fix
+- Custom error pages agora redirecionam para home quando DEBUG=False
+- Landing page busca planos do banco (mesma lógica da página /planos/)
+
+---
+
+## [1.0.5] - 2026-04-15
+
+### Fix
+- Corrige texto "gérer" para "gerenciar" na landing page
+- Página de planos agora mostra "Ilimitado" quando limite é 0
+
+---
+
 ## [1.0.4] - 2026-04-15
 
 ### Fix
-- CompanyRequiredMixin agora verifica se usuário está autenticado antes de verificar account
+- CompanyRequiredMixin verifica usuário autenticado antes de account
 
 ---
 

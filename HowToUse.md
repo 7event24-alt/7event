@@ -1,6 +1,6 @@
 # 7Event - Como Usar
 
-**Versão:** 1.0.4
+**Versão:** 1.0.6
 
 Sistema de gestão de eventos para autônomos e empresas.
 

@@ -2,6 +2,9 @@ import os
 from datetime import datetime
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 
 def get_error_info(request):
@@ -16,6 +19,9 @@ def get_error_info(request):
 
 def bad_request(request, exception=None):
     """400 - Bad Request"""
+    if not settings.DEBUG:
+        return HttpResponseRedirect(reverse("dashboard:home"))
+
     error_info = get_error_info(request)
     return render(
         request,
@@ -31,6 +37,9 @@ def bad_request(request, exception=None):
 
 def permission_denied(request, exception=None):
     """403 - Permission Denied"""
+    if not settings.DEBUG:
+        return HttpResponseRedirect(reverse("dashboard:home"))
+
     error_info = get_error_info(request)
     return render(
         request,
@@ -46,6 +55,9 @@ def permission_denied(request, exception=None):
 
 def page_not_found(request, exception=None):
     """404 - Page Not Found"""
+    if not settings.DEBUG:
+        return HttpResponseRedirect(reverse("dashboard:home"))
+
     error_info = get_error_info(request)
     return render(
         request,
@@ -61,14 +73,13 @@ def page_not_found(request, exception=None):
 
 def server_error(request):
     """500 - Server Error"""
-    error_info = get_error_info(request)
-
+    # Even in production, we may want to handle this differently
     # Optional: send email notification in production
-    if not DEBUG:
+    if not settings.DEBUG:
         try:
             from django.core.mail import send_mail
-            from django.conf import settings
 
+            error_info = get_error_info(request)
             subject = f"[7Event Error] 500 - {error_info['path']}"
             message = f"""
 Um erro ocorreu no sistema 7Event:
@@ -91,6 +102,10 @@ Por favor, verifique os logs para mais detalhes.
         except Exception:
             pass
 
+    if not settings.DEBUG:
+        return HttpResponseRedirect(reverse("dashboard:home"))
+
+    error_info = get_error_info(request)
     return render(
         request,
         "errors/error.html",
@@ -101,9 +116,3 @@ Por favor, verifique os logs para mais detalhes.
         },
         status=500,
     )
-
-
-# Import DEBUG for conditional email sending
-from django.conf import settings
-
-DEBUG = settings.DEBUG
