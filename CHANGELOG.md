@@ -2,6 +2,14 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.0.9] - 2026-04-15
+
+### Fix
+- Error handlers simplificados para evitar redirect loops
+- Redirecionamento simples para "/" em produção
+
+---
+
 ## [1.0.8] - 2026-04-15
 
 ### Feat

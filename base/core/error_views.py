@@ -17,24 +17,10 @@ def get_error_info(request):
     }
 
 
-def get_redirect_url():
-    """Get safe redirect URL for errors"""
-    try:
-        # Try to redirect to dashboard (user's home)
-        return reverse("dashboard:home")
-    except Exception:
-        try:
-            # Fallback to landing page
-            return reverse("landingpage:index")
-        except Exception:
-            # Ultimate fallback to root
-            return "/"
-
-
 def bad_request(request, exception=None):
     """400 - Bad Request"""
     if not settings.DEBUG:
-        return HttpResponseRedirect(get_redirect_url())
+        return HttpResponseRedirect("/")
 
     error_info = get_error_info(request)
     return render(
@@ -52,7 +38,7 @@ def bad_request(request, exception=None):
 def permission_denied(request, exception=None):
     """403 - Permission Denied"""
     if not settings.DEBUG:
-        return HttpResponseRedirect(get_redirect_url())
+        return HttpResponseRedirect("/")
 
     error_info = get_error_info(request)
     return render(
@@ -70,7 +56,7 @@ def permission_denied(request, exception=None):
 def page_not_found(request, exception=None):
     """404 - Page Not Found"""
     if not settings.DEBUG:
-        return HttpResponseRedirect(get_redirect_url())
+        return HttpResponseRedirect("/")
 
     error_info = get_error_info(request)
     return render(
@@ -87,8 +73,6 @@ def page_not_found(request, exception=None):
 
 def server_error(request):
     """500 - Server Error"""
-    # Even in production, we may want to handle this differently
-    # Optional: send email notification in production
     if not settings.DEBUG:
         try:
             from django.core.mail import send_mail
@@ -117,7 +101,7 @@ Por favor, verifique os logs para mais detalhes.
             pass
 
     if not settings.DEBUG:
-        return HttpResponseRedirect(get_redirect_url())
+        return HttpResponseRedirect("/")
 
     error_info = get_error_info(request)
     return render(
