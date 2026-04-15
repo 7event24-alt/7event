@@ -36,7 +36,12 @@ else:
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
 else:
-    ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+    allowed = os.environ.get("ALLOWED_HOSTS", "")
+    if allowed:
+        ALLOWED_HOSTS = [h.strip() for h in allowed.split(",") if h.strip()]
+    else:
+        # Default production hosts
+        ALLOWED_HOSTS = ["7event.com.br", "www.7event.com.br", "localhost", "127.0.0.1"]
 
 INSTALLED_APPS = [
     "jazzmin",
