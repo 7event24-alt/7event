@@ -2,10 +2,29 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.0.8] - 2026-04-15
+
+### Feat
+- Landing page: novo design da hero com imagem phonehero.png
+- Cards de notificação distribuídos harmoniosamente com animações diferenciadas
+- Adicionadas notificações "Trabalho Confirmado" e "Orçamento Aceito"
+
+### Fix
+- Error handlers com fallback chain para evitar loops
+
+---
+
+## [1.0.7] - 2026-04-15
+
+### Fix
+- Error redirect fallback to prevent 400 loop
+
+---
+
 ## [1.0.6] - 2026-04-15
 
 ### Fix
-- Custom error pages agora redirecionam para home quando DEBUG=False
+- Custom error pages redirecionam para home quando DEBUG=False
 - Landing page busca planos do banco (mesma lógica da página /planos/)
 
 ---
