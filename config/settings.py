@@ -245,3 +245,12 @@ JAZZMIN_UI_TWEAKS = {
     "accent_color": "accent-info",
     "max_navbar_items": 25,
 }
+
+# Custom error pages
+handler400 = "base.core.error_views.bad_request"
+handler403 = "base.core.error_views.permission_denied"
+handler404 = "base.core.error_views.page_not_found"
+handler500 = "base.core.error_views.server_error"
+
+# Email for error reports
+ERROR_REPORT_EMAIL = os.environ.get("ERROR_REPORT_EMAIL", "contato@7event.com.br")

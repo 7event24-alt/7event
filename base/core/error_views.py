@@ -1,0 +1,113 @@
+import os
+from datetime import datetime
+from django.shortcuts import render
+from django.template import TemplateDoesNotExist
+
+
+def get_error_info(request):
+    """Extract useful error information for reports"""
+    return {
+        "path": request.path,
+        "method": request.method,
+        "user": str(request.user) if request.user.is_authenticated else "Anonymous",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def bad_request(request, exception=None):
+    """400 - Bad Request"""
+    error_info = get_error_info(request)
+    return render(
+        request,
+        "errors/error.html",
+        {
+            "code": 400,
+            "error_info": f"Bad Request: {request.path}",
+            "timestamp": error_info["timestamp"],
+        },
+        status=400,
+    )
+
+
+def permission_denied(request, exception=None):
+    """403 - Permission Denied"""
+    error_info = get_error_info(request)
+    return render(
+        request,
+        "errors/error.html",
+        {
+            "code": 403,
+            "error_info": f"Access denied to: {request.path}",
+            "timestamp": error_info["timestamp"],
+        },
+        status=403,
+    )
+
+
+def page_not_found(request, exception=None):
+    """404 - Page Not Found"""
+    error_info = get_error_info(request)
+    return render(
+        request,
+        "errors/error.html",
+        {
+            "code": 404,
+            "error_info": f"Page not found: {request.path}",
+            "timestamp": error_info["timestamp"],
+        },
+        status=404,
+    )
+
+
+def server_error(request):
+    """500 - Server Error"""
+    error_info = get_error_info(request)
+
+    # Log the error details for admin review
+    # In production, you might want to send an email notification
+    error_msg = f"Server Error at {error_info['path']} - User: {error_info['user']}"
+
+    # Optional: send email notification in production
+    if not DEBUG and hasattr(request, "_global_exception"):
+        try:
+            from django.core.mail import send_mail
+            from django.conf import settings
+
+            subject = f"[7Event Error] 500 - {error_info['path']}"
+            message = f"""
+Um erro occurred no sistema 7Event:
+
+Path: {error_info["path"]}
+Method: {error_info["method"]}
+User: {error_info["user"]}
+Timestamp: {error_info["timestamp"]}
+
+Por favor, verifique os logs para mais detalhes.
+            """
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [getattr(settings, "ERROR_REPORT_EMAIL", "contato@7event.com.br")],
+                fail_silently=True,
+            )
+        except Exception:
+            pass  # Silently fail if email doesn't work
+
+    return render(
+        request,
+        "errors/error.html",
+        {
+            "code": 500,
+            "error_info": "Erro interno do servidor. Nossa equipe foi notificada.",
+            "timestamp": error_info["timestamp"],
+        },
+        status=500,
+    )
+
+
+# Import DEBUG for conditional email sending
+from django.conf import settings
+
+DEBUG = settings.DEBUG

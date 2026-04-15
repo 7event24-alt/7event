@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro {{ code }} - 7Event</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a5f',
+                        secondary: '#2d5a8a',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+    <div class="max-w-lg w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-8 text-center">
+            <img src="https://www.7event.com.br/static/img/logo7eventbranco.png" alt="7Event" class="h-12 mx-auto">
+        </div>
+        
+        <!-- Content -->
+        <div class="p-8 text-center">
+            {% if code == 400 %}
+            <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Ops! Algo deu errado</h1>
+            <p class="text-gray-600 mb-6">A solicitação não pôde ser processada. Tente novamente ou entre em contato conosco.</p>
+            
+            {% elif code == 403 %}
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-lock text-red-600 text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Acesso Negado</h1>
+            <p class="text-gray-600 mb-6">Você não tem permissão para acessar este recurso.</p>
+            
+            {% elif code == 404 %}
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-search text-blue-600 text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Página Não Encontrada</h1>
+            <p class="text-gray-600 mb-6">A página que você procura não existe ou foi movida.</p>
+            
+            {% else %}
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-exclamation-circle text-red-600 text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Erro Interno</h1>
+            <p class="text-gray-600 mb-6">Ocorreu um erro inesperado. Nossa equipe foi notificada.</p>
+            {% endif %}
+            
+            <!-- Error Details for Report -->
+            {% if error_info %}
+            <div class="bg-gray-100 rounded-lg p-4 text-left mb-6">
+                <p class="text-xs text-gray-500 mb-2 font-semibold uppercase">Informações para relatório:</p>
+                <p class="text-xs text-gray-600 font-mono">Erro: {{ error_info }}</p>
+                <p class="text-xs text-gray-600 font-mono">Data: {{ timestamp }}</p>
+                <p class="text-xs text-gray-600 font-mono">Código: {{ code }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div class="flex flex-col gap-3">
+                <a href="/" class="inline-block w-full py-3 px-6 bg-primary hover:bg-secondary text-white rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-home mr-2"></i> Voltar ao Início
+                </a>
+                <a href="mailto:contato@7event.com.br?subject=Relatório de erro - 7Event&body=Olá, encontrei um erro no sistema.%0A%0ACódigo do erro: {{ code }}%0AData: {{ timestamp }}%0A%0ADescrição do erro: {% if error_info %}{{ error_info }}{% else %}Não foi possível obter detalhes{% endif %}" class="inline-block w-full py-3 px-6 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-envelope mr-2"></i> Reportar Erro
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-50 px-8 py-4 text-center">
+            <p class="text-xs text-gray-500">© 2024 7Event - Sistema de Gestão de Eventos</p>
+        </div>
+    </div>
+</body>
+</html>
