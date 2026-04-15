@@ -29,7 +29,15 @@ class ClientListView(CompanyRequiredMixin, View):
 
     def get(self, request):
         company = request.user.account
-        clients = Client.objects.filter(account=company).order_by("name")
+        user = request.user
+        is_superuser = user.is_superuser
+
+        if is_superuser:
+            clients = Client.objects.filter(account=company).order_by("name")
+        else:
+            clients = Client.objects.filter(account=company, created_by=user).order_by(
+                "name"
+            )
 
         query = request.GET.get("q", "")
         if query:
@@ -39,14 +47,31 @@ class ClientListView(CompanyRequiredMixin, View):
                 | Q(phone__icontains=query)
             )
 
-        return render(request, self.template_name, {"clients": clients, "query": query})
+        user_filter = request.GET.get("user", "")
+        if user_filter:
+            clients = clients.filter(created_by_id=user_filter)
+
+        users = []
+        if is_superuser:
+            users = company.users.all()
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "clients": clients,
+                "query": query,
+                "user_filter": user_filter,
+                "users": users,
+                "is_superuser": is_superuser,
+            },
+        )
 
 
 class ClientCreateView(CompanyRequiredMixin, View):
     template_name = "clients/form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # Check plan limits
         from base.core.plan_check import check_plan_limit
         from .models import Client
 
@@ -63,9 +88,9 @@ class ClientCreateView(CompanyRequiredMixin, View):
         if form.is_valid():
             client = form.save(commit=False)
             client.account = request.user.account
+            client.created_by = request.user
             client.save()
 
-            # Criar notificação
             if request.user.account.notify_on_client_created:
                 from base.accounts.models import Notification, NotificationType
 
@@ -88,9 +113,9 @@ class ClientQuickCreateView(CompanyRequiredMixin, View):
         if form.is_valid():
             client = form.save(commit=False)
             client.account = request.user.account
+            client.created_by = request.user
             client.save()
 
-            # Criar notificação
             if request.user.account.notify_on_client_created:
                 from base.accounts.models import Notification, NotificationType
 

@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.utils import timezone
@@ -16,6 +17,10 @@ class AgendaView(LoginRequiredMixin, View):
         if not request.user.account:
             return render(request, self.template_name, self.get_context_data())
 
+        company = request.user.account
+        user = request.user
+        is_superuser = user.is_superuser
+
         now = timezone.now()
         year = int(request.GET.get("year") or now.year)
         month = int(request.GET.get("month") or now.month)
@@ -31,19 +36,35 @@ class AgendaView(LoginRequiredMixin, View):
         last_day = datetime(year, month, monthrange(year, month)[1])
 
         status_filter = request.GET.get("status", "")
+        user_filter = request.GET.get("user", "")
 
-        jobs = (
-            Job.objects.filter(
-                account=request.user.account,
-                start_date__gte=first_day.date(),
-                start_date__lte=last_day.date(),
+        if is_superuser:
+            jobs = (
+                Job.objects.filter(
+                    account=company,
+                    start_date__gte=first_day.date(),
+                    start_date__lte=last_day.date(),
+                )
+                .select_related("client")
+                .order_by("start_date", "start_time")
             )
-            .select_related("client")
-            .order_by("start_date", "start_time")
-        )
+        else:
+            jobs = (
+                Job.objects.filter(
+                    account=company,
+                    start_date__gte=first_day.date(),
+                    start_date__lte=last_day.date(),
+                )
+                .filter(Q(user=user) | Q(workers=user))
+                .select_related("client")
+                .order_by("start_date", "start_time")
+            )
 
         if status_filter:
             jobs = jobs.filter(status=status_filter)
+
+        if user_filter:
+            jobs = jobs.filter(user_id=user_filter)
 
         prev_month = month - 1 if month > 1 else 12
         prev_year = year if month > 1 else year - 1
@@ -99,17 +120,26 @@ class AgendaView(LoginRequiredMixin, View):
                     )
             calendar_weeks.append(week_data)
 
-        upcoming_jobs = (
-            Job.objects.filter(
-                account=request.user.account,
-                start_date__gte=now.date(),
-                status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
-            )
-            .select_related("client")
-            .order_by("start_date")[:10]
+        upcoming_jobs = Job.objects.filter(
+            account=company,
+            start_date__gte=now.date(),
+            status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
         )
+        if not is_superuser:
+            upcoming_jobs = upcoming_jobs.filter(Q(user=user) | Q(workers=user))
+        elif user_filter:
+            upcoming_jobs = upcoming_jobs.filter(user_id=user_filter)
+
+        upcoming_jobs = upcoming_jobs.select_related("client").order_by("start_date")[
+            :10
+        ]
+
         for job in upcoming_jobs:
             job.status_color = self.get_status_color(job.status)
+
+        users = []
+        if is_superuser:
+            users = company.users.all()
 
         context = {
             "year": year,
@@ -123,6 +153,9 @@ class AgendaView(LoginRequiredMixin, View):
             "jobs": jobs,
             "upcoming_jobs": upcoming_jobs,
             "status_filter": status_filter,
+            "user_filter": user_filter,
+            "users": users,
+            "is_superuser": is_superuser,
         }
 
         return render(request, self.template_name, context)

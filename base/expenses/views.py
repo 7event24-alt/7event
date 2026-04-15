@@ -74,11 +74,21 @@ class ExpenseListView(CompanyRequiredMixin, View):
 
     def get(self, request):
         company = request.user.account
-        expenses = (
-            Expense.objects.filter(account=company)
-            .select_related("job")
-            .order_by("-date")
-        )
+        user = request.user
+        is_superuser = user.is_superuser
+
+        if is_superuser:
+            expenses = (
+                Expense.objects.filter(account=company)
+                .select_related("job", "user")
+                .order_by("-date")
+            )
+        else:
+            expenses = (
+                Expense.objects.filter(account=company, user=user)
+                .select_related("job", "user")
+                .order_by("-date")
+            )
 
         query = request.GET.get("q", "")
         if query:
@@ -92,6 +102,14 @@ class ExpenseListView(CompanyRequiredMixin, View):
         if job_filter:
             expenses = expenses.filter(job_id=job_filter)
 
+        user_filter = request.GET.get("user", "")
+        if user_filter:
+            expenses = expenses.filter(user_id=user_filter)
+
+        users = []
+        if is_superuser:
+            users = company.users.all()
+
         total_value = sum(e.value for e in expenses)
 
         return render(
@@ -102,8 +120,11 @@ class ExpenseListView(CompanyRequiredMixin, View):
                 "query": query,
                 "category_filter": category_filter,
                 "job_filter": job_filter,
+                "user_filter": user_filter,
                 "categories": ExpenseCategory.choices,
                 "jobs": Job.objects.filter(account=company),
+                "users": users,
+                "is_superuser": is_superuser,
                 "total_value": total_value,
             },
         )

@@ -17,6 +17,14 @@
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="q" value="{{ query }}" placeholder="Buscar clientes..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary">
             </div>
+            {% if is_superuser and users %}
+            <select name="user" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
+                <option value="">Todos Usuários</option>
+                {% for u in users %}
+                <option value="{{ u.pk }}" {% if user_filter == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.first_name|default:u.username }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
             <button type="submit" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                 <i class="fas fa-search"></i>
             </button>

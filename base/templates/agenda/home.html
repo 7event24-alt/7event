@@ -30,6 +30,14 @@
                 <button id="todayBtn" class="bg-white text-primary px-2 lg:px-4 py-1.5 lg:py-2 rounded-lg font-medium hover:bg-gray-100 transition text-xs lg:text-sm flex items-center gap-1">
                     <i class="fas fa-calendar-day"></i><span class="hidden sm:inline">Hoje</span>
                 </button>
+                {% if is_superuser and users %}
+                <select id="userFilter" class="px-2 lg:px-3 py-1.5 border border-white/30 rounded-lg text-xs lg:text-sm bg-[#1e3a5f] text-white focus:outline-none focus:ring-2 focus:ring-white">
+                    <option value="">Todos Usuários</option>
+                    {% for u in users %}
+                    <option value="{{ u.pk }}" {% if user_filter == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.first_name|default:u.username }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
                 <select id="viewSelector" class="px-2 lg:px-3 py-1.5 border border-white/30 rounded-lg text-xs lg:text-sm bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white">
                     <option value="dayGridMonth">Mês</option>
                     <option value="timeGridWeek">Semana</option>
@@ -149,7 +157,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchEvents(info, successCallback, failureCallback) {
         console.log('Fetching events...');
         
-        fetch('/agenda/api/eventos/', {
+        var url = '/agenda/api/eventos/';
+        var userFilter = document.getElementById('userFilter');
+        if (userFilter && userFilter.value) {
+            url += '?user=' + userFilter.value;
+        }
+        
+        fetch(url, {
             method: 'GET',
             credentials: 'same-origin'
         })
@@ -266,6 +280,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         updateMonthDisplay(calendar);
+        
+        var userFilterSelect = document.getElementById('userFilter');
+        if (userFilterSelect) {
+            userFilterSelect.addEventListener('change', function() {
+                refreshCalendarEvents();
+            });
+        }
         
         document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
             checkbox.addEventListener('change', refreshCalendarEvents);

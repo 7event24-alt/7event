@@ -75,11 +75,22 @@ class AgendaEventsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        jobs = (
-            Job.objects.filter(account=request.user.account)
-            .select_related("client")
-            .order_by("start_date")
-        )
+        company = request.user.account
+        user = request.user
+        is_superuser = user.is_superuser
+
+        jobs = Job.objects.filter(account=company).select_related("client")
+
+        if not is_superuser:
+            from django.db.models import Q
+
+            jobs = jobs.filter(Q(user=user) | Q(workers=user))
+
+        user_filter = request.GET.get("user", "")
+        if is_superuser and user_filter:
+            jobs = jobs.filter(user_id=user_filter)
+
+        jobs = jobs.order_by("start_date")
         serializer = AgendaEventSerializer(jobs, many=True)
         return Response(serializer.data)
 

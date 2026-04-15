@@ -10,6 +10,14 @@ class Client(models.Model):
         related_name="clients",
         verbose_name=_("Conta"),
     )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="clients_created",
+        verbose_name=_("Criado por"),
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=200, verbose_name=_("Nome"))
     email = models.EmailField(blank=True, verbose_name=_("Email"))
     phone = models.CharField(

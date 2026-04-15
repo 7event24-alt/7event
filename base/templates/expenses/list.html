@@ -29,6 +29,14 @@
                 <option value="{{ job.pk }}" {% if job_filter == job.pk|stringformat:"s" %}selected{% endif %}>{{ job.title }}</option>
                 {% endfor %}
             </select>
+            {% if is_superuser and users %}
+            <select name="user" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
+                <option value="">Todos Usuários</option>
+                {% for u in users %}
+                <option value="{{ u.pk }}" {% if user_filter == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.first_name|default:u.username }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
             <button type="submit" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                 <i class="fas fa-search"></i>
             </button>
@@ -52,6 +60,7 @@
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Categoria</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Valor</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">Descrição</th>
+                    {% if is_superuser %}<th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">Criado por</th>{% endif %}
                     <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Ações</th>
                 </tr>
             </thead>
@@ -67,6 +76,7 @@
                     </td>
                     <td class="px-4 py-3 font-medium">- {{ expense.value|brl }}</td>
                     <td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{{ expense.description|default:"-"|truncatechars:50 }}</td>
+                    {% if is_superuser %}<td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{{ expense.user.first_name|default:expense.user.username|default:"-" }}</td>{% endif %}
                     <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-2">
                             <a href="{% url 'expenses:update' expense.pk %}" class="text-gray-600 hover:text-primary p-1" title="Editar">
