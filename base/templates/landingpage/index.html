@@ -347,10 +347,10 @@
                     
                     <div class="text-center mb-6">
                         {% if plan.price_monthly > 0 %}
-                        <span class="text-4xl font-bold text-gray-900">R$ {{ plan.price_monthly|floatformat:0 }}</span>
+                        <span class="text-4xl font-bold text-gray-900">R$ {{ plan.price_monthly|floatformat:2 }}</span>
                         <span class="text-gray-500">/mês</span>
                         {% if plan.price_semester > 0 %}
-                        <p class="text-sm text-gray-400 mt-1">ou R$ {{ plan.price_semester|floatformat:0 }}/semestre</p>
+                        <p class="text-sm text-gray-400 mt-1">ou R$ {{ plan.price_semester|floatformat:2 }}/semestre</p>
                         {% endif %}
                         {% else %}
                         <span class="text-4xl font-bold text-gray-900">Grátis</span>
