@@ -328,139 +328,102 @@
                 </p>
             </div>
             
-            <!-- Pricing Cards -->
+            <!-- Pricing Cards - Dynamic -->
             <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <!-- Basic Plan -->
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative card-hover">
+                {% for plan in plans %}
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative card-hover {% if plan.highlight %}border-2 border-primary transform md:-translate-y-4 shadow-2xl{% endif %}">
+                    {% if plan.highlight %}
+                    <div class="popular-tag bg-primary text-white px-4 py-1 rounded-full text-xs font-semibold">
+                        Mais Popular
+                    </div>
+                    {% endif %}
+                    
                     <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Básico</h3>
-                        <p class="text-gray-500 text-sm">Para autônomos que estão começando</p>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
+                        {% if plan.short_description %}
+                        <p class="text-gray-500 text-sm">{{ plan.short_description }}</p>
+                        {% endif %}
                     </div>
                     
                     <div class="text-center mb-6">
+                        {% if plan.price_monthly > 0 %}
+                        <span class="text-4xl font-bold text-gray-900">R$ {{ plan.price_monthly|floatformat:0 }}</span>
+                        <span class="text-gray-500">/mês</span>
+                        {% if plan.price_semester > 0 %}
+                        <p class="text-sm text-gray-400 mt-1">ou R$ {{ plan.price_semester|floatformat:0 }}/semestre</p>
+                        {% endif %}
+                        {% else %}
                         <span class="text-4xl font-bold text-gray-900">Grátis</span>
                         <span class="text-gray-500">/para sempre</span>
+                        {% endif %}
                     </div>
                     
                     <ul class="space-y-4 mb-8">
+                        {% if plan.max_clients == 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Até 10 clientes</span>
+                            <span>Clientes ilimitados</span>
                         </li>
+                        {% elif plan.max_clients > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Até 10 trabalhos</span>
+                            <span>Até {{ plan.max_clients }} clientes</span>
                         </li>
+                        {% endif %}
+                        
+                        {% if plan.max_jobs == 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>10 despesas</span>
+                            <span>Trabalhos ilimitados</span>
                         </li>
+                        {% elif plan.max_jobs > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Agenda básica</span>
+                            <span>Até {{ plan.max_jobs }} trabalhos</span>
                         </li>
+                        {% endif %}
+                        
+                        {% if plan.max_expenses == 0 %}
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Despesas ilimitadas</span>
+                        </li>
+                        {% elif plan.max_expenses > 0 %}
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>{{ plan.max_expenses }} despesas</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% if plan.max_users > 0 %}
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Até {{ plan.max_users }} usuários</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% if plan.max_users > 0 %}
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <i class="fas fa-check text-green-500"></i>
+                            <span>Gestão de equipe</span>
+                        </li>
+                        {% endif %}
+                        
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
                             <span>Suporte por email</span>
                         </li>
                     </ul>
                     
-                    <a href="/accounts/register/" class="block text-center bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-xl font-semibold transition-all">
+                    <a href="/accounts/register/" class="block text-center {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-4 rounded-xl font-semibold transition-all">
+                        {% if plan.price_monthly == 0 %}
                         Começar Grátis
+                        {% else %}
+                        Escolher {{ plan.name }}
+                        {% endif %}
                     </a>
                 </div>
-                
-                <!-- Professional Plan - HIGHLIGHTED -->
-                <div class="bg-white rounded-2xl shadow-2xl border-2 border-primary p-8 relative card-hover transform md:-translate-y-4">
-                    <div class="popular-tag bg-primary text-white px-4 py-1 rounded-full text-xs font-semibold">
-                        Mais Popular
-                    </div>
-                    
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Profissional</h3>
-                        <p class="text-gray-500 text-sm">Para profissionais que precisam de mais</p>
-                    </div>
-                    
-                    <div class="text-center mb-6">
-                        <span class="text-4xl font-bold text-gray-900">R$ 97</span>
-                        <span class="text-gray-500">/mês</span>
-                    </div>
-                    
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Clientes ilimitados</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Trabalhos ilimitados</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Despesas ilimitadas</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Agenda completa</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Orçamentos ilimitados</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Suporte prioritário</span>
-                        </li>
-                    </ul>
-                    
-                    <a href="/accounts/register/" class="block text-center bg-primary hover:bg-secondary text-white py-4 rounded-xl font-semibold transition-all btn-shine">
-                        Escolher Profissional
-                    </a>
-                </div>
-                
-                <!-- Enterprise Plan -->
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative card-hover">
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Business</h3>
-                        <p class="text-gray-500 text-sm">Para empresas que gerenciam equipe</p>
-                    </div>
-                    
-                    <div class="text-center mb-6">
-                        <span class="text-4xl font-bold text-gray-900">R$ 197</span>
-                        <span class="text-gray-500">/mês</span>
-                    </div>
-                    
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Tudo do Profissional</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Até 10 usuários</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Gestão de equipe</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Relatórios avançados</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>API acesso</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
-                            <span>Gerente de contas</span>
-                        </li>
-                    </ul>
-                    
-                    <a href="/accounts/register/" class="block text-center bg-gray-800 hover:bg-gray-900 text-white py-4 rounded-xl font-semibold transition-all">
-                        Falar com Consultor
-                    </a>
-                </div>
+                {% endfor %}
             </div>
         </div>
     </section>
