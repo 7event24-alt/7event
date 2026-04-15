@@ -2,6 +2,13 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.0.4] - 2026-04-15
+
+### Fix
+- CompanyRequiredMixin agora verifica se usuário está autenticado antes de verificar account
+
+---
+
 ## [1.0.3] - 2026-04-15
 
 ### Fix
@@ -29,7 +36,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Sistema completo de gestão de eventos para autônomos e empresas
 - Cadastro de clientes com histórico de trabalhos e receita
 - Sistema de trabalhos (jobs) com status: Pendente → Confirmado → Concluído/Cancelado
-- Diferença entre confirmar (envia email ao cliente) e aprovar (validação interna/financeira)
+- Diferença entre confirmar (envia email ao cliente) e aprobar (validação interna/financeira)
 - Sistema de workers (membros da equipe) associados aos trabalhos
 - Registro de despesas vinculadas a trabalhos por categoria
 - Agenda mensal com FullCalendar e filtros por status

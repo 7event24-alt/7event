@@ -62,6 +62,11 @@ class ExpenseForm(forms.ModelForm):
 
 class CompanyRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            from django.contrib.auth.views import redirect_to_login
+
+            return redirect_to_login(request.get_full_path())
+
         if not request.user.account:
             from django.http import HttpResponseForbidden
 
