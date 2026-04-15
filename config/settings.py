@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Version
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -203,12 +203,36 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://7event.com.br",
+    "https://www.7event.com.br",
+]
 
 SESSION_COOKIE_AGE = 86400
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = True
-CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app", "https://*.ngrok.io"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.ngrok-free.app",
+    "https://*.ngrok.io",
+    "https://7event.com.br",
+    "https://www.7event.com.br",
+    "http://7event.com.br",
+    "http://www.7event.com.br",
+    "http://localhost",
+    "http://127.0.0.1",
+]
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://7event.com.br",
+    "https://www.7event.com.br",
+    "http://7event.com.br",
+    "http://www.7event.com.br",
+    "http://localhost",
+    "http://127.0.0.1",
+]
 
 LOGGING = {
     "version": 1,
