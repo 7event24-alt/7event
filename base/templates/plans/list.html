@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Escolher Plano - 7event{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-12 px-4">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Escolha seu Plano</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Selecione o plano que melhor atende às suas necessidades. Todos os planos incluem suporte básico e acesso à plataforma.
+        </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+        {% for plan in plans %}
+        <div class="bg-white rounded-2xl shadow-lg border-2 {% if plan.highlight %}border-primary scale-105{% else %}border-gray-200{% endif %} overflow-hidden">
+            {% if plan.highlight %}
+            <div class="bg-primary text-white text-center py-2 text-sm font-semibold">
+                Mais Popular
+            </div>
+            {% endif %}
+
+            <div class="p-8">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ plan.name }}</h2>
+                    {% if plan.short_description %}
+                    <p class="text-gray-500 mb-6">{{ plan.short_description }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="text-center mb-8">
+                    {% if plan.price_monthly > 0 %}
+                    <div class="text-4xl font-bold text-gray-900">
+                        R$ {{ plan.price_monthly|floatformat:2 }}
+                        <span class="text-lg font-normal text-gray-500">/mês</span>
+                    </div>
+                    {% if plan.price_quarterly > 0 %}
+                    <p class="text-sm text-gray-500 mt-1">
+                        ou R$ {{ plan.price_quarterly|floatformat:2 }}/trimestral
+                    </p>
+                    {% endif %}
+                    {% if plan.price_semester > 0 %}
+                    <p class="text-sm text-gray-500 mt-1">
+                        ou R$ {{ plan.price_semester|floatformat:2 }}/semestral
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-4xl font-bold text-green-600">Grátis</div>
+                    <p class="text-sm text-gray-500 mt-1">Para sempre</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Limites:</h3>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-users text-primary"></i>
+                            <span>{{ plan.max_users }} usuário(s)</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-handshake text-primary"></i>
+                            <span>{{ plan.max_clients }} cliente(s)</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-briefcase text-primary"></i>
+                            <span>{{ plan.max_jobs }} trabalho(s)</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-receipt text-primary"></i>
+                            <span>{{ plan.max_expenses }} despesa(s)</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-calendar text-primary"></i>
+                            <span>{{ plan.max_agenda_events }} evento(s) na agenda</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                    <button type="submit" class="w-full py-3 px-6 rounded-lg font-semibold transition-colors {% if plan.highlight %}bg-primary hover:bg-secondary text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %}">
+                        {% if plan.price_monthly > 0 %}
+                        Assinar Agora
+                        {% else %}
+                        Começar Grátis
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-12 text-center">
+        <p class="text-gray-500">
+            Já tem um plano? <a href="{% url 'login' %}" class="text-primary hover:underline">Entre aqui</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -45,6 +45,15 @@ class ClientListView(CompanyRequiredMixin, View):
 class ClientCreateView(CompanyRequiredMixin, View):
     template_name = "clients/form.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        # Check plan limits
+        from base.core.plan_check import check_plan_limit
+        from .models import Client
+
+        return check_plan_limit(Client, "max_clients")(super().dispatch)(
+            request, *args, **kwargs
+        )
+
     def get(self, request):
         form = ClientForm()
         return render(request, self.template_name, {"form": form})

@@ -82,7 +82,37 @@ class JobListView(CompanyRequiredMixin, View):
 class JobCreateView(CompanyRequiredMixin, View):
     template_name = "jobs/form.html"
 
+    def _check_plan_limit(self, request):
+        """Check if user can create a new job based on their plan"""
+        if not request.user.account or not request.user.account.plan:
+            return False, "Plano"
+
+        if not request.user.account.is_active:
+            return False, "Plano ativo"
+
+        limit = request.user.account.plan.max_jobs
+        if limit == 0:
+            return True, None  # Unlimited
+
+        from .models import Job
+
+        current = Job.objects.filter(account=request.user.account).count()
+        if current >= limit:
+            return False, f"Limite de {limit} trabalhos"
+
+        return True, None
+
     def get(self, request):
+        can_create, reason = self._check_plan_limit(request)
+        if not can_create:
+            from django.contrib import messages
+
+            messages.warning(
+                request, f"Você atingiu o {reason}. Escolha um plano para continuar."
+            )
+            from django.shortcuts import redirect
+
+            return redirect("plans:list")
         from .forms import JobForm
         from datetime import datetime
 

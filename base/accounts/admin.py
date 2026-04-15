@@ -57,6 +57,24 @@ class PlanAdmin(admin.ModelAdmin):
     ]
     list_filter = ["type", "is_active"]
     filter_horizontal = ["features"]
+    fieldsets = (
+        (None, {"fields": ("type", "name", "description", "short_description")}),
+        (
+            "Limites",
+            {
+                "fields": (
+                    "max_users",
+                    "max_clients",
+                    "max_jobs",
+                    "max_expenses",
+                    "max_agenda_events",
+                )
+            },
+        ),
+        ("Preços", {"fields": ("price_monthly", "price_quarterly", "price_semester")}),
+        ("Pagamento", {"fields": ("payment_link", "is_visible", "highlight")}),
+        ("Funcionalidades", {"fields": ("features", "is_active")}),
+    )
 
 
 @admin.register(Subscription)

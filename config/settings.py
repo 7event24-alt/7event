@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "base.admin_panel",
     "base.quote",
     "base.services",
+    "base.plans",
 ]
 
 MIDDLEWARE = [
