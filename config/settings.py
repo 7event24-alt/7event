@@ -10,7 +10,25 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-dev-key-change-in-production"
 )
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+
+# Auto-detect DEBUG based on environment
+# - Local development: DEBUG=True
+# - Production (AWS): DEBUG=False (unless explicitly set)
+import socket
+
+hostname = socket.gethostname()
+is_production = hostname.startswith("ip-172") or hostname.startswith("ip-10")
+
+# Check if DEBUG is explicitly set in environment
+debug_from_env = os.environ.get("DEBUG", "").lower()
+
+if debug_from_env in ["true", "1", "yes"]:
+    DEBUG = True
+elif debug_from_env in ["false", "0", "no"]:
+    DEBUG = False
+else:
+    # Auto-detect: True locally, False in production
+    DEBUG = not is_production
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]

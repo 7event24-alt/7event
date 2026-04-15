@@ -22,7 +22,7 @@ def bad_request(request, exception=None):
         "errors/error.html",
         {
             "code": 400,
-            "error_info": f"Bad Request: {request.path}",
+            "error_info": f"Requisição inválida: {request.path}",
             "timestamp": error_info["timestamp"],
         },
         status=400,
@@ -37,7 +37,7 @@ def permission_denied(request, exception=None):
         "errors/error.html",
         {
             "code": 403,
-            "error_info": f"Access denied to: {request.path}",
+            "error_info": f"Acesso negado ao recurso: {request.path}",
             "timestamp": error_info["timestamp"],
         },
         status=403,
@@ -52,7 +52,7 @@ def page_not_found(request, exception=None):
         "errors/error.html",
         {
             "code": 404,
-            "error_info": f"Page not found: {request.path}",
+            "error_info": f"Página não encontrada: {request.path}",
             "timestamp": error_info["timestamp"],
         },
         status=404,
@@ -63,19 +63,15 @@ def server_error(request):
     """500 - Server Error"""
     error_info = get_error_info(request)
 
-    # Log the error details for admin review
-    # In production, you might want to send an email notification
-    error_msg = f"Server Error at {error_info['path']} - User: {error_info['user']}"
-
     # Optional: send email notification in production
-    if not DEBUG and hasattr(request, "_global_exception"):
+    if not DEBUG:
         try:
             from django.core.mail import send_mail
             from django.conf import settings
 
             subject = f"[7Event Error] 500 - {error_info['path']}"
             message = f"""
-Um erro occurred no sistema 7Event:
+Um erro ocorreu no sistema 7Event:
 
 Path: {error_info["path"]}
 Method: {error_info["method"]}
@@ -93,14 +89,14 @@ Por favor, verifique os logs para mais detalhes.
                 fail_silently=True,
             )
         except Exception:
-            pass  # Silently fail if email doesn't work
+            pass
 
     return render(
         request,
         "errors/error.html",
         {
             "code": 500,
-            "error_info": "Erro interno do servidor. Nossa equipe foi notificada.",
+            "error_info": "Erro interno do servidor. Nossa equipe foi notificada automaticamente.",
             "timestamp": error_info["timestamp"],
         },
         status=500,
