@@ -393,8 +393,29 @@ class PlanEditView(LoginRequiredMixin, View):
                     "price_monthly",
                     "price_quarterly",
                     "price_semester",
+                    "payment_link",
+                    "is_visible",
                     "is_active",
+                    "highlight",
                 ]
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                for field in self.fields.values():
+                    field.widget.attrs.update(
+                        {
+                            "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        }
+                    )
+                self.fields["is_visible"].widget.attrs.update(
+                    {"class": "w-5 h-5 text-primary"}
+                )
+                self.fields["is_active"].widget.attrs.update(
+                    {"class": "w-5 h-5 text-primary"}
+                )
+                self.fields["highlight"].widget.attrs.update(
+                    {"class": "w-5 h-5 text-gold"}
+                )
 
         form = PlanForm(instance=plan)
         return render(request, self.template_name, {"form": form, "object": plan})
@@ -424,8 +445,29 @@ class PlanEditView(LoginRequiredMixin, View):
                     "price_monthly",
                     "price_quarterly",
                     "price_semester",
+                    "payment_link",
+                    "is_visible",
                     "is_active",
+                    "highlight",
                 ]
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                for field in self.fields.values():
+                    field.widget.attrs.update(
+                        {
+                            "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        }
+                    )
+                self.fields["is_visible"].widget.attrs.update(
+                    {"class": "w-5 h-5 text-primary"}
+                )
+                self.fields["is_active"].widget.attrs.update(
+                    {"class": "w-5 h-5 text-primary"}
+                )
+                self.fields["highlight"].widget.attrs.update(
+                    {"class": "w-5 h-5 text-gold"}
+                )
 
         form = PlanForm(request.POST, instance=plan)
         if form.is_valid():

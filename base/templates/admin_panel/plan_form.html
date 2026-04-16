@@ -4,143 +4,133 @@
 {% block page_title %}{% if object %}Editar{% else %}Novo{% endif %} Plano{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'admin_panel:plan_list' %}" class="btn btn-secondary">
+<a href="{% url 'admin_panel:plan_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
     <i class="fas fa-arrow-left"></i> Voltar
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 800px; margin: 0 auto;">
-    <div class="card-header">
-        <h3 class="card-title">Dados do Plano</h3>
-    </div>
-    <div class="card-body">
-        <form method="post">
-            {% csrf_token %}
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="label">{{ form.type.label }} *</label>
-                    {{ form.type }}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Dados do Plano</h3>
+        </div>
+        <div class="p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                    <p>Por favor, corrija os erros abaixo.</p>
                 </div>
-                <div class="form-group">
-                    <label class="label">{{ form.name.label }} *</label>
-                    {{ form.name }}
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="label">{{ form.description.label }}</label>
-                {{ form.description }}
-            </div>
-            
-            <div class="form-section">
-                <h4>Limites</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="label">{{ form.max_users.label }}</label>
-                        {{ form.max_users }}
+                {% endif %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.type.label }} *</label>
+                        {{ form.type }}
+                        {% if form.type.errors %}
+                        <span class="text-red-500 text-sm">{{ form.type.errors.0 }}</span>
+                        {% endif %}
                     </div>
-                    <div class="form-group">
-                        <label class="label">{{ form.max_clients.label }}</label>
-                        {{ form.max_clients }}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.name.label }} *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <span class="text-red-500 text-sm">{{ form.name.errors.0 }}</span>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="label">{{ form.max_jobs.label }}</label>
-                        {{ form.max_jobs }}
-                    </div>
-                    <div class="form-group">
-                        <label class="label">{{ form.max_expenses.label }}</label>
-                        {{ form.max_expenses }}
-                    </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <span class="text-red-500 text-sm">{{ form.description.errors.0 }}</span>
+                    {% endif %}
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="label">{{ form.max_agenda_events.label }}</label>
+                
+                <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+                    <h4 class="text-sm font-semibold text-primary uppercase tracking-wider">Limites</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.max_users.label }}</label>
+                            {{ form.max_users }}
+                            <p class="text-xs text-gray-500 mt-1">0 = Ilimitado</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.max_clients.label }}</label>
+                            {{ form.max_clients }}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.max_jobs.label }}</label>
+                            {{ form.max_jobs }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.max_expenses.label }}</label>
+                            {{ form.max_expenses }}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.max_agenda_events.label }}</label>
                         {{ form.max_agenda_events }}
                     </div>
                 </div>
-            </div>
-            
-            <div class="form-section">
-                <h4>Preços</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="label">{{ form.price_monthly.label }}</label>
-                        {{ form.price_monthly }}
-                    </div>
-                    <div class="form-group">
-                        <label class="label">{{ form.price_quarterly.label }}</label>
-                        {{ form.price_quarterly }}
-                    </div>
-                    <div class="form-group">
-                        <label class="label">{{ form.price_semester.label }}</label>
-                        {{ form.price_semester }}
+                
+                <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+                    <h4 class="text-sm font-semibold text-primary uppercase tracking-wider">Preços</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.price_monthly.label }}</label>
+                            {{ form.price_monthly }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.price_quarterly.label }}</label>
+                            {{ form.price_quarterly }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.price_semester.label }}</label>
+                            {{ form.price_semester }}
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="checkbox-label">
-                    {{ form.is_active }}
-                    <span class="checkmark"></span>
-                    <span class="checkbox-text">Plano Ativo</span>
-                </label>
-            </div>
-            
-            <div class="form-actions">
-                <a href="{% url 'admin_panel:plan_list' %}" class="btn btn-outline">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Salvar</button>
-            </div>
-        </form>
+                
+                <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+                    <h4 class="text-sm font-semibold text-primary uppercase tracking-wider">Configurações</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.payment_link.label }}</label>
+                            {{ form.payment_link }}
+                        </div>
+                        <div class="flex items-center gap-3 pt-6">
+                            {{ form.is_visible }}
+                            <label class="text-sm text-gray-700">{{ form.is_visible.label }}</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3 pt-4">
+                            {{ form.is_active }}
+                            <label class="text-sm text-gray-700">{{ form.is_active.label }}</label>
+                        </div>
+                        <div class="flex items-center gap-3 pt-4">
+                            {{ form.highlight }}
+                            <label class="text-sm text-gray-700">{{ form.highlight.label }}</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <a href="{% url 'admin_panel:plan_list' %}" class="border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition flex items-center gap-2">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-medium transition flex items-center gap-2">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
-<style>
-.form-section {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: var(--color-gray-50);
-    border-radius: 8px;
-}
-.form-section h4 {
-    margin-bottom: 1rem;
-    color: var(--color-primary);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.5rem;
-}
-.checkbox-label input { display: none; }
-.checkmark {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--color-gray-400);
-    border-radius: 4px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.checkbox-label input:checked + .checkmark {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-}
-.checkbox-label input:checked + .checkmark::after {
-    content: '✓';
-    color: white;
-    font-size: 12px;
-}
-.checkbox-text {
-    font-size: 0.9rem;
-    color: var(--color-gray-700);
-}
-</style>
 {% endblock %}

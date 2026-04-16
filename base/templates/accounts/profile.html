@@ -393,6 +393,12 @@ function toggleEditMode() {
         displayMode.classList.add('hidden');
         editForm.classList.remove('hidden');
         editBtn.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+        
+        // Apply phone mask when edit form is shown
+        if (typeof Inputmask !== 'undefined') {
+            Inputmask({ mask: '(99) 99999-9999' }).mask(document.querySelectorAll('#editForm [data-mask="phone"]'));
+            Inputmask({ mask: '(99) 9999-9999' }).mask(document.querySelectorAll('#editForm [data-mask="phone-fixed"]'));
+        }
     }
 }
 </script>
