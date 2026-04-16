@@ -116,7 +116,16 @@ class ProfileView(LoginRequiredMixin, View):
         from .forms import UserProfileForm
 
         form = UserProfileForm(instance=request.user)
-        return render(request, self.template_name, {"form": form})
+
+        context = {"form": form}
+
+        if request.user.is_superuser:
+            from .models import Account
+
+            context["total_accounts"] = Account.objects.count()
+            context["total_users"] = User.objects.count()
+
+        return render(request, self.template_name, context)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):

@@ -28,14 +28,37 @@
                 <h1 class="text-2xl font-bold text-gray-800">{{ user.get_full_name|default:user.username }}</h1>
                 <p class="text-gray-500">{{ user.email }}</p>
                 <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
-                    {% if user.role %}
-                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
-                        <i class="fas fa-briefcase mr-1"></i>{{ user.role }}
+                    {% if user.is_superuser %}
+                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-shield-alt mr-1"></i>Super Administrador
                     </span>
                     {% endif %}
+                    
                     {% if user.is_account_admin %}
                     <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm">
                         <i class="fas fa-crown mr-1"></i>Administrador
+                    </span>
+                    {% endif %}
+                    
+                    {% if user.account %}
+                        {% if user.account.account_type == 'autonomous' %}
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-user-tie mr-1"></i>Autônomo
+                        </span>
+                        {% else %}
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-users mr-1"></i>Equipe
+                        </span>
+                        {% endif %}
+                        
+                        {% if user.plan %}
+                        <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-star mr-1"></i>Plano Próprio
+                        </span>
+                        {% endif %}
+                    {% else %}
+                    <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+                        <i class="fas fa-user mr-1"></i>Sem empresa
                     </span>
                     {% endif %}
                 </div>
@@ -169,22 +192,98 @@
                 <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
                     <h2 class="font-semibold text-gray-800 flex items-center gap-2">
                         <i class="fas fa-building text-primary"></i>
-                        Empresa
+                        {% if user.is_superuser %}Sistema{% else %}Empresa{% endif %}
                     </h2>
                 </div>
                 <div class="p-4 lg:p-6 space-y-4">
+                    {% if user.is_superuser %}
+                    <div>
+                        <label class="block text-sm text-gray-500">Acesso</label>
+                        <p class="font-medium text-purple-700">Super Administrador do Sistema</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-purple-50 p-3 rounded-lg text-center">
+                            <p class="text-2xl font-bold text-purple-700">{{ total_accounts }}</p>
+                            <p class="text-xs text-gray-600">Empresas</p>
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded-lg text-center">
+                            <p class="text-2xl font-bold text-purple-700">{{ total_users }}</p>
+                            <p class="text-xs text-gray-600">Usuários</p>
+                        </div>
+                    </div>
+                    {% elif user.account %}
                     <div>
                         <label class="block text-sm text-gray-500">Nome</label>
                         <p class="font-medium text-gray-800">{{ user.account.name }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-500">Plano</label>
-                        <p class="font-medium text-gray-800">{{ user.account.get_plan_display }}</p>
+                        <label class="block text-sm text-gray-500">Tipo de Conta</label>
+                        <p class="font-medium text-gray-800">
+                            {% if user.account.account_type == 'autonomous' %}
+                            <i class="fas fa-user-tie text-green-600 mr-1"></i>Autônomo
+                            {% else %}
+                            <i class="fas fa-building text-blue-600 mr-1"></i>Empresa
+                            {% endif %}
+                        </p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-500">Usuários</label>
-                        <p class="font-medium text-gray-800">{{ user.account.user_count }} / {{ user.account.max_users }}</p>
+                        <label class="block text-sm text-gray-500">
+                            {% if user.plan %}Meu Plano{% else %}Plano da Empresa{% endif %}
+                        </label>
+                        <p class="font-medium text-gray-800">
+                            {% if user.plan %}
+                            <span class="text-indigo-700">{{ user.plan.name }}</span>
+                            {% elif user.account.plan %}
+                            <span class="text-primary">{{ user.account.plan.name }}</span>
+                            {% else %}
+                            <span class="text-gray-400">Nenhum</span>
+                            {% endif %}
+                        </p>
                     </div>
+                    
+                    {% if user.account.plan %}
+                    <div>
+                        <label class="block text-sm text-gray-500 mb-2">Limites do Plano</label>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600"><i class="fas fa-users mr-1"></i>Clientes</span>
+                                <span class="text-sm font-medium">
+                                    {% if user.get_max_clients == 0 %}
+                                    <span class="text-green-600">Ilimitado</span>
+                                    {% else %}{{ user.account.client_count }} / {{ user.get_max_clients }}{% endif %}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600"><i class="fas fa-briefcase mr-1"></i>Trabalhos</span>
+                                <span class="text-sm font-medium">
+                                    {% if user.get_max_jobs == 0 %}
+                                    <span class="text-green-600">Ilimitado</span>
+                                    {% else %}{{ user.account.job_count }} / {{ user.get_max_jobs }}{% endif %}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600"><i class="fas fa-receipt mr-1"></i>Despesas</span>
+                                <span class="text-sm font-medium">
+                                    {% if user.get_max_expenses == 0 %}
+                                    <span class="text-green-600">Ilimitado</span>
+                                    {% else %}{{ user.account.expense_count }} / {{ user.get_max_expenses }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <label class="block text-sm text-gray-500">Membros da Equipe</label>
+                        <p class="font-medium text-gray-800">{{ user.account.user_count }} / {{ user.account.max_users|default:"∞" }}</p>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-circle text-gray-400 text-3xl mb-2"></i>
+                        <p class="text-gray-500">Você não está associado a uma empresa</p>
+                        <p class="text-sm text-gray-400">Entre em contato com o administrador</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 

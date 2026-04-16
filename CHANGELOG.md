@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.2.1] - 2026-04-15
+
+### Feat
+- Página de perfil com tags dinâmicas: Super Admin, Admin, Autônomo, Equipe, Sem empresa
+- Seção "Empresa" dinâmica com limites do plano (clientes/trabalhos/despesas usados vs limite)
+- Para superusers: mostra total de empresas e usuários no sistema
+- Adiciona propriedades client_count, job_count, expense_count no Account
+
+---
+
 ## [1.2.0] - 2026-04-15
 
 ### Feat

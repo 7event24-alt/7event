@@ -245,6 +245,24 @@ class Account(models.Model):
         return self.users.count()
 
     @property
+    def client_count(self):
+        from base.clients.models import Client
+
+        return Client.objects.filter(account=self).count()
+
+    @property
+    def job_count(self):
+        from base.jobs.models import Job
+
+        return Job.objects.filter(account=self).count()
+
+    @property
+    def expense_count(self):
+        from base.expenses.models import Expense
+
+        return Expense.objects.filter(account=self).count()
+
+    @property
     def can_access(self):
         if self.is_blocked:
             return False
