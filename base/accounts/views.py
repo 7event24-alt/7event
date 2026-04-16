@@ -120,7 +120,7 @@ class ProfileView(LoginRequiredMixin, View):
         context = {"form": form}
 
         if request.user.is_superuser:
-            from .models import Account
+            from .models import Account, User
 
             context["total_accounts"] = Account.objects.count()
             context["total_users"] = User.objects.count()
