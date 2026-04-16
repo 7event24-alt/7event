@@ -2,6 +2,20 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.2.0] - 2026-04-15
+
+### Feat
+- Usuários podem ter plano individual próprio
+- Se usuário não tem plano pessoal, usa o plano da empresa
+- Novos métodos no User: get_plan(), get_max_*, has_limit()
+- Admin Django atualizado para gerenciar plano do usuário
+
+### Fix
+- Error handlers simplificados
+- ALLOWED_HOSTS com fallback para produção
+
+---
+
 ## [1.1.1] - 2026-04-15
 
 ### Fix

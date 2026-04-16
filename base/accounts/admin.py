@@ -114,12 +114,20 @@ class UserAdmin(BaseUserAdmin):
         "first_name",
         "last_name",
         "account",
+        "plan",
         "role",
         "is_account_admin",
         "is_active",
         "is_blocked",
     ]
-    list_filter = ["is_active", "is_blocked", "is_account_admin", "account", "role"]
+    list_filter = [
+        "is_active",
+        "is_blocked",
+        "is_account_admin",
+        "account",
+        "role",
+        "plan",
+    ]
     search_fields = ["username", "email", "first_name", "last_name"]
     ordering = ["-created_at"]
     readonly_fields = ("created_at", "updated_at", "last_login")
@@ -127,7 +135,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         ("Pessoal", {"fields": ("first_name", "last_name", "email", "phone", "photo")}),
-        ("Conta", {"fields": ("account", "role", "is_account_admin")}),
+        ("Conta", {"fields": ("account", "role", "is_account_admin", "plan")}),
         (
             "Status",
             {

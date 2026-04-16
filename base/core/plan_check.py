@@ -18,13 +18,13 @@ class PlanCheckMixin:
         if not hasattr(request.user, "account") or not request.user.account:
             return super().dispatch(request, *args, **kwargs)
 
-        # Skip if account doesn't have a plan
-        account = request.user.account
-        if not account.plan:
+        # Get user's effective plan (personal or company)
+        plan = request.user.get_plan()
+        if not plan:
             return HttpResponseRedirect(reverse("plans:list"))
 
         # Check if account is active
-        if not account.is_active:
+        if not request.user.account.is_active:
             return HttpResponseRedirect(reverse("plans:list"))
 
         return super().dispatch(request, *args, **kwargs)
@@ -46,19 +46,21 @@ def check_plan_limit(model_class, limit_field):
 
             account = request.user.account
 
-            if not account.plan:
-                return HttpResponseRedirect(reverse("plans:list"))
-
             if not account.is_active:
                 return HttpResponseRedirect(reverse("plans:list"))
 
+            # Get user's effective plan (personal or company)
+            plan = request.user.get_plan()
+            if not plan:
+                return HttpResponseRedirect(reverse("plans:list"))
+
             # Get limit from plan
-            limit = getattr(account.plan, limit_field, 0)
+            limit = getattr(plan, limit_field, 0)
 
             if limit == 0:  # Unlimited
                 return view_func(request, *args, **kwargs)
 
-            # Count current items
+            # Count current items for this user's account
             current_count = model_class.objects.filter(account=account).count()
 
             if current_count >= limit:

@@ -392,8 +392,55 @@ class User(AbstractUser):
     )
 
     notes = models.TextField(blank=True, verbose_name=_("Anotações"))
+    plan = models.ForeignKey(
+        "Plan",
+        on_delete=models.SET_NULL,
+        related_name="users_with_plan",
+        verbose_name=_("Plano Individual"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Plano pessoal do usuário. Se não informado, usa o plano da empresa."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def get_plan(self):
+        """Retorna o plano do usuário, ou o plano da empresa se não tiver plano individual"""
+        if self.plan:
+            return self.plan
+        if self.account and self.account.plan:
+            return self.account.plan
+        return Plan.get_default()
+
+    def get_max_users(self):
+        return self.get_plan().max_users
+
+    def get_max_clients(self):
+        return self.get_plan().max_clients
+
+    def get_max_jobs(self):
+        return self.get_plan().max_jobs
+
+    def get_max_expenses(self):
+        return self.get_plan().max_expenses
+
+    def get_max_agenda_events(self):
+        return self.get_plan().max_agenda_events
+
+    def has_limit(self, model_class, current_count):
+        """Verifica se o usuário atingiu o limite do seu plano"""
+        plan = self.get_plan()
+        if model_class.__name__ == "Client":
+            max_count = plan.max_clients if plan.max_clients > 0 else float("inf")
+        elif model_class.__name__ == "Job":
+            max_count = plan.max_jobs if plan.max_jobs > 0 else float("inf")
+        elif model_class.__name__ == "Expense":
+            max_count = plan.max_expenses if plan.max_expenses > 0 else float("inf")
+        else:
+            return False
+        return current_count >= max_count
 
     class Meta:
         db_table = "users"

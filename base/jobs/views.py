@@ -89,13 +89,18 @@ class JobCreateView(CompanyRequiredMixin, View):
 
     def _check_plan_limit(self, request):
         """Check if user can create a new job based on their plan"""
-        if not request.user.account or not request.user.account.plan:
-            return False, "Plano"
+        if not request.user.account:
+            return False, "Conta"
 
         if not request.user.account.is_active:
             return False, "Plano ativo"
 
-        limit = request.user.account.plan.max_jobs
+        # Get user's effective plan (personal or company)
+        plan = request.user.get_plan()
+        if not plan:
+            return False, "Plano"
+
+        limit = plan.max_jobs
         if limit == 0:
             return True, None  # Unlimited
 
