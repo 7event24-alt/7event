@@ -38,6 +38,9 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+    // Only cache GET requests
+    if (event.request.method !== 'GET') return;
+    
     // Always fetch from network first
     event.respondWith(
         fetch(event.request)
