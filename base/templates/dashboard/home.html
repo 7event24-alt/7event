@@ -46,15 +46,13 @@ let messaging;
 async function sendTestPush() {
     try {
         firebase.initializeApp(firebaseConfig);
+        messaging = firebase.messaging();
         
         // Registrar service worker explicitamente
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
             scope: '/firebase-cloud-messaging-push-scope'
         });
-        
-        messaging = firebase.messaging({
-            serviceWorkerRegistration: registration
-        });
+        messaging.useServiceWorker(registration);
         
         messaging.onBackgroundMessage((payload) => {
             console.log('Background:', payload);
