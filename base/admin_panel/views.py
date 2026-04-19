@@ -155,6 +155,75 @@ class AccountCreateView(LoginRequiredMixin, View):
         )
 
 
+class AccountEditView(LoginRequiredMixin, View):
+    template_name = "admin_panel/account_form.html"
+
+    def get(self, request, pk):
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden("Acesso restrito a superadministradores.")
+
+        account = get_object_or_404(Account, pk=pk)
+        from base.accounts.forms import AccountAdminForm
+
+        account_form = AccountAdminForm(instance=account)
+
+        return render(
+            request,
+            self.template_name,
+            {"account_form": account_form, "object": account},
+        )
+
+    def post(self, request, pk):
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden("Acesso restrito a superadministradores.")
+
+        account = get_object_or_404(Account, pk=pk)
+        from base.accounts.forms import AccountAdminForm
+
+        account_form = AccountAdminForm(request.POST, instance=account)
+
+        if account_form.is_valid():
+            account_form.save()
+            messages.success(request, f"Conta '{account.name}' atualizada com sucesso!")
+            return redirect("admin_panel:home")
+
+        return render(
+            request,
+            self.template_name,
+            {"account_form": account_form, "object": account},
+        )
+
+
+class AccountDeleteView(LoginRequiredMixin, View):
+    template_name = "admin_panel/account_confirm_delete.html"
+
+    def get(self, request, pk):
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden("Acesso restrito a superadministradores.")
+
+        account = get_object_or_404(Account, pk=pk)
+        return render(request, self.template_name, {"object": account})
+
+    def post(self, request, pk):
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden("Acesso restrito a superadministradores.")
+
+        account = get_object_or_404(Account, pk=pk)
+        account_name = account.name
+        account.delete()
+
+        messages.success(request, f"Conta '{account_name}' excluída com sucesso!")
+        return redirect("admin_panel:home")
+
+
 class AdminPanelView(LoginRequiredMixin, View):
     template_name = "admin_panel/home.html"
 
@@ -182,9 +251,9 @@ class AdminPanelView(LoginRequiredMixin, View):
             accounts = accounts.filter(name__icontains=search)
 
         context = {
-            "accounts": accounts,
+            "companies": accounts,
             "plan_types": PlanType.choices,
-            "subscription_statuses": SubscriptionStatus.choices,
+            "payment_statuses": SubscriptionStatus.choices,
             "account_types": AccountType.choices,
             "plan_filter": plan_filter,
             "status_filter": status_filter,
@@ -530,6 +599,8 @@ class SubscriptionListView(LoginRequiredMixin, View):
 
 admin_panel = AdminPanelView.as_view()
 account_create = AccountCreateView.as_view()
+account_edit = AccountEditView.as_view()
+account_delete = AccountDeleteView.as_view()
 account_detail = AccountDetailView.as_view()
 account_toggle_active = AccountToggleActiveView.as_view()
 account_toggle_blocked = AccountToggleBlockedView.as_view()

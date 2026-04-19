@@ -4,6 +4,8 @@ from .views import (
     admin_panel,
     account_detail,
     account_create,
+    account_edit,
+    account_delete,
     account_toggle_active,
     account_toggle_blocked,
     company_update_notifications,
@@ -24,6 +26,8 @@ urlpatterns = [
     path("", admin_panel, name="home"),
     path("contas/nova/", account_create, name="account_create"),
     path("contas/<int:pk>/", account_detail, name="account_detail"),
+    path("contas/<int:pk>/editar/", account_edit, name="account_edit"),
+    path("contas/<int:pk>/excluir/", account_delete, name="account_delete"),
     path(
         "contas/<int:pk>/toggle-active/",
         account_toggle_active,

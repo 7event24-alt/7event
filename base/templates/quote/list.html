@@ -19,7 +19,6 @@
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Título</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">Cliente</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden sm:table-cell">Serviços</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Ações</th>
@@ -30,7 +29,6 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium text-gray-800">{{ quote.title }}</td>
                     <td class="px-4 py-3 text-gray-600 hidden md:table-cell">{{ quote.client.name|default:"-" }}</td>
-                    <td class="px-4 py-3 text-gray-600 hidden sm:table-cell">{{ quote.services.count }}</td>
                     <td class="px-4 py-3 font-medium text-green-600">{{ quote.total|brl }}</td>
                     <td class="px-4 py-3">
                         {% include 'components/badge_status.html' with status=quote.status type='quote' %}

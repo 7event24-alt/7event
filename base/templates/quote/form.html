@@ -106,91 +106,6 @@
         </div>
     </div>
 
-    <!-- Serviços -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap justify-between items-center gap-2">
-            <h3 class="text-lg font-semibold text-gray-800">Serviços</h3>
-            <div class="flex flex-wrap gap-2">
-                <select id="service-select" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary">
-                    <option value="">Selecione um serviço...</option>
-                    {% for service in services %}
-                    <option value="{{ service.pk }}">{{ service.name }} - {{ service.estimated_total|brl }}</option>
-                    {% endfor %}
-                </select>
-                <button type="button" class="bg-primary hover:bg-secondary text-white px-3 py-2 rounded-lg text-sm font-medium" onclick="addService()">
-                    <i class="fas fa-plus"></i> Adicionar
-                </button>
-                <a href="{% url 'services:create' %}?next=quote_create" class="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
-                    <i class="fas fa-plus"></i> Novo Serviço
-                </a>
-            </div>
-        </div>
-        <div class="p-4">
-            <div class="overflow-x-auto">
-                <table class="w-full" id="services-table">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Serviço</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Diárias</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Valor Diária</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
-                            <th class="px-4 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="services-tbody" class="divide-y divide-gray-200">
-                        {% if object %}
-                        {% for s in quote.services.all %}
-                        <tr data-service-id="{{ s.service.pk }}">
-                            <td class="px-4 py-3">
-                                {{ s.service.name }}
-                                <input type="hidden" name="service_ids" value="{{ s.service.pk }}">
-                            </td>
-                            <td class="px-4 py-3 text-gray-600">{{ s.service.estimated_duration_hours|floatformat:0 }}</td>
-                            <td class="px-4 py-3">
-                                <input type="number" name="custom_price_{{ s.service.pk }}" value="{{ s.unit_price|floatformat:2 }}" step="0.01" class="w-24 px-2 py-1 border border-gray-300 rounded-lg text-sm" onchange="recalculate()">
-                            </td>
-                            <td class="px-4 py-3 font-semibold text-gray-800 row-total">{{ s.total|brl }}</td>
-                            <td class="px-4 py-3">
-                                <button type="button" class="text-red-600 hover:text-red-800" onclick="removeService(this)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        {% elif selected_services %}
-                        {% for s in selected_services %}
-                        <tr data-service-id="{{ s.pk }}">
-                            <td class="px-4 py-3">
-                                {{ s.name }}
-                                <input type="hidden" name="service_ids" value="{{ s.pk }}">
-                            </td>
-                            <td class="px-4 py-3 text-gray-600">{{ s.estimated_duration_hours|floatformat:0 }}</td>
-                            <td class="px-4 py-3">
-                                <input type="number" name="custom_price_{{ s.pk }}" value="{{ s.hourly_rate|floatformat:2 }}" step="0.01" class="w-24 px-2 py-1 border border-gray-300 rounded-lg text-sm" onchange="recalculate()">
-                            </td>
-                            <td class="px-4 py-3 font-semibold text-gray-800 row-total">{{ s.estimated_total|brl }}</td>
-                            <td class="px-4 py-3">
-                                <button type="button" class="text-red-600 hover:text-red-800" onclick="removeService(this)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-            {% if not selected_services and not services %}
-            <div class="p-6 text-center text-gray-500">
-                <p>Nenhum serviço disponível. <a href="{% url 'services:create' %}?next=quote_create" class="text-primary hover:underline">Crie um serviço</a></p>
-            </div>
-            {% endif %}
-            <div class="mt-4 text-right font-semibold text-primary">
-                Subtotal Serviços: <span id="services-total" class="text-lg">R$ 0,00</span>
-            </div>
-        </div>
-    </div>
-
     <!-- Status -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
@@ -241,81 +156,12 @@
 
 {% block scripts %}
 <script>
-const servicesData = {};
-{% for service in services %}
-servicesData[{{ service.pk }}] = {
-    name: "{{ service.name|escapejs }}",
-    hours: parseInt("{{ service.estimated_duration_hours|stringformat:".0f" }}"),
-    price: parseFloat("{{ service.estimated_total|stringformat:".2f" }}")
-};
-{% endfor %}
-
-function addService() {
-    const select = document.getElementById('service-select');
-    const serviceId = select.value;
-    if (!serviceId) {
-        alert('Selecione um serviço primeiro!');
-        return;
-    }
-    
-    const tbody = document.getElementById('services-tbody');
-    const existingRow = tbody.querySelector(`tr[data-service-id="${serviceId}"]`);
-    if (existingRow) {
-        alert('Serviço já adicionado!');
-        return;
-    }
-    
-    const service = servicesData[serviceId];
-    if (!service) {
-        alert('Dados do serviço não encontrados!');
-        return;
-    }
-    
-    const row = document.createElement('tr');
-    const serviceTotal = service.price * service.hours;
-    row.setAttribute('data-service-id', serviceId);
-    row.innerHTML = `
-        <td class="px-4 py-3">${service.name}
-            <input type="hidden" name="service_ids" value="${serviceId}">
-        </td>
-        <td class="px-4 py-3 text-gray-600">${service.hours}</td>
-        <td class="px-4 py-3">
-            <input type="number" name="custom_price_${serviceId}" value="${service.price.toFixed(2)}" step="0.01" class="w-24 px-2 py-1 border border-gray-300 rounded-lg text-sm" onchange="recalculate()">
-        </td>
-        <td class="px-4 py-3 font-semibold text-gray-800 row-total">R$ ${serviceTotal.toFixed(2)}</td>
-        <td class="px-4 py-3">
-            <button type="button" class="text-red-600 hover:text-red-800" onclick="removeService(this)">
-                <i class="fas fa-trash"></i>
-            </button>
-        </td>
-    `;
-    tbody.appendChild(row);
-    select.value = '';
-    recalculate();
-}
-
-function removeService(btn) {
-    btn.closest('tr').remove();
-    recalculate();
-}
-
 function recalculate() {
     const hourlyRate = parseFloat(document.getElementById('id_hourly_rate').value) || 0;
     const workHours = parseFloat(document.getElementById('id_work_hours').value) || 0;
     const laborTotal = hourlyRate * workHours;
     document.getElementById('labor-total').textContent = 'R$ ' + laborTotal.toFixed(2).replace('.', ',');
-    
-    let servicesTotal = 0;
-    document.querySelectorAll('#services-tbody tr').forEach(row => {
-        const serviceId = row.getAttribute('data-service-id');
-        const price = parseFloat(row.querySelector(`[name="custom_price_${serviceId}"]`).value) || 0;
-        row.querySelector('.row-total').textContent = 'R$ ' + price.toFixed(2).replace('.', ',');
-        servicesTotal += price;
-    });
-    document.getElementById('services-total').textContent = 'R$ ' + servicesTotal.toFixed(2).replace('.', ',');
-    
-    const quoteTotal = laborTotal + servicesTotal;
-    document.getElementById('quote-total').textContent = quoteTotal.toFixed(2).replace('.', ',');
+    document.getElementById('quote-total').textContent = laborTotal.toFixed(2).replace('.', ',');
 }
 
 document.getElementById('id_hourly_rate').addEventListener('input', recalculate);

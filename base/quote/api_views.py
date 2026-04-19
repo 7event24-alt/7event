@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Quote, QuoteService, QuoteExpense
+from .models import Quote, QuoteExpense
 from .serializers import QuoteSerializer, QuoteCreateSerializer
 
 
@@ -42,31 +42,6 @@ class QuoteViewSet(viewsets.ModelViewSet):
         serializer.save(account=self.request.user.account, user=self.request.user)
 
     @action(detail=True, methods=["post"])
-    def add_service(self, request, pk=None):
-        quote = self.get_object()
-        service_id = request.data.get("service")
-        quantity = request.data.get("quantity", 1)
-        custom_price = request.data.get("custom_price")
-
-        from base.services.models import Service
-
-        try:
-            service = Service.objects.get(id=service_id, account=request.user.account)
-        except Service.DoesNotExist:
-            return Response(
-                {"error": "Serviço não encontrado"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        quote_service = QuoteService.objects.create(
-            quote=quote,
-            service=service,
-            quantity=quantity,
-            custom_price=custom_price,
-        )
-        quote.save()
-        return Response(QuoteSerializer(quote).data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=["post"])
     def add_expense(self, request, pk=None):
         quote = self.get_object()
         description = request.data.get("description")
@@ -87,23 +62,6 @@ class QuoteViewSet(viewsets.ModelViewSet):
         )
         quote.save()
         return Response(QuoteSerializer(quote).data, status=status.HTTP_201_CREATED)
-
-    @action(
-        detail=True,
-        methods=["delete"],
-        url_path="remove_service/(?P<service_id>[^/.]+)",
-    )
-    def remove_service(self, request, pk=None, service_id=None):
-        quote = self.get_object()
-        try:
-            quote_service = QuoteService.objects.get(id=service_id, quote=quote)
-            quote_service.delete()
-            quote.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except QuoteService.DoesNotExist:
-            return Response(
-                {"error": "Serviço não encontrado"}, status=status.HTTP_404_NOT_FOUND
-            )
 
     @action(
         detail=True,

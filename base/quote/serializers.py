@@ -1,15 +1,5 @@
 from rest_framework import serializers
-from .models import Quote, QuoteService, QuoteExpense
-
-
-class QuoteServiceSerializer(serializers.ModelSerializer):
-    service_name = serializers.CharField(source="service.name", read_only=True)
-    total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-
-    class Meta:
-        model = QuoteService
-        fields = ["id", "service", "service_name", "quantity", "custom_price", "total"]
-        read_only_fields = ["id"]
+from .models import Quote, QuoteExpense
 
 
 class QuoteExpenseSerializer(serializers.ModelSerializer):
@@ -23,7 +13,6 @@ class QuoteExpenseSerializer(serializers.ModelSerializer):
 
 class QuoteSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True)
-    services = QuoteServiceSerializer(many=True, read_only=True)
     expenses = QuoteExpenseSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
@@ -45,7 +34,6 @@ class QuoteSerializer(serializers.ModelSerializer):
             "notes",
             "created_at",
             "updated_at",
-            "services",
             "expenses",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]

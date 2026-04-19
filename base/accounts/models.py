@@ -17,6 +17,7 @@ class ProfessionalRole(models.TextChoices):
     TECNICO_MONTAGEM = "tecnico_montagem", _("Técnico de montagem")
     DIRETOR_FOTOGRAFIA = "diretor_fotografia", _("Diretor de Fotografia")
     OPERADOR_CAMERA = "operador_camera", _("Operador de Câmera")
+    ASSISTENTE_CAMERA = "assistente_camera", _("Assistente de Câmera")
     TECNICO_VIDEO = "tecnico_video", _("Técnico de Vídeo")
     OPERADOR_SWITCHER = "operador_switcher", _("Operador de Switcher")
     TECNICO_STREAMING = "tecnico_streaming", _("Técnico de Streaming / Live")
@@ -66,7 +67,6 @@ class ProfessionalRole(models.TextChoices):
     BOMBEIRO_CIVIL = "bombeiro_civil", _("Bombeiro Civil")
     RESPONSAVEL_TECNICO = "responsavel_tecnico", _("Responsável Técnico")
     EQUIPE_MEDICA = "equipe_medica", _("Equipe médica / ambulância")
-    CONVIDADO = "convidado", _("Convidado")
 
 
 class UserManager(DjangoUserManager):
@@ -190,7 +190,7 @@ class Account(models.Model):
     slug = models.SlugField(max_length=50, unique=True, verbose_name=_("Slug"))
     cnpj = models.CharField(max_length=18, blank=True, verbose_name=_("CNPJ"))
     phone = models.CharField(max_length=20, blank=True, verbose_name=_("Telefone"))
-    email = models.EmailField(blank=True, verbose_name=_("Email"))
+    email = models.EmailField(blank=True, unique=True, verbose_name=_("Email"))
     address = models.TextField(blank=True, verbose_name=_("Endereço"))
     logo = models.ImageField(
         upload_to="accounts/logos/", blank=True, null=True, verbose_name=_("Logo")
@@ -366,6 +366,8 @@ class Subscription(models.Model):
 class User(AbstractUser):
     objects = UserManager()
 
+    email = models.EmailField(blank=True, unique=True, verbose_name=_("Email"))
+
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
@@ -516,52 +518,6 @@ class Notification(models.Model):
 
         cutoff = timezone.now() - timedelta(days=1)
         Notification.objects.filter(user=self.user, created_at__lt=cutoff).delete()
-
-    def __str__(self):
-        return self.get_full_name() or self.username
-
-    @property
-    def full_name(self):
-        return self.get_full_name() or self.username
-
-    @property
-    def can_access(self):
-        if self.is_blocked:
-            return False
-        if hasattr(self, "subscription"):
-            if self.subscription.status in [
-                SubscriptionStatus.OVERDUE,
-                SubscriptionStatus.CANCELLED,
-            ]:
-                return False
-        return True
-
-    @property
-    def company(self):
-        return self
-
-    @property
-    def max_users(self):
-        return self.plan.max_users if self.plan else 1
-
-    @property
-    def get_plan_display(self):
-        return self.plan.name if self.plan else "Sem Plano"
-        if not self.account:
-            return False
-        if self.is_blocked:
-            return False
-        if not self.account.can_access:
-            return False
-        return True
-
-    @property
-    def is_account_owner(self):
-        return self.is_account_admin or self.is_superuser
-
-    @property
-    def company(self):
-        return self.account
 
 
 Company = Account

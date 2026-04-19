@@ -30,13 +30,11 @@ class JobListView(CompanyRequiredMixin, View):
         company = request.user.account
         user = request.user
 
-        # Admin vê todos, worker só vê jobs associados
+        # Admin vê todos
         if user.is_account_admin:
             jobs = Job.objects.filter(account=company)
         else:
-            jobs = Job.objects.filter(
-                account=company,
-            ).filter(Q(user=user) | Q(workers=user))
+            jobs = Job.objects.filter(account=company, user=user)
 
         jobs = jobs.select_related("client", "user").order_by("-start_date")
 
@@ -135,20 +133,12 @@ class JobCreateView(CompanyRequiredMixin, View):
             except ValueError:
                 pass
 
-        from base.accounts.models import User
-
-        available_workers = User.objects.filter(account=request.user.account).exclude(
-            id=request.user.id
-        )
-
         return render(
             request,
             self.template_name,
             {
                 "form": form,
                 "initial_date": initial_date,
-                "available_workers": available_workers,
-                "selected_workers": [],
             },
         )
 
@@ -161,17 +151,6 @@ class JobCreateView(CompanyRequiredMixin, View):
             job.account = request.user.account
             job.user = request.user
             job.save()
-            form.save_m2m()
-
-            # Get selected workers from POST
-            worker_ids = request.POST.getlist("workers")
-            if worker_ids:
-                from base.accounts.models import User
-
-                workers = User.objects.filter(
-                    id__in=worker_ids, account=request.user.account
-                )
-                job.workers.set(workers)
 
             # Criar notificação
             if request.user.account.notify_on_job_created:
@@ -181,7 +160,7 @@ class JobCreateView(CompanyRequiredMixin, View):
                     user=request.user,
                     title="Novo trabalho criado",
                     message=f"Trabalho '{job.title}' foi criado com sucesso",
-                    action_url=f"/trabalhos/{job.pk}/",
+                    action_url=f"/app/trabalhos/{job.pk}/",
                     notification_type=NotificationType.JOB,
                 )
 
@@ -221,21 +200,12 @@ class JobUpdateView(CompanyRequiredMixin, View):
         job = get_object_or_404(Job, pk=pk, account=request.user.account)
         form = JobForm(instance=job, user=request.user)
 
-        from base.accounts.models import User
-
-        available_workers = User.objects.filter(account=request.user.account).exclude(
-            id=request.user.id
-        )
-        selected_workers = list(job.workers.all())
-
         return render(
             request,
             self.template_name,
             {
                 "form": form,
                 "object": job,
-                "available_workers": available_workers,
-                "selected_workers": selected_workers,
             },
         )
 
@@ -247,24 +217,9 @@ class JobUpdateView(CompanyRequiredMixin, View):
         if form.is_valid():
             form.save()
 
-            worker_ids = request.POST.getlist("workers")
-            from base.accounts.models import User
-
-            if worker_ids:
-                workers = User.objects.filter(
-                    id__in=worker_ids, account=request.user.account
-                )
-                job.workers.set(workers)
-            else:
-                job.workers.clear()
-
             messages.success(request, "Trabalho atualizado com sucesso!")
             return redirect("jobs:detail", pk=job.pk)
         clients = Client.objects.filter(account=request.user.account)
-        available_workers = User.objects.filter(account=request.user.account).exclude(
-            id=request.user.id
-        )
-        selected_workers = list(job.workers.all())
         return render(
             request,
             self.template_name,
@@ -272,8 +227,6 @@ class JobUpdateView(CompanyRequiredMixin, View):
                 "form": form,
                 "object": job,
                 "clients": clients,
-                "available_workers": available_workers,
-                "selected_workers": selected_workers,
             },
         )
 

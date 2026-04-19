@@ -113,3 +113,29 @@ def send_html_email_with_template(to_email, subject, html_message):
     except Exception as e:
         print(f"Erro ao enviar email: {e}")
         return False
+
+
+def send_quote_email(quote, client_email):
+    """Envia orçamento por email ao cliente"""
+    if not client_email:
+        return False
+
+    subject = f"Orçamento: {quote.title}"
+
+    html_message = render_to_string("emails/quote.html", {"quote": quote})
+
+    return send_html_email_with_template(client_email, subject, html_message)
+
+
+def send_support_reply(support_message):
+    """Envia email de resposta ao cliente do suporte"""
+    if not support_message.email:
+        return False
+
+    subject = f"Re: {support_message.get_subject_display()} - 7event Suporte"
+
+    html_message = render_to_string(
+        "emails/support_reply.html", {"message": support_message}
+    )
+
+    return send_html_email_with_template(support_message.email, subject, html_message)

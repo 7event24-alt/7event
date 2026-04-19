@@ -1,16 +1,92 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib import messages
-from django.contrib.auth.views import PasswordChangeView
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.views import PasswordChangeView, LoginView
+from django.contrib.auth.forms import PasswordChangeForm, AuthenticationForm
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
+from django import forms
+from django.db import models
+from django.contrib.sites.models import Site
+from django.conf import settings
 
 from .forms import RegisterForm
+
+
+def get_base_url(request):
+    """Obtém URL base de forma segura, sem depender do Site.objects.get_current()"""
+    try:
+        site = Site.objects.get_current()
+        return f"https://{site.domain}"
+    except Exception:
+        return request.build_absolute_uri("/")[:-1]
+
+
+class CustomLoginView(LoginView):
+    template_name = "registration/login.html"
+    authentication_form = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST.get("username"):
+            context["username_value"] = self.request.POST.get("username")
+        return context
+
+    def form_invalid(self, form):
+        username = self.request.POST.get("username", "")
+        password = self.request.POST.get("password", "")
+
+        if username and password:
+            from django.contrib.auth import get_user_model
+
+            User = get_user_model()
+            try:
+                user = User.objects.get(
+                    models.Q(username__iexact=username)
+                    | models.Q(email__iexact=username)
+                    | models.Q(phone__iexact=username)
+                )
+                if not user.is_active:
+                    from django.http import HttpResponseRedirect
+                    from django.urls import reverse
+
+                    return HttpResponseRedirect(
+                        reverse("accounts:account_inactive") + f"?email={user.email}"
+                    )
+            except User.DoesNotExist:
+                pass
+
+        if username and password:
+            messages.error(
+                self.request, "Usuário ou senha incorretos. Tente novamente."
+            )
+        elif not username:
+            messages.error(self.request, "Por favor, insira seu usuário.")
+        elif not password:
+            messages.error(self.request, "Por favor, insira sua senha.")
+
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        # Use Django's default logic but handle site errors gracefully
+        url = super().get_success_url()
+        if not url:
+            from django.conf import settings
+
+            return settings.LOGIN_REDIRECT_URL
+        return url
+
+
+class AccountInactiveView(View):
+    template_name = "accounts/account_inactive.html"
+
+    def get(self, request):
+        email = request.GET.get("email", "")
+        return render(request, self.template_name, {"email": email})
 
 
 # Simple logout view that handles GET
@@ -24,6 +100,68 @@ class SimpleLogoutView(View):
 def custom_logout(request):
     logout(request)
     return redirect("accounts:login")
+
+
+class AdminResendActivationView(View):
+    """View para reenviar email de ativação a partir do admin"""
+
+    def get(self, request, user_id):
+        from django.contrib.auth.decorators import login_required
+        from django.contrib.admin import site
+
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden("Acesso restrito a administradores.")
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=user_id)
+
+            if user.is_active:
+                from django.contrib import messages
+
+                messages.info(request, f"O usuário {user.email} já está ativo.")
+            else:
+                import secrets
+
+                user.verification_token = secrets.token_urlsafe(32)
+                user.save()
+
+                try:
+                    from base.core.emails import send_verification_email
+
+                    base_url = get_base_url(request)
+
+                    verification_url = (
+                        f"{base_url}/accounts/ativar/{user.verification_token}/"
+                    )
+                    send_verification_email(user, verification_url)
+
+                    from django.contrib import messages
+
+                    messages.success(
+                        request, f"Email de ativação enviado para {user.email}!"
+                    )
+                except Exception as e:
+                    from django.contrib import messages
+
+                    messages.error(request, f"Erro ao enviar email: {e}")
+
+        except User.DoesNotExist:
+            from django.contrib import messages
+
+            messages.error(request, "Usuário não encontrado.")
+
+        return redirect("/admin/accounts/user/")
+
+
+class RegistrationSuccessView(View):
+    template_name = "accounts/registration_success.html"
+
+    def get(self, request):
+        email = request.GET.get("email", "")
+        return render(request, self.template_name, {"email": email})
 
 
 class RegisterView(View):
@@ -88,25 +226,176 @@ class RegisterView(View):
                 user.account = account
                 user.save()
 
-            from django.contrib.auth import get_backends
+            # Enviar email de verificação
+            import logging
 
-            backend = get_backends()[0]
-            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            logger = logging.getLogger(__name__)
 
-            # Enviar email de boas-vindas
             try:
-                from base.core.emails import send_welcome_email
+                from base.core.emails import send_verification_email
+                from django.urls import reverse
 
-                send_welcome_email(user)
+                base_url = get_base_url(request)
+
+                verification_url = (
+                    f"{base_url}/accounts/ativar/{user.verification_token}/"
+                )
+
+                email_sent = send_verification_email(user, verification_url)
+
+                if not email_sent:
+                    logger.error(
+                        f"Falha ao enviar email de verificacao para {user.email}"
+                    )
+                    messages.warning(
+                        request,
+                        "Cadastro realizado, mas houve problema ao enviar email de verificação. Verifique sua caixa de spam ou solicite reenvio.",
+                    )
+                else:
+                    logger.info(f"Email de verificacao enviado para {user.email}")
+
             except Exception as e:
-                print(f"Erro ao enviar email: {e}")
+                import traceback
 
-            messages.success(request, "Cadastro realizado com sucesso!")
-            return redirect("dashboard:home")
-        return render(request, self.template_name, {"form": form})
+                logger.error(
+                    f"Erro ao enviar email de verificacao: {e}\n{traceback.format_exc()}"
+                )
+                messages.warning(
+                    request,
+                    "Cadastro realizado, mas houve problema ao enviar email de verificação. Verifique sua caixa de spam ou solicite reenvio.",
+                )
+
+            messages.success(
+                request,
+                "Cadastro realizado! Verifique seu email para ativar sua conta.",
+            )
+            return render(
+                request, "accounts/registration_success.html", {"email": user.email}
+            )
+
+        return render(
+            request, self.template_name, {"form": form, "form_data": request.POST}
+        )
 
 
 register = RegisterView.as_view()
+
+
+class ActivationSuccessView(View):
+    template_name = "accounts/activation_success.html"
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+
+class ActivateAccountView(View):
+    template_name = "accounts/account_activated.html"
+
+    def get(self, request, token=None):
+        User = get_user_model()
+        try:
+            user = User.objects.get(verification_token=token)
+            user.is_verified = True
+            user.is_active = True
+            user.verification_token = ""
+            user.save()
+
+            return render(request, self.template_name)
+
+        except User.DoesNotExist:
+            return render(
+                request,
+                "accounts/activation_error.html",
+                {"success": False, "error": "Token inválido ou expirado."},
+            )
+
+
+class ResendActivationView(View):
+    template_name = "accounts/resend_activation.html"
+
+    def get(self, request):
+        email = request.GET.get("email", "")
+
+        # Se passou email na URL, tentar reenviar automaticamente
+        if email:
+            User = get_user_model()
+            user = User.objects.filter(email__iexact=email).first()
+
+            if user:
+                if user.is_active:
+                    messages.info(
+                        request, "Esta conta já está ativa. Você pode fazer login."
+                    )
+                    return render(
+                        request, self.template_name, {"email": email, "sent": True}
+                    )
+
+                # Reenviar email
+                import secrets
+
+                user.verification_token = secrets.token_urlsafe(32)
+                user.save()
+
+                try:
+                    from base.core.emails import send_verification_email
+
+                    base_url = get_base_url(request)
+
+                    verification_url = (
+                        f"{base_url}/accounts/ativar/{user.verification_token}/"
+                    )
+                    send_verification_email(user, verification_url)
+
+                    return render(
+                        request, self.template_name, {"email": email, "sent": True}
+                    )
+                except Exception as e:
+                    messages.error(
+                        request, "Erro ao enviar email. Tente novamente mais tarde."
+                    )
+                    print(f"Erro ao enviar email: {e}")
+            else:
+                messages.error(request, "Email não encontrado.")
+
+        return render(request, self.template_name, {"email": email})
+
+    def post(self, request):
+        email = request.POST.get("email", "").strip()
+        User = get_user_model()
+
+        user = User.objects.filter(email__iexact=email).first()
+
+        if not user:
+            messages.error(request, "Email não encontrado.")
+            return render(request, self.template_name, {"email": email})
+
+        if user.is_active:
+            messages.info(request, "Esta conta já está ativa. Você pode fazer login.")
+            return render(request, self.template_name, {"email": email, "sent": True})
+
+        import secrets
+
+        user.verification_token = secrets.token_urlsafe(32)
+        user.save()
+
+        try:
+            from base.core.emails import send_verification_email
+
+            base_url = get_base_url(request)
+
+            verification_url = f"{base_url}/accounts/ativar/{user.verification_token}/"
+            send_verification_email(user, verification_url)
+
+            messages.success(
+                request,
+                "Email de ativação enviado! Verifique sua caixa de entrada.",
+            )
+            return render(request, self.template_name, {"email": email, "sent": True})
+        except Exception as e:
+            messages.error(request, "Erro ao enviar email. Tente novamente mais tarde.")
+            print(f"Erro ao enviar email: {e}")
+
+        return render(request, self.template_name, {"email": email})
 
 
 class ProfileView(LoginRequiredMixin, View):

@@ -75,37 +75,6 @@
     </div>
     {% endif %}
     
-    {% if services %}
-    <div class="section">
-        <h2>Serviços</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Serviço</th>
-                    <th class="text-right">Qtd</th>
-                    <th class="text-right">Valor Unit.</th>
-                    <th class="text-right">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in services %}
-                <tr>
-                    <td>
-                        <strong>{{ s.service.name }}</strong>
-                        {% if s.service.description %}
-                        <br><span style="font-size: 11px; color: #666;">{{ s.service.description }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-right">{{ s.quantity }}</td>
-                    <td class="text-right">R$ {{ s.unit_price|floatformat:2 }}</td>
-                    <td class="text-right">R$ {{ s.total|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
-    
     {% if expenses %}
     <div class="section">
         <h2>Despesas</h2>

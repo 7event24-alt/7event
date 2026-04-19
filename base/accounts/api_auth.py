@@ -77,6 +77,8 @@ class AuthViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"], permission_classes=[permissions.AllowAny])
     def register(self, request):
         from django.contrib.auth import get_user_model
+        from django.contrib.auth import password_validation
+        import re
 
         email = request.data.get("email")
         password = request.data.get("password")
@@ -96,10 +98,34 @@ class AuthViewSet(viewsets.ViewSet):
                 {"error": "As senhas não conferem"}, status=status.HTTP_400_BAD_REQUEST
             )
 
+        try:
+            password_validation.validate_password(password)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if User.objects.filter(email=email).exists():
             return Response(
                 {"error": "Email já está em uso"}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Validar telefone duplicado (normalizado)
+        if phone:
+            phone_normalized = re.sub(r"\D", "", phone)
+            for user in User.objects.filter(phone__isnull=False).exclude(phone=""):
+                if user.phone:
+                    user_phone_normalized = re.sub(r"\D", "", user.phone)
+                    if user_phone_normalized == phone_normalized:
+                        return Response(
+                            {
+                                "error": "Este telefone já está cadastrado em outra conta. Entre em contato com o suporte para recuperar seu acesso."
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+            # Normalizar telefone para salvar
+            phone = phone_normalized
 
         # Gerar token de verificação
         verification_token = secrets.token_urlsafe(32)

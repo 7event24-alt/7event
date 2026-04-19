@@ -78,7 +78,7 @@ function markNotificationAndRedirect(event, notificationId, url) {
     
     if (!url || url === '#') return;
     
-    fetch('/accounts/notificacoes/marcar-lida/' + notificationId + '/', {
+    fetch('/app/accounts/notificacoes/marcar-lida/' + notificationId + '/', {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),

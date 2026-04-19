@@ -1,6 +1,5 @@
 from django import forms
-from .models import Quote, QuoteExpense, QuoteService
-from base.services.models import Service
+from .models import Quote, QuoteExpense
 
 
 class QuoteForm(forms.ModelForm):
@@ -80,54 +79,6 @@ class QuoteForm(forms.ModelForm):
                 attrs={
                     "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
                     "rows": 3,
-                }
-            ),
-        }
-
-
-class QuoteServiceForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        account = kwargs.pop("account", None) or kwargs.pop("company", None)
-        super().__init__(*args, **kwargs)
-        if account:
-            self.fields["service"].queryset = Service.objects.filter(account=account)
-
-        for field_name, field in self.fields.items():
-            current_class = field.widget.attrs.get("class", "input")
-            if "input" in current_class:
-                current_class = current_class.replace(
-                    "input",
-                    "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
-                )
-            else:
-                current_class = f"w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm {current_class}"
-            if self.errors.get(field_name):
-                current_class += (
-                    " border-red-500 focus:ring-red-500 focus:border-red-500"
-                )
-            field.widget.attrs["class"] = current_class.strip()
-
-    class Meta:
-        model = QuoteService
-        fields = ["service", "quantity", "custom_price"]
-        widgets = {
-            "service": forms.Select(
-                attrs={
-                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-                }
-            ),
-            "quantity": forms.NumberInput(
-                attrs={
-                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
-                    "min": 1,
-                    "value": 1,
-                }
-            ),
-            "custom_price": forms.NumberInput(
-                attrs={
-                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
-                    "placeholder": "Deixe vazio para usar padrão",
-                    "step": "0.01",
                 }
             ),
         }

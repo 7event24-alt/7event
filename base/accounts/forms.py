@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import password_validation
 from .models import User, Account, ProfessionalRole, Plan, AccountType
 
 
@@ -116,12 +117,77 @@ class RegisterForm(UserCreationForm):
     def clean_company_name(self):
         return self.cleaned_data.get("company_name", "")
 
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "").strip().lower()
+        if not email:
+            return email
+
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "Este email já está cadastrado em outra conta. "
+                "Entre em contato com o suporte para recuperar seu acesso."
+            )
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone", "").strip()
+        if not phone:
+            return phone
+
+        import re
+
+        phone_normalized = re.sub(r"\D", "", phone)
+
+        if not phone_normalized:
+            return phone
+
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        for user in User.objects.filter(phone__isnull=False).exclude(phone=""):
+            if user.phone:
+                user_phone_normalized = re.sub(r"\D", "", user.phone)
+                if user_phone_normalized == phone_normalized:
+                    raise forms.ValidationError(
+                        "Este telefone já está cadastrado em outra conta. "
+                        "Entre em contato com o suporte para recuperar seu acesso."
+                    )
+        return phone
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError("As senhas não conferem.")
+
+            password_validation.validate_password(password2, self.instance)
+
+        return password2
+
     def save(self, commit=True):
+        import secrets
         from .models import Account, Plan, AccountType
         from django.utils.text import slugify
         import uuid
 
         user = super().save(commit=False)
+
+        # Normalizar telefone: remover máscara
+        if user.phone:
+            import re
+
+            user.phone = re.sub(r"\D", "", user.phone)
+
+        # Criar usuário inativo até verificar o email
+        user.is_active = False
+        user.verification_token = secrets.token_urlsafe(32)
 
         if commit:
             user.save()
@@ -447,6 +513,54 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ("first_name", "last_name", "email", "phone", "role", "photo")
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "").strip().lower()
+        if not email:
+            return email
+
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        if (
+            User.objects.filter(email__iexact=email)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
+            raise forms.ValidationError("Este email já está cadastrado em outra conta.")
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone", "").strip()
+        if not phone:
+            return phone
+
+        import re
+
+        phone_normalized = re.sub(r"\D", "", phone)
+
+        if not phone_normalized:
+            return phone
+
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        for user in (
+            User.objects.filter(phone__isnull=False)
+            .exclude(phone="")
+            .exclude(pk=self.instance.pk)
+        ):
+            if user.phone:
+                user_phone_normalized = re.sub(r"\D", "", user.phone)
+                if user_phone_normalized == phone_normalized:
+                    raise forms.ValidationError(
+                        "Este telefone já está cadastrado em outra conta."
+                    )
+
+        self.cleaned_data["phone"] = phone_normalized
+        return phone_normalized
 
 
 class PasswordChangeForm(forms.ModelForm):

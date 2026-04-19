@@ -37,6 +37,14 @@
             </div>
         </div>
         <div class="flex gap-2">
+            {% if quote.status == 'draft' and quote.client and quote.client.email %}
+            <form method="post" action="{% url 'quote:send' quote.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2" onclick="return confirm('Enviar orçamento por email para {{ quote.client.email }}?')">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+            </form>
+            {% endif %}
             <a href="{% url 'quote:update' quote.pk %}" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
                 <i class="fas fa-edit"></i> Editar
             </a>
@@ -47,115 +55,80 @@
     </div>
 </div>
 
-<!-- Grid de Serviços e Despesas -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Serviços -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-800">Serviços</h3>
-            <a href="{% url 'quote:add_service' quote.pk %}" class="bg-primary hover:bg-secondary text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
-                <i class="fas fa-plus"></i> Adicionar
-            </a>
-        </div>
-        {% if services %}
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Serviço</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Qtd</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Unit.</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
-                        <th class="px-4 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {% for s in services %}
-                    <tr>
-                        <td class="px-4 py-3 text-gray-800">{{ s.service.name }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ s.quantity }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ s.unit_price|brl }}</td>
-                        <td class="px-4 py-3 font-semibold text-gray-800">{{ s.total|brl }}</td>
-                        <td class="px-4 py-3">
-                            <form method="post" action="{% url 'quote:delete_service' quote.pk s.pk %}" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Excluir serviço?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot class="bg-gray-50">
-                    <tr>
-                        <td colspan="3" class="px-4 py-3 font-semibold text-gray-800">Total Serviços</td>
-                        <td colspan="2" class="px-4 py-3 font-bold text-primary">
-                            {% with services_total=quote.services.all|length %}
-                            {% if services_total > 0 %}
-                            R$ {{ quote.total|default:0|stringformat:".2f" }}
-                            {% else %}
-                            R$ 0,00
-                            {% endif %}
-                            {% endwith %}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        {% else %}
-        <div class="p-8 text-center text-gray-500">
-            <p>Nenhum serviço adicionado.</p>
-        </div>
-        {% endif %}
+<!-- Detalhamento do Orçamento -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="text-lg font-semibold text-gray-800">Mão de Obra</h3>
     </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <span class="text-sm font-medium text-gray-500">Valor da Hora</span>
+                <p class="text-xl font-semibold text-gray-800">{{ quote.hourly_rate|brl }}</p>
+            </div>
+            <div>
+                <span class="text-sm font-medium text-gray-500">Horas de Trabalho</span>
+                <p class="text-xl font-semibold text-gray-800">{{ quote.work_hours|floatformat:2 }}h</p>
+            </div>
+            <div>
+                <span class="text-sm font-medium text-gray-500">Total Mão de Obra</span>
+                <p class="text-xl font-semibold text-primary">{{ quote.labor_cost|brl }}</p>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- Despesas -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-800">Despesas</h3>
-            <a href="{% url 'quote:add_expense' quote.pk %}" class="bg-primary hover:bg-secondary text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
-                <i class="fas fa-plus"></i> Adicionar
-            </a>
-        </div>
-        {% if expenses %}
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Descrição</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Qtd</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Unit.</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
-                        <th class="px-4 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {% for expense in expenses %}
-                    <tr>
-                        <td class="px-4 py-3 text-gray-800">{{ expense.description }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ expense.quantity }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ expense.unit_price|brl }}</td>
-                        <td class="px-4 py-3 font-semibold text-gray-800">{{ expense.total|brl }}</td>
-                        <td class="px-4 py-3">
-                            <form method="post" action="{% url 'quote:delete_expense' quote.pk expense.pk %}" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Excluir despesa?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="p-8 text-center text-gray-500">
-            <p>Nenhuma despesa adicionada.</p>
-        </div>
-        {% endif %}
+<!-- Despesas -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800">Despesas</h3>
+        <a href="{% url 'quote:add_expense' quote.pk %}" class="bg-primary hover:bg-secondary text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
+            <i class="fas fa-plus"></i> Adicionar
+        </a>
     </div>
+    {% if expenses %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Descrição</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Qtd</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Unit.</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for expense in expenses %}
+                <tr>
+                    <td class="px-4 py-3 text-gray-800">{{ expense.description }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ expense.quantity }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ expense.unit_price|brl }}</td>
+                    <td class="px-4 py-3 font-semibold text-gray-800">{{ expense.total|brl }}</td>
+                    <td class="px-4 py-3">
+                        <form method="post" action="{% url 'quote:delete_expense' quote.pk expense.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Excluir despesa?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-gray-50">
+                <tr>
+                    <td colspan="3" class="px-4 py-3 font-semibold text-gray-800">Total Despesas</td>
+                    <td colspan="2" class="px-4 py-3 font-bold text-primary">{{ quote.expenses_cost|brl }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-8 text-center text-gray-500">
+        <p>Nenhuma despesa adicionada.</p>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Total -->

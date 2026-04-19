@@ -10,7 +10,7 @@ app_name = "accounts"
 urlpatterns = [
     path(
         "login/",
-        auth_views.LoginView.as_view(
+        views.CustomLoginView.as_view(
             template_name="registration/login.html", redirect_authenticated_user=True
         ),
         name="login",
@@ -35,6 +35,26 @@ urlpatterns = [
         name="logout_get",
     ),
     path("register/", views.register, name="register"),
+    path(
+        "cadastro-sucesso/",
+        views.RegistrationSuccessView.as_view(),
+        name="registration_success",
+    ),
+    path(
+        "ativar/<str:token>/",
+        views.ActivateAccountView.as_view(),
+        name="activate_account",
+    ),
+    path("ativado/", views.ActivationSuccessView.as_view(), name="activation_success"),
+    path("reativar/", views.ResendActivationView.as_view(), name="resend_activation"),
+    path(
+        "conta-inativa/", views.AccountInactiveView.as_view(), name="account_inactive"
+    ),
+    path(
+        "admin/resend-activation/<int:user_id>/",
+        views.AdminResendActivationView.as_view(),
+        name="admin_resend_activation",
+    ),
     path("profile/", views.profile, name="profile"),
     path("password/", views.password_change, name="password_change"),
     path("notificacoes/", views.notifications, name="notifications"),

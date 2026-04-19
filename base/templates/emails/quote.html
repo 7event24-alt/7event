@@ -1,0 +1,62 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="color: #1f2937;">
+    <h2 style="color: #1e3a5f; margin-bottom: 20px;">Olá, {{ quote.client.name }}!</h2>
+    
+    <p style="font-size: 16px; line-height: 1.6;">
+        Segue o orçamento para <strong>{{ quote.title }}</strong>.
+    </p>
+    
+    {% if quote.description %}
+    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <h3 style="color: #1e3a5f; margin: 0 0 15px 0; font-size: 16px;">Descrição</h3>
+        <p style="color: #1f2937; font-size: 14px; line-height: 1.6;">{{ quote.description|linebreaks }}</p>
+    </div>
+    {% endif %}
+    
+    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <h3 style="color: #1e3a5f; margin: 0 0 15px 0; font-size: 16px;">Detalhes do Orçamento</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Valor da Diária:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">R$ {{ quote.hourly_rate }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Quantidade de Diárias:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ quote.work_hours }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Total Mão de Obra:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">R$ {{ quote.labor_cost }}</td>
+            </tr>
+            {% if quote.expenses_cost > 0 %}
+            <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Despesas:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">R$ {{ quote.expenses_cost }}</td>
+            </tr>
+            {% endif %}
+            <tr style="border-top: 2px solid #1e3a5f;">
+                <td style="padding: 12px 0 8px 0; color: #1e3a5f; font-size: 16px; font-weight: bold;">TOTAL DO ORÇAMENTO:</td>
+                <td style="padding: 12px 0 8px 0; color: #059669; font-size: 20px; font-weight: bold;">R$ {{ quote.total }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    {% if quote.notes %}
+    <div style="background-color: #fef3c7; border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 14px;">Observações</h3>
+        <p style="color: #78350f; font-size: 14px; line-height: 1.6;">{{ quote.notes|linebreaks }}</p>
+    </div>
+    {% endif %}
+    
+    <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+        Para aceitar este orçamento, entre em contato conosco ou responda este email.
+    </p>
+    
+    <p style="font-size: 14px; color: #1f2937; margin-top: 20px;">
+        Atenciosamente,<br>
+        <strong>Equipe 7Event</strong>
+    </p>
+</div>
+{% endblock %}

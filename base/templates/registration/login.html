@@ -50,22 +50,36 @@
             <div class="p-8">
                 <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Entrar</h2>
                 
-                {% if form.non_field_errors %}
+                {% if messages %}
+                {% for message in messages %}
+                {% if message.tags == 'success' %}
+                <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-center gap-2 text-green-700">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                </div>
+                {% else %}
                 <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div class="flex items-center gap-2 text-red-700">
                         <i class="fas fa-exclamation-circle"></i>
-                        {% for error in form.non_field_errors %}
-                        <span>{{ error }}</span>
-                        {% endfor %}
+                        <span>{{ message }}</span>
                     </div>
+                    {% if "ativada" in message or "ativação" in message %}
+                    <a href="{% url 'accounts:resend_activation' %}" class="mt-2 inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                        <i class="fas fa-envelope"></i> Reenviar email de ativação
+                    </a>
+                    {% endif %}
                 </div>
+                {% endif %}
+                {% endfor %}
                 {% endif %}
                 
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">E-mail ou Telefone</label>
-                        <input type="text" name="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.username.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com ou (00) 00000-0000" required>
+                        <input type="text" name="username" value="{{ username_value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.username.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com ou (00) 00000-0000" required>
                         {% if form.username.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -75,7 +89,12 @@
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                        <input type="password" name="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" required>
+                        <div class="relative">
+                            <input type="password" name="password" id="passwordInput" class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" required autocomplete="current-password">
+                            <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
                         {% if form.password.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -83,6 +102,22 @@
                         </p>
                         {% endif %}
                     </div>
+                    
+                    <script>
+                    function togglePassword() {
+                        const input = document.getElementById('passwordInput');
+                        const icon = document.getElementById('eyeIcon');
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                        } else {
+                            input.type = 'password';
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                        }
+                    }
+                    </script>
                     
                     <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition font-medium flex items-center justify-center gap-2">
                         <i class="fas fa-sign-in-alt"></i> Entrar
@@ -93,6 +128,14 @@
                     <p><a href="{% url 'password_reset' %}" class="text-primary hover:underline">Esqueci minha senha</a></p>
                     <p class="mt-2">Não tem conta? <a href="{% url 'accounts:register' %}" class="text-primary hover:underline font-medium">Cadastre-se</a></p>
                 </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200 text-center">
+                    <p class="text-sm text-gray-500">
+                        <a href="{% url 'support:contact' %}" class="text-primary hover:underline">
+                            <i class="fas fa-question-circle"></i> Problemas com login?
+                        </a>
+                    </p>
+                </div>
             </div>
             
             <div class="bg-gray-50 px-8 py-4 text-center">
@@ -100,5 +143,15 @@
             </div>
         </div>
     </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const errorField = document.querySelector('.border-red-500, input.error');
+        if (errorField) {
+            errorField.focus();
+            errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+    </script>
 </body>
 </html>

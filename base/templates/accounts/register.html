@@ -68,7 +68,7 @@
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.first_name.label }} *</label>
-                            <input type="text" name="first_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.first_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Seu nome" required>
+                            <input type="text" name="first_name" value="{{ form_data.first_name|default:form.first_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.first_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Seu nome" required>
                             {% if form.first_name.errors %}
                             <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -78,7 +78,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.last_name.label }} *</label>
-                            <input type="text" name="last_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.last_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Sobrenome" required>
+                            <input type="text" name="last_name" value="{{ form_data.last_name|default:form.last_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.last_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Sobrenome" required>
                             {% if form.last_name.errors %}
                             <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -90,7 +90,7 @@
                     
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.email.label }} *</label>
-                        <input type="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.email.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com" required>
+                        <input type="email" name="email" value="{{ form_data.email|default:form.email.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.email.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com" required>
                         {% if form.email.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -101,7 +101,7 @@
                     
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.phone.label }} *</label>
-                        <input type="text" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.phone.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="(00) 00000-0000" required>
+                        <input type="text" name="phone" value="{{ form_data.phone|default:form.phone.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.phone.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="(00) 00000-0000" required>
                         {% if form.phone.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -112,7 +112,7 @@
                     
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.company_name.label }}</label>
-                        <input type="text" name="company_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.company_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Nome da sua empresa ou organização">
+                        <input type="text" name="company_name" value="{{ form_data.company_name|default:form.company_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.company_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Nome da sua empresa ou organização">
                         {% if form.company_name.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -126,7 +126,7 @@
                         <select name="role" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.role.errors %}border-red-500 focus:ring-red-500{% endif %}">
                             <option value="">Selecione uma função</option>
                             {% for value, label in form.role.field.choices %}
-                            <option value="{{ value }}">{{ label }}</option>
+                            <option value="{{ value }}" {% if form_data.role == value or form.role.value == value %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                         {% if form.role.errors %}
@@ -137,16 +137,17 @@
                         {% endif %}
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="grid grid-cols-2 gap-4 mb-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Senha *</label>
-                            <input type="password" name="password1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password1.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Senha" required>
+                            <input type="password" name="password1" id="password1" onchange="validatePassword(this.value)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password1.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Senha" required>
                             {% if form.password1.errors %}
                             <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                                 <i class="fas fa-exclamation-circle"></i>
                                 {{ form.password1.errors.0 }}
                             </p>
                             {% endif %}
+                            <div id="password-feedback" class="mt-1 text-xs hidden"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar *</label>
@@ -207,12 +208,22 @@
                 
                 <script>
                     // Funções do Modal de Confirmação de Email
+                    let emailConfirmed = false;
+                    
                     function showEmailConfirmModal() {
                         const email = document.querySelector('input[name="email"]').value;
                         if (!email) {
+                            // Se email vazio, deixa submeter para mostrar erro do Django
                             document.querySelector('form').submit();
                             return;
                         }
+                        
+                        // Se email ja foi confirmado antes, submete diretamente
+                        if (emailConfirmed) {
+                            document.querySelector('form').submit();
+                            return;
+                        }
+                        
                         document.getElementById('confirmEmail').textContent = email;
                         document.getElementById('emailConfirmModal').classList.remove('hidden');
                     }
@@ -222,6 +233,7 @@
                     }
                     
                     function confirmEmail() {
+                        emailConfirmed = true;
                         document.querySelector('form').submit();
                     }
                     
@@ -230,11 +242,86 @@
                         document.querySelector('input[name="email"]').focus();
                     }
                     
-                    // Interceptar submit
+                    // Interceptar submit - validar senhas primeiro
                     document.querySelector('form').addEventListener('submit', function(e) {
+                        const password1 = document.querySelector('input[name="password1"]').value;
+                        const password2 = document.querySelector('input[name="password2"]').value;
+                        const email = document.querySelector('input[name="email"]').value;
+                        
+                        // Se senhas não conferem, não mostrar modal - deixar Django validar
+                        if (password1 !== password2) {
+                            return;
+                        }
+                        
+                        // Validar força da senha
+                        const hasMinLength = password1.length >= 8;
+                        const hasNumber = /\d/.test(password1);
+                        const hasUpper = /[A-Z]/.test(password1);
+                        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password1);
+                        const strength = [hasMinLength, hasNumber, hasUpper, hasSpecial].filter(Boolean).length;
+                        
+                        if (strength < 2) {
+                            document.getElementById('password-feedback').innerHTML = '<span class="text-red-600"><i class="fas fa-times-circle"></i> Senha muito fraca. Use pelo menos 8 caracteres com letras, números e símbolos.</span>';
+                            document.getElementById('password-feedback').classList.remove('hidden');
+                            e.preventDefault();
+                            return;
+                        }
+                        
+                        // Se email está vazio, deixar Django validar
+                        if (!email) {
+                            return;
+                        }
+                        
+                        // Se email já foi confirmado antes, não mostrar modal
+                        if (emailConfirmed) {
+                            return;
+                        }
+                        
+                        // Mostrar modal de confirmação de email
                         e.preventDefault();
                         showEmailConfirmModal();
                     });
+                    
+                    // Focar no campo com erro
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const errorField = document.querySelector('.border-red-500');
+                        if (errorField) {
+                            errorField.focus();
+                            errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                    
+                    // Validar força da senha em tempo real
+                    function validatePassword(password) {
+                        const feedback = document.getElementById('password-feedback');
+                        
+                        if (!password) {
+                            feedback.classList.add('hidden');
+                            return;
+                        }
+                        
+                        const hasMinLength = password.length >= 8;
+                        const hasNumber = /\d/.test(password);
+                        const hasUpper = /[A-Z]/.test(password);
+                        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+                        
+                        const score = [hasMinLength, hasNumber, hasUpper, hasSpecial].filter(Boolean).length;
+                        
+                        let html = '';
+                        
+                        if (score <= 1) {
+                            html = '<span class="text-red-600"><i class="fas fa-times-circle mr-1"></i>Senha fraca (mínimo 8 caracteres, número, maiúscula)</span>';
+                        } else if (score === 2) {
+                            html = '<span class="text-yellow-600"><i class="fas fa-exclamation-circle mr-1"></i>Senha média</span>';
+                        } else if (score === 3) {
+                            html = '<span class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Senha boa</span>';
+                        } else {
+                            html = '<span class="text-green-600 font-medium"><i class="fas fa-shield-alt mr-1"></i>Senha forte</span>';
+                        }
+                        
+                        feedback.innerHTML = html;
+                        feedback.classList.remove('hidden');
+                    }
                 </script>
                 
                 <div class="mt-6 text-center text-sm text-gray-600">

@@ -1,6 +1,6 @@
 from django.db import models
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from decimal import Decimal
 
 
 class QuoteStatus(models.TextChoices):
@@ -75,57 +75,33 @@ class Quote(models.Model):
     def calculate(self):
         if not self.pk:
             return Decimal("0")
-        services_total = sum(s.total for s in self.services.all())
         self.labor_cost = self.hourly_rate * self.work_hours
         self.expenses_cost = sum(e.total for e in self.expenses.all())
-        self.total = services_total + self.labor_cost + self.expenses_cost
+        self.total = self.labor_cost + self.expenses_cost
         return self.total
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_status = None
+
+        if not is_new:
+            old_quote = Quote.objects.get(pk=self.pk)
+            old_status = old_quote.status
+
         if self.pk:
             self.calculate()
+
         super().save(*args, **kwargs)
 
+        if (
+            not is_new
+            and old_status != QuoteStatus.SENT
+            and self.status == QuoteStatus.SENT
+        ):
+            if self.client and self.client.email:
+                from base.core.emails import send_quote_email
 
-class QuoteService(models.Model):
-    quote = models.ForeignKey(
-        Quote,
-        on_delete=models.CASCADE,
-        related_name="services",
-        verbose_name=_("Orçamento"),
-    )
-    service = models.ForeignKey(
-        "services.Service",
-        on_delete=models.CASCADE,
-        related_name="quote_services",
-        verbose_name=_("Serviço"),
-    )
-    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Quantidade"))
-    custom_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Preço Customizado"),
-    )
-
-    class Meta:
-        db_table = "quote_services"
-        verbose_name = _("Serviço do Orçamento")
-        verbose_name_plural = _("Serviços do Orçamento")
-
-    def __str__(self):
-        return f"{self.service.name} x{self.quantity}"
-
-    @property
-    def unit_price(self):
-        if self.custom_price:
-            return self.custom_price
-        return self.service.hourly_rate * self.service.estimated_duration_hours
-
-    @property
-    def total(self):
-        return self.unit_price * self.quantity
+                send_quote_email(self, self.client.email)
 
 
 class QuoteExpense(models.Model):

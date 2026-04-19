@@ -51,7 +51,15 @@ class ExpenseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+
+        if user:
+            if user.is_superuser:
+                self.fields["job"].queryset = Job.objects.filter(account=user.account)
+            else:
+                self.fields["job"].queryset = Job.objects.filter(user=user)
+
         for field_name, field in self.fields.items():
             current_class = field.widget.attrs.get("class", "")
             if self.errors.get(field_name):
@@ -88,12 +96,14 @@ class ExpenseListView(CompanyRequiredMixin, View):
                 .select_related("job", "user")
                 .order_by("-date")
             )
+            jobs = Job.objects.filter(account=company)
         else:
             expenses = (
                 Expense.objects.filter(account=company, user=user)
                 .select_related("job", "user")
                 .order_by("-date")
             )
+            jobs = Job.objects.filter(user=user)
 
         query = request.GET.get("q", "")
         if query:
@@ -127,7 +137,7 @@ class ExpenseListView(CompanyRequiredMixin, View):
                 "job_filter": job_filter,
                 "user_filter": user_filter,
                 "categories": ExpenseCategory.choices,
-                "jobs": Job.objects.filter(account=company),
+                "jobs": jobs,
                 "users": users,
                 "is_superuser": is_superuser,
                 "total_value": total_value,
@@ -139,19 +149,21 @@ class ExpenseCreateView(CompanyRequiredMixin, View):
     template_name = "expenses/form.html"
 
     def get(self, request):
-        form = ExpenseForm()
-        jobs = Job.objects.filter(account=request.user.account)
+        form = ExpenseForm(user=request.user)
+        if request.user.is_superuser:
+            jobs = Job.objects.filter(account=request.user.account)
+        else:
+            jobs = Job.objects.filter(user=request.user)
         return render(request, self.template_name, {"form": form, "jobs": jobs})
 
     def post(self, request):
-        form = ExpenseForm(request.POST)
+        form = ExpenseForm(request.POST, user=request.user)
         if form.is_valid():
             expense = form.save(commit=False)
             expense.account = request.user.account
             expense.user = request.user
             expense.save()
 
-            # Criar notificação
             if request.user.account.notify_on_expense_created:
                 from base.accounts.models import Notification, NotificationType
 
@@ -169,7 +181,10 @@ class ExpenseCreateView(CompanyRequiredMixin, View):
 
             messages.success(request, "Despesa criada com sucesso!")
             return redirect("expenses:list")
-        jobs = Job.objects.filter(account=request.user.account)
+        if request.user.is_superuser:
+            jobs = Job.objects.filter(account=request.user.account)
+        else:
+            jobs = Job.objects.filter(user=request.user)
         return render(request, self.template_name, {"form": form, "jobs": jobs})
 
 
@@ -178,20 +193,26 @@ class ExpenseUpdateView(CompanyRequiredMixin, View):
 
     def get(self, request, pk):
         expense = get_object_or_404(Expense, pk=pk, account=request.user.account)
-        form = ExpenseForm(instance=expense)
-        jobs = Job.objects.filter(account=request.user.account)
+        form = ExpenseForm(instance=expense, user=request.user)
+        if request.user.is_superuser:
+            jobs = Job.objects.filter(account=request.user.account)
+        else:
+            jobs = Job.objects.filter(user=request.user)
         return render(
             request, self.template_name, {"form": form, "object": expense, "jobs": jobs}
         )
 
     def post(self, request, pk):
         expense = get_object_or_404(Expense, pk=pk, account=request.user.account)
-        form = ExpenseForm(request.POST, instance=expense)
+        form = ExpenseForm(request.POST, instance=expense, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Despesa atualizada com sucesso!")
             return redirect("expenses:list")
-        jobs = Job.objects.filter(account=request.user.account)
+        if request.user.is_superuser:
+            jobs = Job.objects.filter(account=request.user.account)
+        else:
+            jobs = Job.objects.filter(user=request.user)
         return render(
             request, self.template_name, {"form": form, "object": expense, "jobs": jobs}
         )

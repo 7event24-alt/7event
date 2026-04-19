@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
+from django.urls import reverse
 from .models import (
     User,
     Account,
@@ -119,6 +121,7 @@ class UserAdmin(BaseUserAdmin):
         "is_account_admin",
         "is_active",
         "is_blocked",
+        "actions_column",
     ]
     list_filter = [
         "is_active",
@@ -131,6 +134,20 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ["username", "email", "first_name", "last_name"]
     ordering = ["-created_at"]
     readonly_fields = ("created_at", "updated_at", "last_login")
+
+    @admin.display(description="Ações")
+    def actions_column(self, obj):
+        if not obj.is_active:
+            url = reverse("accounts:admin_resend_activation", args=[obj.pk])
+            return format_html(
+                '<a href="{}" class="button" title="Enviar email de ativação" style="color: #2563eb;">'
+                '<i class="fas fa-envelope"></i> Enviar</a>',
+                url,
+            )
+        return "-"
+
+    def has_add_permission(self, request):
+        return True
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),

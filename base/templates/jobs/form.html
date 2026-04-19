@@ -149,7 +149,7 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.cache.label }}</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Cache Total</label>
                             {{ form.cache }}
                         </div>
                         <div>
@@ -158,6 +158,7 @@
                         </div>
                     </div>
                     
+                    <!-- Payment Advance (Antecipado) -->
                     <div id="payment_advance_fields" class="mt-4" style="display: none;">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Data do Pagamento</label>
@@ -165,32 +166,53 @@
                         </div>
                     </div>
                     
+                    <!-- Payment Full (Total) -->
                     <div id="payment_full_fields" class="mt-4" style="display: none;">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Data do Pagamento</label>
-                            {{ form.payment_date }}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Valor Total</label>
+                                <input type="text" id="id_payment_total_display_full" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm bg-gray-100" readonly placeholder="0,00">
+                                <input type="hidden" name="payment_total" id="id_payment_total_full" value="">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Data do Pagamento</label>
+                                <input type="date" id="payment_date_full" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm" onchange="document.getElementById('id_payment_date').value = this.value">
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-info-circle"></i> Por padrão, a data é definida para 20 dias após o evento
+                                </p>
+                            </div>
                         </div>
                     </div>
                     
+                    <!-- Payment Partial (Parcial) -->
                     <div id="payment_partial_fields" class="mt-4 space-y-4" style="display: none;">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Valor Total</label>
-                                {{ form.payment_total }}
+                                <input type="text" id="id_payment_total_display" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm bg-gray-100" readonly placeholder="0,00">
+                                <input type="hidden" name="payment_total" id="id_payment_total" value="">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Valor Parcial</label>
                                 {{ form.payment_partial_value }}
+                                <p id="partial_error" class="text-xs text-red-500 mt-1 hidden">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>Valor parcial não pode ser maior que o cachê</span>
+                                </p>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Data Pagamento Parcial</label>
                                 {{ form.payment_partial_date }}
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-info-circle"></i> Por padrão, a data é definida para 20 dias após o evento
+                                </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Valor Restante</label>
-                                {{ form.payment_remaining_value }}
+                                <input type="text" id="id_payment_remaining_value_display" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm bg-gray-100" readonly placeholder="0,00">
+                                <input type="hidden" name="payment_remaining_value" id="id_payment_remaining_value" value="">
                             </div>
                         </div>
                         <div>
@@ -198,210 +220,7 @@
                             {{ form.payment_remaining_date }}
                         </div>
                     </div>
-                    
-                    <!-- Trabalhadores -->
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Trabalhadores</label>
-                        <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                            <!-- Header -->
-                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-100">
-                                <span id="selectedWorkersCount" class="text-sm text-gray-600">0 trabalhador(es) selecionado(s)</span>
-                                <button type="button" onclick="openWorkerModal()" class="text-sm text-primary hover:text-secondary flex items-center gap-1">
-                                    <i class="fas fa-plus"></i> Adicionar
-                                </button>
-                            </div>
-                            <!-- Lista de workers selecionados -->
-                            <div id="selectedWorkersContainer" class="max-h-48 overflow-y-auto"></div>
-                    </div>
 
-<!-- Modal Worker Rápido -->
-<div id="workerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        <div class="flex justify-between items-center p-5 border-b border-gray-200 shrink-0">
-            <h3 class="text-lg font-semibold text-gray-800">Adicionar Trabalhadores</h3>
-            <button onclick="closeWorkerModal()" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        
-        <div class="p-5 border-b border-gray-200 overflow-y-auto flex-1">
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Selecione trabalhadores existentes</h4>
-            <div class="mb-3">
-                <input type="text" id="workerSearch" onkeyup="filterWorkers()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="Buscar trabalhador...">
-            </div>
-            <div id="workersListContainer" class="space-y-2 max-h-48 overflow-y-auto">
-                {% for worker in available_workers %}
-                <label class="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer worker-item">
-                    <input type="checkbox" name="workers_modal" value="{{ worker.id }}" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                    <span class="text-sm worker-name">{{ worker.get_full_name }}</span>
-                    {% if worker.role %}
-                    <span class="text-xs text-gray-500 worker-role">({{ worker.role }})</span>
-                    {% endif %}
-                </label>
-                {% empty %}
-                <p class="text-sm text-gray-500 text-center py-2">Nenhum trabalhador disponível</p>
-                {% endfor %}
-            </div>
-            <div class="mt-4 flex justify-end">
-                <button type="button" onclick="addSelectedWorkers()" class="px-4 py-2 bg-primary hover:bg-secondary text-white rounded-lg text-sm">
-                    <i class="fas fa-plus mr-1"></i> Adicionar Selecionados
-                </button>
-            </div>
-        </div>
-        
-        <div class="p-5 border-t border-gray-200 shrink-0">
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Ou crie um novo trabalhador</h4>
-            <form id="quickWorkerForm" class="space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Nome *</label>
-                        <input type="text" name="first_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="Nome completo" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Email *</label>
-                        <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="email@exemplo.com">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Função</label>
-                    <select name="role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm">
-                        <option value="">Selecione uma função</option>
-                        {% get_professional_roles as roles %}
-                        {% for role in roles %}
-                        <option value="{{ role.0 }}">{{ role.1 }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="closeWorkerModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-primary hover:bg-secondary text-white rounded-lg text-sm">Criar Trabalhador</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-var selectedWorkers = [{% for w in selected_workers %}{{ w.id }}{% if not forloop.last %},{% endif %}{% endfor %}];
-
-function openWorkerModal() {
-    document.getElementById('workerModal').classList.remove('hidden');
-}
-
-function closeWorkerModal() {
-    document.getElementById('workerModal').classList.add('hidden');
-    document.getElementById('workerSearch').value = '';
-    filterWorkers();
-}
-
-function filterWorkers() {
-    var search = document.getElementById('workerSearch').value.toLowerCase();
-    var items = document.querySelectorAll('.worker-item');
-    items.forEach(function(item) {
-        var name = item.querySelector('.worker-name').textContent.toLowerCase();
-        var role = item.querySelector('.worker-role') ? item.querySelector('.worker-role').textContent.toLowerCase() : '';
-        if (name.indexOf(search) !== -1 || role.indexOf(search) !== -1) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-function addSelectedWorkers() {
-    var checkboxes = document.querySelectorAll('input[name="workers_modal"]:checked');
-    checkboxes.forEach(function(cb) {
-        var id = parseInt(cb.value);
-        if (!selectedWorkers.includes(id)) {
-            selectedWorkers.push(id);
-            
-            // Add to global workers list if not already there
-            var name = cb.closest('label').querySelector('.worker-name').textContent;
-            var roleEl = cb.closest('label').querySelector('.worker-role');
-            var role = roleEl ? roleEl.textContent.replace(/[()]/g, '') : '';
-            
-            var exists = window.availableWorkersList.some(function(w) { return w.id === id; });
-            if (!exists) {
-                window.availableWorkersList.push({id: id, first_name: name.split(' ')[0], last_name: name.split(' ').slice(1).join(' ') || '', role: role});
-            }
-        }
-        cb.checked = false;
-    });
-    renderSelectedWorkers();
-    closeWorkerModal();
-}
-
-function renderSelectedWorkers() {
-    var container = document.getElementById('selectedWorkersContainer');
-    var countEl = document.getElementById('selectedWorkersCount');
-    var workers = window.availableWorkersList || [];
-    
-    var selected = workers.filter(function(w) { return selectedWorkers.includes(w.id); });
-    
-    countEl.textContent = selected.length + ' trabalhador(es) selecionado(s)';
-    
-    if (selected.length === 0) {
-        container.innerHTML = '<div class="px-4 py-4 text-center text-gray-500 text-sm">Nenhum trabalhador selecionado</div>';
-        return;
-    }
-    
-    var html = '';
-    selected.forEach(function(w) {
-        html += '<div class="flex items-center justify-between px-4 py-2 border-b border-gray-100 hover:bg-gray-50">';
-        html += '<div class="flex items-center gap-2">';
-        html += '<input type="checkbox" name="workers" value="' + w.id + '" checked class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">';
-        html += '<span class="text-sm">' + w.first_name + ' ' + (w.last_name || '') + '</span>';
-        if (w.role) html += '<span class="text-xs text-gray-500">(' + w.role + ')</span>';
-        html += '</div>';
-        html += '<button type="button" onclick="removeWorker(' + w.id + ')" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-times"></i></button>';
-        html += '</div>';
-    });
-    container.innerHTML = html;
-}
-
-function removeWorker(id) {
-    selectedWorkers = selectedWorkers.filter(function(w) { return w !== id; });
-    renderSelectedWorkers();
-}
-
-document.getElementById('quickWorkerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var formData = new FormData(this);
-    
-    fetch('/accounts/api/quick-worker/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(Object.fromEntries(formData))
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.success) {
-            selectedWorkers.push(data.worker.id);
-            renderSelectedWorkers();
-            closeWorkerModal();
-            document.getElementById('quickWorkerForm').reset();
-        } else {
-            alert(data.error || 'Erro ao criar trabalhador');
-        }
-    })
-    .catch(function() {
-        alert('Erro ao criar trabalhador');
-    });
-});
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    var workersData = [
-        {% for w in available_workers %}{id: {{ w.id }}, first_name: "{{ w.first_name|escapejs }}", last_name: "{{ w.last_name|escapejs|default:'' }}", role: "{% if w.role %}{{ w.role|escapejs }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}
-    ];
-    window.availableWorkersList = workersData;
-    renderSelectedWorkers();
-});
-</script>
-                    
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.payment_status.label }}</label>
                         {{ form.payment_status }}
@@ -471,15 +290,145 @@ document.getElementById('single_day').addEventListener('change', function() {
     }
 });
 
-document.getElementById('id_payment_type').addEventListener('change', function() {
+function onPaymentTypeChange() {
+    const paymentType = document.getElementById('id_payment_type').value;
+    
     document.querySelectorAll('[id$="_fields"]').forEach(el => el.style.display = 'none');
-    if(this.value === 'advance') document.getElementById('payment_advance_fields').style.display = 'block';
-    else if(this.value === 'full') document.getElementById('payment_full_fields').style.display = 'block';
-    else if(this.value === 'partial') document.getElementById('payment_partial_fields').style.display = 'block';
-});
+    if(paymentType === 'advance') {
+        document.getElementById('payment_advance_fields').style.display = 'block';
+        setTodayDate('id_payment_date');
+        calculatePaymentTotalFromCache();
+    }
+    else if(paymentType === 'full') {
+        document.getElementById('payment_full_fields').style.display = 'block';
+        setPaymentDate20DaysAfterEvent('payment_date_full');
+    }
+    else if(paymentType === 'partial') {
+        document.getElementById('payment_partial_fields').style.display = 'block';
+        // Primeiro pagamento: 20 dias após o evento
+        setPaymentDate20DaysAfterEvent('id_payment_partial_date');
+        // Segundo pagamento: 20 dias após o primeiro pagamento
+        setDateFromField('id_payment_remaining_date', 'id_payment_partial_date', 20);
+        calculatePaymentTotalFromCache();
+    }
+}
+
+document.getElementById('id_payment_type').addEventListener('change', onPaymentTypeChange);
+
+function setTodayDate(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        const today = new Date().toISOString().split('T')[0];
+        field.value = today;
+    }
+}
+
+function setPaymentDate20DaysFromNow(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        const date = new Date();
+        date.setDate(date.getDate() + 20);
+        field.value = date.toISOString().split('T')[0];
+    }
+}
+
+function setPaymentDate20DaysAfterEvent(fieldId) {
+    const field = document.getElementById(fieldId);
+    const startDate = document.getElementById('id_start_date').value;
+    let baseDate;
+    
+    if (startDate) {
+        baseDate = new Date(startDate);
+    } else {
+        baseDate = new Date();
+    }
+    
+    if (field && baseDate) {
+        baseDate.setDate(baseDate.getDate() + 20);
+        field.value = baseDate.toISOString().split('T')[0];
+    }
+}
+
+function setDateFromField(targetFieldId, sourceFieldId, daysToAdd) {
+    const targetField = document.getElementById(targetFieldId);
+    const sourceField = document.getElementById(sourceFieldId);
+    
+    if (targetField && sourceField && sourceField.value) {
+        const sourceDate = new Date(sourceField.value);
+        sourceDate.setDate(sourceDate.getDate() + daysToAdd);
+        targetField.value = sourceDate.toISOString().split('T')[0];
+    }
+}
+
+function calculatePaymentTotalFromCache() {
+    const cache = parseFloat(document.getElementById('id_cache').value) || 0;
+    const paymentType = document.getElementById('id_payment_type').value;
+    const formattedValue = cache.toFixed(2).replace('.', ',');
+    
+    // Atualiza o Valor Total conforme o tipo de pagamento
+    if (paymentType === 'partial') {
+        const paymentTotalDisplay = document.getElementById('id_payment_total_display');
+        const paymentTotalHidden = document.getElementById('id_payment_total');
+        if (paymentTotalDisplay && paymentTotalHidden) {
+            paymentTotalDisplay.value = formattedValue;
+            paymentTotalHidden.value = cache;
+        }
+        
+        // Recalcula o restante
+        const partialInput = document.getElementById('id_payment_partial_value');
+        const partial = parseFloat(partialInput.value.replace(',', '.')) || 0;
+        const remainingDisplay = document.getElementById('id_payment_remaining_value_display');
+        const remainingHidden = document.getElementById('id_payment_remaining_value');
+        
+        if (partial > 0) {
+            const remaining = cache - partial;
+            remainingDisplay.value = remaining.toFixed(2).replace('.', ',');
+            remainingHidden.value = remaining;
+        } else {
+            remainingDisplay.value = formattedValue;
+            remainingHidden.value = cache;
+        }
+    }
+    else if (paymentType === 'full' || paymentType === 'advance') {
+        const paymentTotalDisplay = document.getElementById('id_payment_total_display_full');
+        const paymentTotalHidden = document.getElementById('id_payment_total_full');
+        if (paymentTotalDisplay && paymentTotalHidden) {
+            paymentTotalDisplay.value = formattedValue;
+            paymentTotalHidden.value = cache;
+        }
+    }
+}
+
+function calculatePaymentRemaining() {
+    const partial = parseFloat(document.getElementById('id_payment_partial_value').value.replace(',', '.')) || 0;
+    const total = parseFloat(document.getElementById('id_payment_total_display').value.replace(',', '.')) || 0;
+    const remainingDisplay = document.getElementById('id_payment_remaining_value_display');
+    const remainingHidden = document.getElementById('id_payment_remaining_value');
+    const errorMsg = document.getElementById('partial_error');
+    const partialInput = document.getElementById('id_payment_partial_value');
+    
+    if (partial > total) {
+        errorMsg.classList.remove('hidden');
+        partialInput.classList.add('border-red-500');
+    } else {
+        errorMsg.classList.add('hidden');
+        partialInput.classList.remove('border-red-500');
+        
+        const remaining = total - partial;
+        const formattedRemaining = remaining.toFixed(2).replace('.', ',');
+        remainingDisplay.value = formattedRemaining;
+        remainingHidden.value = remaining;
+    }
+}
 
 {% if object %}
 document.getElementById('id_payment_type').dispatchEvent(new Event('change'));
+{% else %}
+document.getElementById('id_start_date').addEventListener('change', setDefaultPaymentDates);
+// Also call on load if start_date already has value
+if (document.getElementById('id_start_date').value) {
+    setDefaultPaymentDates();
+}
 {% endif %}
 
 function quickCreateClient() {

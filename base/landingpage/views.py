@@ -3,10 +3,12 @@ from django.shortcuts import render
 
 
 def landing_page(request):
-    # Get visible plans from database - same as system plans page
+    # Get visible and active plans from database
     from base.accounts.models import Plan
 
-    plans = Plan.objects.filter(is_visible=True).order_by("price_monthly")
+    plans = Plan.objects.filter(is_visible=True, is_active=True).order_by(
+        "price_monthly"
+    )
 
     return render(
         request,

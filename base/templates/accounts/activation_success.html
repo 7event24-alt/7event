@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conta Ativada - 7event</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a5f',
+                        secondary: '#2d5a8a',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check-circle text-3xl text-green-600"></i>
+            </div>
+            
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Conta Ativada com Sucesso!</h1>
+            
+            <p class="text-gray-600 mb-6">
+                Seu email foi verificado e sua conta está ativa. Agora você pode fazer login no sistema.
+            </p>
+            
+            <a href="{% url 'accounts:login' %}" class="inline-block w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition font-medium">
+                <i class="fas fa-sign-in-alt mr-2"></i> Ir para Login
+            </a>
+        </div>
+    </div>
+</body>
+</html>
