@@ -55,7 +55,7 @@ async function sendTestPush() {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify({ subscription: JSON.stringify(subscription) })
+            body: JSON.stringify({ subscription: subscription })
         });
         
         if (response.ok) {

@@ -92,18 +92,8 @@ def send_fcm_test(request):
         
         import logging
         logger = logging.getLogger(__name__)
-        import json
         
-        body = request.body
-        logger.error(f"Push: Raw body: {body[:200] if body else 'Empty'}")
-        
-        try:
-            data = json.loads(body)
-        except:
-            data = request.data
-            logger.error(f"Push: Used request.data: {data}")
-        
-        subscription_data = data.get('subscription') if data else None
+        subscription_data = request.data.get('subscription')
         logger.error(f"Push: subscription_data: {subscription_data[:50] if subscription_data else 'None'}...")
         
         if not subscription_data:
