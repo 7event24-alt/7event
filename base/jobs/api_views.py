@@ -27,7 +27,7 @@ class JobViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["status", "payment_status", "event_type", "is_multi_day"]
+    filterset_fields = ["status", "payment_status", "event_type"]
     search_fields = ["title", "client__name", "location"]
     ordering_fields = ["start_date", "created_at", "cache"]
     ordering = ["-start_date"]
