@@ -90,15 +90,30 @@ def send_fcm_test(request):
         
         # Bypass auth
         
-        subscription_data = request.data.get('subscription')
+        import logging
+        logger = logging.getLogger(__name__)
+        import json
+        
+        body = request.body
+        logger.error(f"Push: Raw body: {body[:200] if body else 'Empty'}")
+        
+        try:
+            data = json.loads(body)
+        except:
+            data = request.data
+            logger.error(f"Push: Used request.data: {data}")
+        
+        subscription_data = data.get('subscription') if data else None
+        logger.error(f"Push: subscription_data: {subscription_data[:50] if subscription_data else 'None'}...")
         
         if not subscription_data:
             return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
         
-        from django.conf import settings
         filename = '/tmp/push_subscriptions.txt'
         with open(filename, 'a') as f:
             f.write(subscription_data + '\n')
+        
+        logger.error(f"Push: Written to {filename}")
         
         return Response({
             'status': 'success',
