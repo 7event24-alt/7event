@@ -97,52 +97,21 @@ def send_fcm_test(request):
                 return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
             
             data = json.loads(request.body)
-            token = data.get('token')
+            subscription_data = data.get('subscription')
             
-            if not token:
-                return Response({'error': 'Token requerido'}, status=status.HTTP_400_BAD_REQUEST)
+            if not subscription_data:
+                return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Importar firebase-admin
-            try:
-                import firebase_admin
-                from firebase_admin import credentials
-                from firebase_admin import messaging
-            except ImportError:
-                return Response({'error': 'firebase-admin não instalado'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            # Verificar se já inicializado
-            if not firebase_admin._apps:
-                # Usar service account local
-                service_account_path = os.path.join(
-                    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))),
-                    'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'
-                )
-                
-                logger.error(f"FCM: Service account path: {service_account_path}, exists: {os.path.exists(service_account_path)}")
-                
-                if os.path.exists(service_account_path):
-                    cred = credentials.Certificate(service_account_path)
-                    firebase_admin.initialize_app(cred)
-                else:
-                    return Response({
-                        'error': 'Service account não encontrado em: ' + service_account_path
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            # Enviar notificação
-            message = messaging.Message(
-                notification=messaging.Notification(
-                    title='Teste 7event',
-                    body='Notificação de teste enviada com sucesso!'
-                ),
-                token=token,
-            )
-            
-            response = messaging.send(message)
+            # Guardar subscription para uso posterior
+            from django.conf import settings
+            filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'push_subscriptions.txt')
+            with open(filename, 'a') as f:
+                f.write(subscription_data + '\n')
             
             return Response({
                 'status': 'success',
-                'message': 'Notificação enviado!',
-                'firebase_response': response
+                'message': 'Subscription registrada! Configure Web Push VAPID backend.',
+                'subscription_recebido': True
             })
             
         except Exception as e:
