@@ -133,12 +133,6 @@ class Job(models.Model):
         default=PaymentStatusJob.PENDING,
         verbose_name=_("Status de Pagamento"),
     )
-    workers = models.ManyToManyField(
-        "accounts.User",
-        related_name="assigned_jobs",
-        blank=True,
-        verbose_name="Trabalhadores",
-    )
     approved_by = models.ForeignKey(
         "accounts.User",
         on_delete=models.SET_NULL,
@@ -186,3 +180,54 @@ class Job(models.Model):
         from django.utils import timezone
 
         return self.start_date < timezone.now().date()
+
+    def calculate_payment_values(self):
+        """Calcula automaticamente os valores de pagamento baseados no cache e tipo de pagamento"""
+        if not self.cache:
+            return
+
+        # O payment_total SEMPRE deve ser igual ao cache
+        self.payment_total = self.cache
+
+        if self.payment_type == PaymentType.FULL:
+            # Pagamento total - não precisa de valores parciais/restantes
+            self.payment_partial_value = None
+            self.payment_partial_date = None
+            self.payment_remaining_value = None
+            self.payment_remaining_date = None
+
+        elif self.payment_type == PaymentType.PARTIAL:
+            # Pagamento parcial - o restante é calculado automaticamente
+            if self.payment_partial_value:
+                self.payment_remaining_value = self.cache - self.payment_partial_value
+            else:
+                self.payment_remaining_value = self.cache
+
+        elif self.payment_type == PaymentType.ADVANCE:
+            # Pagamento antecipado - o restante é calculado automaticamente
+            if self.payment_partial_value:
+                self.payment_remaining_value = self.cache - self.payment_partial_value
+            else:
+                self.payment_remaining_value = self.cache
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+
+        if (
+            self.payment_type == PaymentType.PARTIAL
+            and self.payment_partial_value
+            and self.cache
+        ):
+            if self.payment_partial_value > self.cache:
+                raise ValidationError(
+                    {
+                        "payment_partial_value": "Valor parcial não pode ser maior que o cachê."
+                    }
+                )
+
+    def save(self, *args, **kwargs):
+        # Calcular valores de pagamento automaticamente antes de salvar
+        self.calculate_payment_values()
+        super().save(*args, **kwargs)

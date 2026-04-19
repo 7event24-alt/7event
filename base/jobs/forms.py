@@ -6,16 +6,6 @@ User = get_user_model()
 
 
 class JobForm(forms.ModelForm):
-    workers = forms.ModelMultipleChoiceField(
-        queryset=User.objects.none(),
-        widget=forms.CheckboxSelectMultiple(
-            attrs={
-                "class": "w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-            }
-        ),
-        required=False,
-        label="Trabalhadores",
-    )
     event_type = forms.ChoiceField(
         choices=[("", "Selecione o tipo de serviço...")] + list(EventType.choices),
         widget=forms.Select(
@@ -105,7 +95,6 @@ class JobForm(forms.ModelForm):
             "payment_remaining_date",
             "status",
             "payment_status",
-            # workers handled manually via JavaScript + POST
         ]
         widgets = {
             "client": forms.Select(
@@ -154,6 +143,13 @@ class JobForm(forms.ModelForm):
                     "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
                     "placeholder": "0,00",
                     "step": "0.01",
+                    "onchange": "onPaymentTypeChange(); calculatePaymentTotalFromCache();",
+                }
+            ),
+            "payment_type": forms.Select(
+                attrs={
+                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
+                    "onchange": "onPaymentTypeChange()",
                 }
             ),
             "payment_total": forms.NumberInput(
@@ -168,6 +164,7 @@ class JobForm(forms.ModelForm):
                     "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
                     "placeholder": "0,00",
                     "step": "0.01",
+                    "onchange": "calculatePaymentRemaining()",
                 }
             ),
             "payment_remaining_value": forms.NumberInput(
@@ -197,17 +194,9 @@ class JobForm(forms.ModelForm):
         # Filtrar clientes apenas da empresa do usuário
         if user and hasattr(user, "account") and user.account:
             self.fields["client"].queryset = user.account.clients.all()
-            self.fields["workers"].queryset = User.objects.filter(
-                account=user.account
-            ).exclude(id=user.id)
-
-            # Se editando job existente, selecionar workers atuais
-            if instance and instance.workers.exists():
-                self.fields["workers"].initial = [w.id for w in instance.workers.all()]
         elif user:
             # Se não tem empresa vinculada, mostra só clientes que ele criou
             self.fields["client"].queryset = user.clients_created.all()
-            self.fields["workers"].queryset = User.objects.none()
 
         self.fields["end_date"].required = False
         self.fields["payment_type"].required = False
@@ -217,6 +206,25 @@ class JobForm(forms.ModelForm):
         self.fields["client"].required = True
         self.fields["title"].required = True
         self.order_fields(["client", "event_type", "title"])
+
+        # Definir datas default para pagamento (20 dias após evento) se não for edição
+        start_date = None
+        if not instance:
+            # Check both form initial and field initial
+            if self.initial.get("start_date"):
+                start_date = self.initial.get("start_date")
+            elif self.fields["start_date"].initial:
+                start_date = self.fields["start_date"].initial
+
+            if start_date:
+                from datetime import timedelta, date
+
+                if isinstance(start_date, str):
+                    start_date = date.fromisoformat(start_date)
+                payment_date = start_date + timedelta(days=20)
+                self.fields["payment_date"].initial = payment_date
+                self.fields["payment_partial_date"].initial = payment_date
+                self.fields["payment_remaining_date"].initial = payment_date
 
         for field_name, field in self.fields.items():
             current_class = field.widget.attrs.get("class", "")

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Mensagens de Suporte - 7event{% endblock %}
+{% block page_title %}Mensagens de Suporte{% endblock %}
+
+{% block header_pre_actions %}
+<a href="/" class="text-gray-600 hover:text-primary p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Voltar">
+    <i class="fas fa-arrow-left"></i>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800">
+            Mensagens Recebidas
+            {% if unread_count > 0 %}
+            <span class="ml-2 bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-sm">{{ unread_count }} nova(s)</span>
+            {% endif %}
+        </h3>
+    </div>
+
+    {% if messages %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nome</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Assunto</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">Data</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for msg in messages %}
+                <tr class="hover:bg-gray-50 {% if not msg.is_read %}bg-blue-50{% endif %}">
+                    <td class="px-4 py-3">
+                        {% if msg.is_read %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            <i class="fas fa-check mr-1"></i> Lida
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            <i class="fas fa-envelope mr-1"></i> Nova
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ msg.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ msg.email }}</td>
+                    <td class="px-4 py-3 text-gray-600">
+                        {% if msg.subject == 'login' %}<span class="text-orange-600">Problemas de Login</span>
+                        {% elif msg.subject == 'cadastro' %}<span class="text-purple-600">Problemas de Cadastro</span>
+                        {% elif msg.subject == 'trabalhos' %}<span class="text-blue-600">Dúvidas sobre Trabalhos</span>
+                        {% elif msg.subject == 'orcamentos' %}<span class="text-green-600">Dúvidas sobre Orçamentos</span>
+                        {% elif msg.subject == 'planos' %}<span class="text-indigo-600">Dúvidas sobre Planos</span>
+                        {% elif msg.subject == 'financeiro' %}<span class="text-red-600">Problemas Financeiros</span>
+                        {% elif msg.subject == 'bug' %}<span class="text-gray-600">Reportar Bug</span>
+                        {% else %}{{ msg.get_subject_display }}{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-500 text-sm hidden md:table-cell">{{ msg.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="px-4 py-3">
+                        <a href="{% url 'support:admin_detail' msg.pk %}" class="text-primary hover:text-secondary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-8 text-center text-gray-500">
+        <i class="fas fa-inbox text-4xl mb-4"></i>
+        <p>Nenhuma mensagem recebida.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

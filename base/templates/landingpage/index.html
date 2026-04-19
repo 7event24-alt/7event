@@ -5,6 +5,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>7Event - Sistema de Gestão de Eventos</title>
+    <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
+    <link rel="icon" type="image/png" href="https://www.7event.com.br/static/img/logo7event.png">
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="https://www.7event.com.br/static/img/logo7event.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="https://www.7event.com.br/static/img/logo7event.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="https://www.7event.com.br/static/img/logo7event.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="https://www.7event.com.br/static/img/logo7event.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="https://www.7event.com.br/static/img/logo7event.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://www.7event.com.br/static/img/logo7event.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Android -->
+    <link rel="icon" sizes="192x192" href="https://www.7event.com.br/static/img/logo7event.png">
+    <link rel="icon" sizes="128x128" href="https://www.7event.com.br/static/img/logo7event.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1e3a5f">
+    <!-- Windows -->
+    <meta name="msapplication-TileImage" content="https://www.7event.com.br/static/img/logo7event.png">
+    <meta name="msapplication-TileColor" content="#1e3a5f">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -129,6 +148,11 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Botão de Instalação PWA -->
+    <button id="pwa-install-btn" hidden class="fixed bottom-4 right-4 bg-primary hover:bg-secondary text-white px-4 py-3 rounded-full shadow-lg z-50 flex items-center gap-2">
+        <i class="fas fa-download"></i>
+        <span>Instalar App</span>
+    </button>
     <!-- ==================== HEADER ==================== -->
     <header class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -143,16 +167,18 @@
                     <a href="#inicio" class="text-gray-600 hover:text-primary font-medium transition-colors">Início</a>
                     <a href="#vantagens" class="text-gray-600 hover:text-primary font-medium transition-colors">Vantagens</a>
                     <a href="#planos" class="text-gray-600 hover:text-primary font-medium transition-colors">Planos</a>
-                    <a href="#contato" class="text-gray-600 hover:text-primary font-medium transition-colors">Contato</a>
+                    <a href="#faq" class="text-gray-600 hover:text-primary font-medium transition-colors">FAQ</a>
+                    <a href="/app/suporte/" class="text-gray-600 hover:text-primary font-medium transition-colors">Contato</a>
                 </nav>
                 
                 <!-- CTA Button -->
-                <div class="flex items-center gap-3">
-                    <a href="/accounts/login/" class="hidden sm:block text-gray-600 hover:text-primary font-medium transition-colors">
+                <div class="flex items-center gap-4">
+                    <a href="/app/accounts/login/" class="text-gray-600 hover:text-primary font-medium transition-colors">
                         Entrar
                     </a>
-                    <a href="/accounts/register/" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
-                        Começar agora
+                    <span class="text-gray-300">|</span>
+                    <a href="/app/accounts/register/" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                        Criar conta grátis
                     </a>
                 </div>
             </div>
@@ -180,7 +206,7 @@
                     </p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <a href="/accounts/register/" class="bg-primary hover:bg-secondary text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all btn-shine shadow-lg hover:shadow-xl">
+                        <a href="/app/accounts/register/" class="bg-primary hover:bg-secondary text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all btn-shine shadow-lg hover:shadow-xl">
                             <i class="fas fa-rocket mr-2"></i>
                             Começar agora
                         </a>
@@ -305,18 +331,7 @@
             
             <!-- Benefits Grid -->
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
-                    <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                        <i class="fas fa-users text-primary text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Gestão de Equipe</h3>
-                    <p class="text-gray-600">
-                        Convide trabalhadores, atribua funções e acompanhe o desempenho de toda a sua equipe em tempo real.
-                    </p>
-                </div>
                 
-                <!-- Card 2 -->
                 <div class="card-hover bg-gray-50 rounded-2xl p-8 border border-gray-100">
                     <div class="w-14 h-14 bg-gold/20 rounded-xl flex items-center justify-center mb-6">
                         <i class="fas fa-hand-holding-usd text-gold text-2xl"></i>
@@ -389,36 +404,36 @@
             </div>
             
             <!-- Pricing Cards - Dynamic -->
-            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div class="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
                 {% for plan in plans %}
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 relative card-hover {% if plan.highlight %}border-2 border-primary transform md:-translate-y-4 shadow-2xl{% endif %}">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 relative card-hover flex flex-col w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] {% if plan.highlight %}border-2 border-primary transform md:-translate-y-4 shadow-2xl{% endif %}">
                     {% if plan.highlight %}
-                    <div class="popular-tag bg-primary text-white px-4 py-1 rounded-full text-xs font-semibold">
+                    <div class="popular-tag bg-primary text-white px-4 py-1 rounded-full text-xs font-semibold absolute -top-3 left-1/2 -translate-x-1/2">
                         Mais Popular
                     </div>
                     {% endif %}
                     
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
+                    <div class="text-center mb-4">
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
                         {% if plan.short_description %}
                         <p class="text-gray-500 text-sm">{{ plan.short_description }}</p>
                         {% endif %}
                     </div>
                     
-                    <div class="text-center mb-6">
+                    <div class="text-center mb-4">
                         {% if plan.price_monthly > 0 %}
-                        <span class="text-4xl font-bold text-gray-900">R$ {{ plan.price_monthly|floatformat:2 }}</span>
-                        <span class="text-gray-500">/mês</span>
+                        <span class="text-3xl sm:text-4xl font-bold text-gray-900">R$ {{ plan.price_monthly|floatformat:2 }}</span>
+                        <span class="text-gray-500 text-sm">/mês</span>
                         {% if plan.price_semester > 0 %}
-                        <p class="text-sm text-gray-400 mt-1">ou R$ {{ plan.price_semester|floatformat:2 }}/semestre</p>
+                        <p class="text-xs text-gray-400 mt-1">ou R$ {{ plan.price_semester|floatformat:2 }}/semestre</p>
                         {% endif %}
                         {% else %}
-                        <span class="text-4xl font-bold text-gray-900">Grátis</span>
-                        <span class="text-gray-500">/para sempre</span>
+                        <span class="text-3xl sm:text-4xl font-bold text-gray-900">Grátis</span>
+                        <span class="text-gray-500 text-sm">/para sempre</span>
                         {% endif %}
                     </div>
                     
-                    <ul class="space-y-4 mb-8">
+                    <ul class="space-y-2 mb-6 text-sm">
                         {% if plan.max_clients == 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
@@ -475,7 +490,7 @@
                         </li>
                     </ul>
                     
-                    <a href="/accounts/register/" class="block text-center {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-4 rounded-xl font-semibold transition-all">
+                    <a href="/app/accounts/register/" class="block text-center mt-auto {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-3 rounded-xl font-semibold transition-all">
                         {% if plan.price_monthly == 0 %}
                         Começar Grátis
                         {% else %}
@@ -484,6 +499,194 @@
                     </a>
                 </div>
                 {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FAQ SECTION ==================== -->
+    <section id="faq" class="py-16 md:py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    Perguntas Frequentes
+                </h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Tire suas dúvidas sobre o 7event. Precisa de mais ajuda? Entre em contato!
+                </p>
+            </div>
+
+            <!-- Abas -->
+            <div class="mb-6">
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button onclick="showFaqTab('login')" id="faq-tab-login" class="faq-tab-btn px-4 py-2 rounded-lg font-medium transition bg-primary text-white">
+                        Login
+                    </button>
+                    <button onclick="showFaqTab('cadastro')" id="faq-tab-cadastro" class="faq-tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        Cadastro
+                    </button>
+                    {% if user.is_authenticated %}
+                    <button onclick="showFaqTab('trabalhos')" id="faq-tab-trabalhos" class="faq-tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        Trabalhos
+                    </button>
+                    <button onclick="showFaqTab('orcamentos')" id="faq-tab-orcamentos" class="faq-tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        Orçamentos
+                    </button>
+                    {% endif %}
+                    <button onclick="showFaqTab('planos')" id="faq-tab-planos" class="faq-tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        Planos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteúdo das Abas -->
+            <div class="space-y-4">
+                <!-- Login -->
+                <div id="faq-content-login" class="faq-tab-content">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como recuperar minha senha?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Na página de login, clique em "Esqueci minha senha". Informe seu email e você receberá um link para criar uma nova senha.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Não consigo acessar minha conta. O que fazer?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Verifique se está usando o email correto. Se ainda tiver problemas, sua conta pode não estar ativada. Verifique seu email para o link de ativação ou entre em contato com o suporte.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como ativar minha conta?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Após o cadastro, você recebe um email de verificação. Clique no link enviado para ativar sua conta. Se não recebeu, verifique a caixa de spam ou solicite o reenvio.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cadastro -->
+                <div id="faq-content-cadastro" class="faq-tab-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como me cadastrar no 7event?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Clique em "Criar conta grátis" na página inicial. Preencha seus dados, crie uma senha e pronto! Você receberá um email para ativar sua conta.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Posso usar sem ter uma empresa?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Sim! O 7event funciona tanto para empresas quanto para profissionais autônomos. Você pode criar sua conta e usar o sistema para gerenciar seus eventos e clientes.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">O cadastro é gratuito?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Sim, o plano básico é gratuito para sempre. Você pode testar todas as funcionalidades básicas sem pagar nada.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                <!-- Trabalhos -->
+                <div id="faq-content-trabalhos" class="faq-tab-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como criar um novo trabalho?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                No menu lateral, clique em "Trabalhos" e depois em "Novo Trabalho". Preencha os dados do evento (cliente, data, local, cachê) e clique em salvar.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como adicionar despesas a um trabalho?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Acesse o trabalho desejado e clique em "Despesas". Clique em "Adicionar Despesa" e preencha os detalhes (descrição, valor, categoria).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orçamentos -->
+                <div id="faq-content-orcamentos" class="faq-tab-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como criar um orçamento?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Acesse "Orçamentos" no menu e clique em "Novo Orçamento". Selecione o cliente, defina os valores de diária e quantidade, e adicione despesas se necessário.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como enviar o orçamento por email?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Na página de detalhes do orçamento, clique no botão "Enviar". O sistema mudará o status para "Enviado" e enviará automaticamente o orçamento por email para o cliente.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Planos -->
+                <div id="faq-content-planos" class="faq-tab-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Quais planos estão disponíveis?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Temos 3 planos: Básico (gratuito), Business e Premium. Visite a seção de Planos na página inicial para ver os detalhes e preços de cada um.
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200">
+                            <button onclick="toggleFaqAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                                <span class="font-medium text-gray-800">Como fazer upgrade de plano?</span>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            </button>
+                            <div class="hidden px-6 pb-4 text-gray-600">
+                                Acesse "Configurações" > "Plano" e clique no plano desejado. Você será redirecionado para a página de pagamento. O upgrade é imediato após a confirmação.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão para Suporte -->
+            <div class="mt-8 text-center">
+                <p class="text-gray-600 mb-4">Não encontrou o que procurava?</p>
+                <a href="/app/suporte/" class="inline-flex items-center gap-2 bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition">
+                    <i class="fas fa-headset"></i> Fale com o Suporte
+                </a>
             </div>
         </div>
     </section>
@@ -498,7 +701,7 @@
                 Comece gratuitamente hoje mesmo. Sem compromisso, sem cartão de crédito. Teste todas as funcionalidades.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/accounts/register/" class="bg-white text-primary px-10 py-5 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-xl">
+                <a href="/app/accounts/register/" class="bg-white text-primary px-10 py-5 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-xl">
                     <i class="fas fa-rocket mr-2"></i>
                     Criar conta grátis
                 </a>
@@ -543,7 +746,9 @@
                         <li><a href="#inicio" class="text-gray-400 hover:text-white transition-colors">Início</a></li>
                         <li><a href="#vantagens" class="text-gray-400 hover:text-white transition-colors">Vantagens</a></li>
                         <li><a href="#planos" class="text-gray-400 hover:text-white transition-colors">Planos</a></li>
-                        <li><a href="/accounts/register/" class="text-gray-400 hover:text-white transition-colors">Cadastrar</a></li>
+                        <li><a href="#faq" class="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="/app/suporte/" class="text-gray-400 hover:text-white transition-colors">Suporte</a></li>
+                        <li><a href="/app/accounts/register/" class="text-gray-400 hover:text-white transition-colors">Cadastrar</a></li>
                     </ul>
                 </div>
                 
@@ -579,5 +784,77 @@
             </div>
         </div>
     </footer>
+<script>
+        // FAQ Tabs
+        function showFaqTab(tabName) {
+            document.querySelectorAll('.faq-tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('faq-content-' + tabName).classList.remove('hidden');
+            
+            document.querySelectorAll('.faq-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            document.getElementById('faq-tab-' + tabName).classList.add('bg-primary', 'text-white');
+            document.getElementById('faq-tab-' + tabName).classList.remove('bg-gray-100', 'text-gray-600');
+        }
+
+        function toggleFaqAccordion(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.fa-chevron-down');
+            
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+    }
+    </script>
+    <!-- PWA Install -->
+    <script>
+    let deferredPrompt;
+    const pwaInstallBtn = document.getElementById('pwa-install-btn');
+    
+    // Hide button if already installed as PWA
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
+    } else if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Show on mobile if not installed
+        if(pwaInstallBtn) pwaInstallBtn.hidden = false;
+    }
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('PWA: Install prompt available!');
+        if(pwaInstallBtn) pwaInstallBtn.hidden = false;
+    });
+    pwaInstallBtn?.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if(pwaInstallBtn) pwaInstallBtn.hidden = true;
+            return;
+        }
+        // Already installed
+        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
+    });
+    // PWA Debug
+    console.log('PWA: Checking installability...');
+    if ('serviceWorker' in navigator) {
+        console.log('PWA: SW supported, registering...');
+        navigator.serviceWorker.register('{% static "sw.js" %}')
+            .then(reg => console.log('PWA: SW registered', reg.scope))
+            .catch(err => console.log('PWA: SW error', err));
+    }
+    window.addEventListener('beforeinstallprompt', e => {
+        console.log('PWA: beforeinstallprompt fired!');
+        e.preventDefault();
+        deferredPrompt = e;
+        if(pwaInstallBtn) pwaInstallBtn.hidden = false;
+    });
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA: App installed!');
+        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
+    });
+    </script>
 </body>
 </html>

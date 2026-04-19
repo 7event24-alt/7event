@@ -1,0 +1,205 @@
+{% extends 'base_public.html' %}
+{% load static %}
+
+{% block title %}FAQ - Perguntas Frequentes - 7event{% endblock %}
+{% block page_title %}Perguntas Frequentes{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <div class="text-center mb-8">
+        <p class="text-gray-600">Encontre respostas para as dúvidas mais comuns sobre o 7event.</p>
+    </div>
+
+    <!-- Abas -->
+    <div class="mb-6">
+        <div class="flex flex-wrap gap-2 justify-center">
+            <button onclick="showTab('login')" id="tab-login" class="tab-btn px-4 py-2 rounded-lg font-medium transition bg-primary text-white">
+                Login
+            </button>
+            <button onclick="showTab('cadastro')" id="tab-cadastro" class="tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                Cadastro
+            </button>
+            <button onclick="showTab('trabalhos')" id="tab-trabalhos" class="tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                Trabalhos
+            </button>
+            <button onclick="showTab('orcamentos')" id="tab-orcamentos" class="tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                Orçamentos
+            </button>
+            <button onclick="showTab('planos')" id="tab-planos" class="tab-btn px-4 py-2 rounded-lg font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">
+                Planos
+            </button>
+        </div>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div class="space-y-4">
+        <!-- Login -->
+        <div id="content-login" class="tab-content">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como recuperar minha senha?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Na página de login, clique em "Esqueci minha senha". Informe seu email e você receberá um link para criar uma nova senha.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Não consigo acessar minha conta. O que fazer?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Verifique se está usando o email correto. Se ainda tiver problemas, sua conta pode não estar ativada. Verifique seu email para o link de ativação ou entre em contato com o suporte.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como ativar minha conta?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Após o cadastro, você recebe um email de verificação. Clique no link enviado para ativar sua conta. Se não recebeu, verifique a caixa de spam ou solicite o reenvio.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cadastro -->
+        <div id="content-cadastro" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como me cadastrar no 7event?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Clique em "Criar conta grátis" na página inicial. Preencha seus dados, crie uma senha e pronto! Você receberá um email para ativar sua conta.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Posso usar sem ter uma empresa?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Sim! O 7event funciona tanto para empresas quanto para profissionais autônomos. Você pode criar sua conta e usar o sistema para gerenciar seus eventos e clientes.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">O cadastro é gratuito?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Sim, o plano básico é gratuito para sempre. Você pode testar todas as funcionalidades básicas sem pagar nada.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trabalhos -->
+        <div id="content-trabalhos" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como criar um novo trabalho?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        No menu lateral, clique em "Trabalhos" e depois em "Novo Trabalho". Preencha os dados do evento (cliente, data, local, cachê) e clique em salvar.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como adicionar despesas a um trabalho?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Acesse o trabalho desejado e clique em "Despesas". Clique em "Adicionar Despesa" e preencha os detalhes (descrição, valor, categoria).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orçamentos -->
+        <div id="content-orcamentos" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como criar um orçamento?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Acesse "Orçamentos" no menu e clique em "Novo Orçamento". Selecione o cliente, defina os valores de diária e quantidade, e adicione despesas se necessário.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como enviar o orçamento por email?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Na página de detalhes do orçamento, clique no botão "Enviar". O sistema mudará o status para "Enviado" e enviará automaticamente o orçamento por email para o cliente.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planos -->
+        <div id="content-planos" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Quais planos estão disponíveis?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Temos 3 planos: Básico (gratuito), Business e Premium. Visite a seção de Planos na página inicial para ver os detalhes e preços de cada um.
+                    </div>
+                </div>
+                <div class="border-b border-gray-200">
+                    <button onclick="toggleAccordion(this)" class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-800">Como fazer upgrade de plano?</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                    </button>
+                    <div class="hidden px-6 pb-4 text-gray-600">
+                        Acesse "Configurações" > "Plano" e clique no plano desejado. Você será redirecionado para a página de pagamento. O upgrade é imediato após a confirmação.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão para Suporte -->
+    <div class="mt-8 text-center">
+        <p class="text-gray-600 mb-4">Não encontrou o que procurava?</p>
+        <a href="/app/suporte/" class="inline-flex items-center gap-2 bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition">
+            <i class="fas fa-headset"></i> Fale com o Suporte
+        </a>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-white');
+        btn.classList.add('bg-gray-100', 'text-gray-600');
+    });
+    document.getElementById('tab-' + tabName).classList.add('bg-primary', 'text-white');
+    document.getElementById('tab-' + tabName).classList.remove('bg-gray-100', 'text-gray-600');
+}
+
+function toggleAccordion(button) {
+    const content = button.nextElementSibling;
+    const icon = button.querySelector('.fa-chevron-down');
+    
+    content.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+</script>
+{% endblock %}

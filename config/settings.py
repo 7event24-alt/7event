@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Version
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "django.contrib.sites",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -70,6 +71,7 @@ INSTALLED_APPS = [
     "base.services",
     "base.plans",
     "base.landingpage",
+    "base.support",
 ]
 
 MIDDLEWARE = [
@@ -148,6 +150,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "base.core.context_processors.support_context",
+                "base.core.context_processors.user_plan_context",
             ],
         },
     },
@@ -167,9 +171,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
+LOGIN_URL = "/app/accounts/login/"
+LOGIN_REDIRECT_URL = "/app/"
+LOGOUT_REDIRECT_URL = "/app/accounts/login/"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -268,33 +272,61 @@ LOGGING = {
 }
 
 JAZZMIN_SETTINGS = {
-    "site_title": "7event - Painel Administrativo",
+    "site_title": "7event - Admin",
     "site_header": "7event",
     "site_brand": "7event",
-    "welcome_sign": "Bem-vindo ao 7event",
+    "site_logo": "img/logo7event.png",
+    "welcome_sign": "Bem-vindo ao painel administrativo",
     "copyright": "© 2025 7event - Sistema de Gestão de Eventos",
     "show_model_app_labels": True,
     "changeform_format": "horizontal_tab",
     "language_chooser": False,
     "navigation_expanded": True,
-    "order_with_respect_to": ["accounts", "clients", "jobs", "expenses", "financial"],
+    "order_with_respect_to": [
+        "accounts",
+        "clients",
+        "jobs",
+        "expenses",
+        "financial",
+        "quote",
+        "support",
+    ],
     "icons": {
-        "accounts.User": "fa fa-users",
-        "accounts.UserProfile": "fa fa-user-circle",
-        "clients.Client": "fa fa-handshake",
-        "jobs.Job": "fa fa-calendar-check",
-        "expenses.Expense": "fa fa-receipt",
+        "accounts.User": "fas fa-user",
+        "accounts.Account": "fas fa-building",
+        "accounts.Plan": "fas fa-layer-group",
+        "accounts.Subscription": "fas fa-credit-card",
+        "accounts.Notification": "fas fa-bell",
+        "accounts.Feature": "fas fa-star",
+        "clients.Client": "fas fa-handshake",
+        "clients.ClientPhone": "fas fa-phone",
+        "clients.ClientEmail": "fas fa-envelope",
+        "jobs.Job": "fas fa-calendar-check",
+        "jobs.JobWorker": "fas fa-users",
+        "expenses.Expense": "fas fa-receipt",
+        "expenses.ExpenseCategory": "fas fa-tags",
+        "quote.Quote": "fas fa-file-invoice-dollar",
+        "quote.QuoteExpense": "fas fa-receipt",
+        "services.Service": "fas fa-concierge-bell",
+        "support.SupportMessage": "fas fa-headset",
+        "agenda.Event": "fas fa-calendar-alt",
+        "financial.Transaction": "fas fa-exchange-alt",
+        "landingpage.LandingPageConfig": "fas fa-home",
     },
-    "default_theme": "cerulean",
+    "default_theme": "default",
+    "user_avatar": "avatar",
+    "default_icon_avatar": "fas fa-user",
 }
 
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
     "body_small_text": False,
-    "brand_colour": "navbar-indigo",
-    "accent_color": "accent-info",
+    "brand_colour": "navbar-indigo-700",
+    "accent_color": "accent-blue",
     "max_navbar_items": 25,
+    "sidebar_small_text": False,
+    "card_dark_mode": False,
 }
 
 # Custom error pages

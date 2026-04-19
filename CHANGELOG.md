@@ -2,6 +2,42 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.3.0] - 2026-04-19
+
+### Feat
+- **PWA - Progressive Web App**: Sistema instalável como app no celular
+  - Arquivo manifest.webmanifest com configurações de instalação
+  - Service Worker para cache e funcionamento offline
+  - Ícones de tamanho correto (192x192, 512x512)
+  - Botão flutuante "Instalar App" no mobile
+  - Meta tags para iOS e Android
+- **FAQ integrado na LP**: Seção FAQ com abas condicionais
+  - Abas: Login, Cadastro (sempre visíveis), Trabalhos, Orçamentos (só logado), Planos
+  - Redirecionamento de /app/suporte/faq/ para LP#faq
+- **Template suporte unificado**: contact.html e success.html com mesmo header/footer da LP
+- **Favicon para atalhos mobile**: Tags específicas para iOS e Android
+
+### Fix
+- Página de FAQ removida, integrada à LP
+- Footer colado na base (flex-grow)
+- Correção do template support para usar header/footer da LP
+- Links do menu atualizados para âncoras (#faq, #contato)
+- Data do Site atualizada para localhost
+
+### Refactor
+- Campos de pagamento no formulário de trabalhos:
+  - Valor Total e Restante são readonly (calculados automaticamente)
+  --payment_total e payment_remaining_value com campos hidden
+  - Payment Type com onchange para atualizar campos
+- Datas de pagamento:
+  - Pagamento Antecipado: data de hoje
+  - Pagamento Total: 20 dias a partir de HOJE
+  - Pagamento Parcial: 20 dias após data do evento + 20 dias para restante
+- Labels atualizados: "Cache Total" (sem *), "Valor Total", "Valor Restante"
+- Disclaimer removido de "Data Pagamento Restante"
+
+---
+
 ## [1.2.1] - 2026-04-15
 
 ### Feat
