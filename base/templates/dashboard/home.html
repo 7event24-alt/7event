@@ -46,13 +46,15 @@ let messaging;
 async function sendTestPush() {
     try {
         firebase.initializeApp(firebaseConfig);
-        messaging = firebase.messaging();
         
-        // Registrar service worker explicitamente
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-            scope: '/firebase-cloud-messaging-push-scope'
-        });
-        messaging.useServiceWorker(registration);
+        // Verificar se há app inicializado
+        const app = firebase.getApp();
+        if (!app) {
+            alert('Erro: Firebase não inicializado');
+            return;
+        }
+        
+        messaging = firebase.messaging(app);
         
         messaging.onBackgroundMessage((payload) => {
             console.log('Background:', payload);
