@@ -48,7 +48,7 @@ async function sendTestPush() {
         firebase.initializeApp(firebaseConfig);
         
         // Verificar se há app inicializado
-        const app = firebase.getApp();
+        const app = firebase.app();
         if (!app) {
             alert('Erro: Firebase não inicializado');
             return;
