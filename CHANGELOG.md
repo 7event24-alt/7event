@@ -2,6 +2,22 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.3.1] - 2026-04-19
+
+### Feat
+- **PWA com atualização automática**:
+  - Banner de "Nova versão disponível" quando há update
+  - Service Worker mejorado para detectar updates
+  - Botão para atualizar com um clique
+
+### Fix
+- SITE_ID forçado = 1 para evitar erros de Site lookup
+- Tabela django_site criada no banco de produção
+- Permissões concedidas ao usuário do banco
+- Context processor e outros arquivos pendentes commitados
+
+---
+
 ## [1.3.0] - 2026-04-19
 
 ### Feat
