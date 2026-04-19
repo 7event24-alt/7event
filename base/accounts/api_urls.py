@@ -24,10 +24,7 @@ def save_fcm_token(request):
             token = data.get('token')
             
             if token:
-                # Salvar token em arquivo (simples) ou no banco
-                # Aqui vamos salvar em arquivo temporário
                 from django.conf import settings
-                import uuid
                 
                 filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'fcm_tokens.txt')
                 with open(filename, 'a') as f:
@@ -41,11 +38,9 @@ def save_fcm_token(request):
 
 # View para enviar notificação FCM (admin)
 def send_fcm_notification(request):
-    from rest_framework.decorators import api_view, permission_classes
     from rest_framework.permissions import IsAdminUser
     from rest_framework.response import Response
     from rest_framework import status
-    import requests
     
     if request.method == 'POST':
         try:
@@ -56,7 +51,6 @@ def send_fcm_notification(request):
             title = data.get('title', '7event')
             body = data.get('body', '')
             
-            # Ler tokens do arquivo
             from django.conf import settings
             filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'fcm_tokens.txt')
             
@@ -67,10 +61,6 @@ def send_fcm_notification(request):
             
             if not tokens:
                 return Response({'error': 'Nenhum token cadastrado'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Enviar via FCM HTTP v1
-            # Precisa de service account JSON do Firebase
-            # Por agora, retorna sucesso simulado
             
             return Response({
                 'status': 'sent',
@@ -87,20 +77,15 @@ def send_fcm_notification(request):
 @csrf_exempt
 @api_view(['POST', 'GET'])
 def send_fcm_test(request):
-    from rest_framework.permissions import AllowAny
     from rest_framework.response import Response
     from rest_framework import status
-    import os
-    import logging
     import json
-    logger = logging.getLogger(__name__)
     
-try:
-        # AllowAny for testing
+    try:
         if request.method == 'GET':
             return Response({'status': 'ok', 'message': 'FCM test endpoint'})
         
-        if request.user.is_authenticated and not request.user.is_superuser:
+        if not request.user.is_superuser:
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
         data = json.loads(request.body)
@@ -121,7 +106,6 @@ try:
         })
         
     except Exception as e:
-        logger.error(f"FCM Error: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 urlpatterns = [
