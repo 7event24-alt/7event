@@ -2,6 +2,19 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.4.0] - 2026-04-19
+
+### Feat
+- **Firebase Cloud Messaging (FCM) para notificações push**:
+  - Service Worker (`firebase-messaging-sw.js`) para receive push notifications
+  - SDK Firebase added to frontend (landingpage)
+  - Script to request permission and save FCM token
+  - API endpoints: `/api/v1/fcm/token/` and `/api/v1/fcm/send/`
+  - Push notifications work even when app is in background
+  - VAPID public key configured for web push
+
+---
+
 ## [1.3.1] - 2026-04-19
 
 ### Feat
