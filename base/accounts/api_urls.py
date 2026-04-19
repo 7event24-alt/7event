@@ -97,7 +97,7 @@ def send_fcm_test(request):
             return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
         
         from django.conf import settings
-        filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'push_subscriptions.txt')
+        filename = '/tmp/push_subscriptions.txt'
         with open(filename, 'a') as f:
             f.write(subscription_data + '\n')
         
