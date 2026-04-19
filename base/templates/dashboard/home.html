@@ -49,7 +49,7 @@ async function sendTestPush() {
             applicationServerKey: urlBase64ToUint8Array('BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM')
         });
         
-        const response = await fetch('/api/fcm/test/', {
+        const response = await fetch('/api/v1/fcm/test/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
