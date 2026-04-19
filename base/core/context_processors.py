@@ -24,7 +24,11 @@ def user_plan_context(request):
     if request.user.is_authenticated and request.user.account:
         account = request.user.account
         plan = account.plan
-
+        
+        # Verificar se plan existe
+        if plan is None:
+            return {"user_plan": None, "user_plan_badge": "FREE"}
+        
         plan_badge = "FREE"
         if plan.type == "professional":
             plan_badge = "PRO"
