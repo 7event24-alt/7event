@@ -109,6 +109,7 @@ class ClientCreateView(CompanyRequiredMixin, View):
 
             # Enviar push notification via HTTP to FCM
             import logging
+            from django.conf import settings
             logger = logging.getLogger(__name__)
             logger.error("=== Push: Starting ===")
             
