@@ -90,8 +90,7 @@ def send_fcm_test(request):
         
         # Bypass auth
         
-        data = json.loads(request.body)
-        subscription_data = data.get('subscription')
+        subscription_data = request.data.get('subscription')
         
         if not subscription_data:
             return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
