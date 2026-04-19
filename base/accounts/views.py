@@ -18,12 +18,16 @@ from .forms import RegisterForm
 
 
 def get_base_url(request):
-    """Obtém URL base de forma segura, sem depender do Site.objects.get_current()"""
+    """Obtém URL base de forma segura"""
     try:
-        site = Site.objects.get_current()
-        return f"https://{site.domain}"
+        # Tenta pegar o Site primeiro (se existir)
+        site = Site.objects.first()
+        if site:
+            return f"https://{site.domain}"
     except Exception:
-        return request.build_absolute_uri("/")[:-1]
+        pass
+    # Fallback para domínio do request
+    return request.build_absolute_uri("/").rstrip("/")
 
 
 class CustomLoginView(LoginView):
