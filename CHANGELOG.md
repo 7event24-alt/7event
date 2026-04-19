@@ -2,6 +2,15 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.4.1] - 2026-04-19
+
+### Fix
+- Banner de update do PWA removido (causava problemas no mobile)
+- Botão flutuante de install só aparece se app não estiver instalado
+- Context processor: verificado se plan é None antes de acessar atributos
+
+---
+
 ## [1.4.0] - 2026-04-19
 
 ### Feat

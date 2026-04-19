@@ -65,17 +65,6 @@
         <span>Instalar App</span>
     </button>
     
-    <!-- Banner de Update PWA -->
-    <div id="update-banner" hidden class="fixed top-0 left-0 right-0 bg-green-600 text-white px-4 py-2 z-50 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-sync-alt"></i>
-            <span>Nova versão disponível!</span>
-        </div>
-        <button onclick="installUpdate()" class="bg-white text-green-600 px-3 py-1 rounded font-medium hover:bg-green-50">
-            Atualizar
-        </button>
-    </div>
-    
     {% block body %}
         {% if user.is_authenticated %}
             <div class="flex flex-col h-screen">
@@ -497,30 +486,21 @@ function getCookie(name) {
 let deferredPrompt;
 const pwaInstallBtn = document.getElementById('pwa-install-btn');
 
-// Hide button if already installed as PWA
-if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-    if(pwaInstallBtn) pwaInstallBtn.hidden = true;
-} else if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+// Função para verificar se já está instalado como PWA
+function isPWAInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true ||
+           window.matchMedia('(display-mode: fullscreen').matches;
+}
+
+// Mostrar botão apenas se não estiver instalado
+if (!isPWAInstalled()) {
     if(pwaInstallBtn) pwaInstallBtn.hidden = false;
 }
 
+// Service Worker
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('{% static "sw.js" %}')
-        .then(reg => {
-            reg.addEventListener('updatefound', () => {
-                if (reg.installing) {
-                    reg.installing.addEventListener('statechange', () => {
-                        if (reg.installing.state === 'installed' && navigator.serviceWorker.controller) {
-                            if(document.getElementById('update-banner')) document.getElementById('update-banner').hidden = false;
-                        }
-                    });
-                }
-            });
-        });
-}
-
-function installUpdate() {
-    navigator.serviceWorker?.skipWaiting().then(() => window.location.reload());
+    navigator.serviceWorker.register('{% static "sw.js" %}').catch(() => {});
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -534,12 +514,8 @@ pwaInstallBtn?.addEventListener('click', async () => {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         deferredPrompt = null;
-        pwaInstallBtn.hidden = true;
+        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
     }
-});
-
-window.addEventListener('appinstalled', () => {
-    pwaInstallBtn.hidden = true;
 });
 
 // Service Worker Registration

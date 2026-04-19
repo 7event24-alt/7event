@@ -44,9 +44,6 @@
             }
         }
     </script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -152,21 +149,6 @@
 </head>
 <body class="bg-gray-50">
     <!-- Botão de Instalação PWA -->
-    <button id="pwa-install-btn" hidden class="fixed bottom-4 right-4 bg-primary hover:bg-secondary text-white px-4 py-3 rounded-full shadow-lg z-50 flex items-center gap-2">
-        <i class="fas fa-download"></i>
-        <span>Instalar App</span>
-    </button>
-    
-    <!-- Banner de Update PWA -->
-    <div id="update-banner" hidden class="fixed top-0 left-0 right-0 bg-green-600 text-white px-4 py-2 z-50 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-sync-alt"></i>
-            <span>Nova versão disponível!</span>
-        </div>
-        <button onclick="installUpdate()" class="bg-white text-green-600 px-3 py-1 rounded font-medium hover:bg-green-50">
-            Atualizar
-        </button>
-    </div>
     <!-- ==================== HEADER ==================== -->
     <header class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -800,90 +782,6 @@
     </footer>
 <script>
 // ==============================
-// Firebase Push Notifications
-// ==============================
-const firebaseConfig = {
-    apiKey: "AIzaSyAIhzei6yjpU60RADGO6lhuQ_l1iAqBq10",
-    authDomain: "event-b2848.firebaseapp.com",
-    projectId: "event-b2848",
-    storageBucket: "event-b2848.firebasestorage.app",
-    messagingSenderId: "1054649753947",
-    appId: "1:1054649753947:web:bfd8fafe405f866abf3a7e"
-};
-
-if ('firebase' in window) {
-    firebase.initializeApp(firebaseConfig);
-    
-    const messaging = firebase.messaging();
-    
-    async function requestFCMPermission() {
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const token = await messaging.getToken({
-                    vapidKey: "BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM"
-                });
-                if (token) {
-                    await saveFCMToken(token);
-                }
-                return token;
-            }
-        } catch (err) {
-            console.log('FCM: Erro:', err);
-        }
-        return null;
-    }
-    
-    async function saveFCMToken(token) {
-        try {
-            const csrftoken = getCookie('csrftoken');
-            await fetch('/api/v1/fcm/token/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({ token: token })
-            });
-        } catch (err) {
-            console.log('FCM: Erro ao salvar token');
-        }
-    }
-    
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    messaging.onMessage(function(payload) {
-        if (payload.notification) {
-            new Notification(payload.notification.title || '7event', {
-                body: payload.notification.body,
-                icon: '/static/img/logo7event.png',
-                tag: '7event-fcm'
-            });
-        }
-    });
-    
-    if (window.Notification && Notification.permission === 'default') {
-        document.addEventListener('click', function once() {
-            requestFCMPermission();
-            document.removeEventListener('click', once);
-        }, { once: true });
-    }
-}
-
-// ==============================
 // FAQ Tabs
 // ==============================
             document.querySelectorAll('.faq-tab-content').forEach(el => el.classList.add('hidden'));
@@ -916,10 +814,17 @@ if ('firebase' in window) {
         if(pwaInstallBtn) pwaInstallBtn.hidden = true;
     } else if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         // Show on mobile if not installed
-        if(pwaInstallBtn) pwaInstallBtn.hidden = false;
-    }
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
+        // Função para verificar se já está instalado como PWA
+function isPWAInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true ||
+           window.matchMedia('(display-mode: fullscreen)').matches;
+}
+
+// Mostrar botão apenas se não estiver instalado
+if (!isPWAInstalled()) {
+    if(pwaInstallBtn) pwaInstallBtn.hidden = false;
+}
         e.preventDefault();
         deferredPrompt = e;
         console.log('PWA: Install prompt available!');
@@ -936,51 +841,10 @@ if ('firebase' in window) {
         // Already installed
         if(pwaInstallBtn) pwaInstallBtn.hidden = true;
     });
-    // Service Worker
+// Service Worker
     if ('serviceWorker' in navigator) {
-        console.log('PWA: SW supported, registering...');
-        navigator.serviceWorker.register('{% static "sw.js" %}')
-            .then(reg => {
-                console.log('PWA: SW registered', reg.scope);
-                // Check for updates
-                reg.addEventListener('updatefound', () => {
-                    const newWorker = reg.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showUpdateNotification();
-                        }
-                    });
-                });
-            })
-            .catch(err => console.log('PWA: SW error', err));
+        navigator.serviceWorker.register('{% static "sw.js" %}').catch(() => {});
     }
-    
-    // Listen for SW messages
-    navigator.serviceWorker?.addEventListener('message', event => {
-        if (event.data && event.data.type === 'SW_ACTIVATED') {
-            showUpdateNotification();
-        }
-    });
-    
-    function showUpdateNotification() {
-        const banner = document.getElementById('update-banner');
-        if (banner) banner.classList.remove('hidden');
-    }
-    
-    function installUpdate() {
-        navigator.serviceWorker?.skipWaiting().then(() => {
-            window.location.reload();
-        });
-    }
-        console.log('PWA: beforeinstallprompt fired!');
-        e.preventDefault();
-        deferredPrompt = e;
-        if(pwaInstallBtn) pwaInstallBtn.hidden = false;
-    });
-    window.addEventListener('appinstalled', () => {
-        console.log('PWA: App installed!');
-        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
-    });
-    </script>
+</script>
 </body>
 </html>
