@@ -2,6 +2,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+from django.views.decorators.cache import never_cache
+
+
+@never_cache
+def firebase_sw(request):
+    import os
+    sw_path = os.path.join(settings.BASE_DIR, "base", "static", "firebase-messaging-sw.js")
+    with open(sw_path, "r") as f:
+        return HttpResponse(f.read(), content_type="application/javascript")
 
 # Custom error handlers
 from base.core.error_views import (
@@ -18,6 +28,7 @@ handler500 = server_error
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("firebase-messaging-sw.js", firebase_sw, name="firebase-sw"),
     path("api/v1/", include("base.accounts.api_urls")),
     path("api/v1/", include("base.clients.api_urls")),
     path("api/v1/", include("base.jobs.api_urls")),
