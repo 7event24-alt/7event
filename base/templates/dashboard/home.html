@@ -69,10 +69,11 @@ async function sendTestPush() {
         });
         
         if (response.ok) {
-            alert('Notificação de teste enviada! Verifique se recebeu no navegador.');
+            const data = await response.json();
+            alert(data.message || 'Notificação enviada!');
         } else {
-            const error = await response.text();
-            alert('Erro ao enviar: ' + error);
+            const data = await response.json();
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
         }
     } catch (err) {
         alert('Erro: ' + err.message);

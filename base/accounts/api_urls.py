@@ -88,6 +88,8 @@ def send_fcm_test(request):
     from rest_framework.response import Response
     from rest_framework import status
     import os
+    import logging
+    logger = logging.getLogger(__name__)
     
     if request.method == 'POST':
         try:
@@ -116,6 +118,8 @@ def send_fcm_test(request):
                     'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'
                 )
                 
+                logger.error(f"FCM: Service account path: {service_account_path}, exists: {os.path.exists(service_account_path)}")
+                
                 if os.path.exists(service_account_path):
                     cred = credentials.Certificate(service_account_path)
                     firebase_admin.initialize_app(cred)
@@ -137,11 +141,12 @@ def send_fcm_test(request):
             
             return Response({
                 'status': 'success',
-                'message': 'Notificação enviada!',
+                'message': 'Notificação enviado!',
                 'firebase_response': response
             })
             
         except Exception as e:
+            logger.error(f"FCM Error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
