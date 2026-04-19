@@ -108,14 +108,18 @@ class ClientCreateView(CompanyRequiredMixin, View):
                 )
 
             # Enviar push notification via HTTP to FCM
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error("=== Push: Starting ===")
+            
             try:
                 import requests
-                import logging
                 import os
-                logger = logging.getLogger(__name__)
                 
                 # Get service account key
                 service_account_path = os.path.join(settings.BASE_DIR, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json')
+                logger.error(f"Push: SA path: {service_account_path}, exists: {os.path.exists(service_account_path)}")
+                
                 if not os.path.exists(service_account_path):
                     logger.error("Push: Service account not found")
                 
