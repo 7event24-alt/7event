@@ -85,9 +85,9 @@ def send_fcm_notification(request):
     return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @csrf_exempt
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 def send_fcm_test(request):
-    from rest_framework.permissions import IsAuthenticated
+    from rest_framework.permissions import AllowAny
     from rest_framework.response import Response
     from rest_framework import status
     import os
@@ -95,8 +95,12 @@ def send_fcm_test(request):
     import json
     logger = logging.getLogger(__name__)
     
-    try:
-        if not request.user.is_superuser:
+try:
+        # AllowAny for testing
+        if request.method == 'GET':
+            return Response({'status': 'ok', 'message': 'FCM test endpoint'})
+        
+        if request.user.is_authenticated and not request.user.is_superuser:
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
         data = json.loads(request.body)
