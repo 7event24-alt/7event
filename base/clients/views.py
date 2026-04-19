@@ -111,6 +111,8 @@ class ClientCreateView(CompanyRequiredMixin, View):
             try:
                 import pywebpush
                 import json
+                import logging
+                logger = logging.getLogger(__name__)
                 
                 subscriptions = []
                 try:
@@ -118,15 +120,17 @@ class ClientCreateView(CompanyRequiredMixin, View):
                         for line in f:
                             if line.strip():
                                 subscriptions.append(json.loads(line.strip()))
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Push: Error reading subscriptions: {e}")
+                    
+                logger.error(f"Push: Found {len(subscriptions)} subscriptions")
                 
                 if subscriptions:
                     VAPID_PRIVATE_KEY = "kb_zvHKqPQVSJrCwCVh7aPrrKNPPHHv3Cj1DNcUGrCk"
                     
                     for sub in subscriptions:
                         try:
-                            pywebpush.webpush(
+                            result = pywebpush.webpush(
                                 sub,
                                 json.dumps({
                                     "title": "Novo Cliente",
@@ -136,10 +140,13 @@ class ClientCreateView(CompanyRequiredMixin, View):
                                 vapid_private_key=VAPID_PRIVATE_KEY,
                                 vapid_claims={"sub": "mailto:contato@7event.com.br"}
                             )
+                            logger.error(f"Push: Sent to {sub.get('endpoint', 'unknown')[:50]}...")
                         except Exception as e:
-                            pass
+                            logger.error(f"Push: Error sending: {e}")
             except Exception as e:
-                pass
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Push: Outer error: {e}")
 
             messages.success(request, "Cliente criado com sucesso!")
             return redirect("clients:list")
