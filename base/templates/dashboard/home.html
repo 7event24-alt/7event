@@ -46,7 +46,7 @@ async function sendTestPush() {
         const registration = await navigator.serviceWorker.register('/sw.js');
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array('BEl62iUYgUivxIkv69yGyE3zEmvq5J4PSs5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQY')
+            applicationServerKey: urlBase64ToUint8Array('BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM')
         });
         
         const response = await fetch('/api/fcm/test/', {
