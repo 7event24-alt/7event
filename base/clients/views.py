@@ -107,12 +107,23 @@ class ClientCreateView(CompanyRequiredMixin, View):
                     notification_type=NotificationType.CLIENT,
                 )
 
-            # Enviar push notification
+            # Enviar push notification via Firebase
             try:
-                import pywebpush
-                import json
+                import firebase_admin
+                from firebase_admin import credentials
+                from firebase_admin import messaging
                 import logging
+                import os
                 logger = logging.getLogger(__name__)
+                
+                # Initialize Firebase
+                if not firebase_admin._apps:
+                    service_account_path = os.path.join(settings.BASE_DIR, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json')
+                    if os.path.exists(service_account_path):
+                        cred = credentials.Certificate(service_account_path)
+                        firebase_admin.initialize_app(cred)
+                    else:
+                        logger.error("Push: Service account not found")
                 
                 subscriptions = []
                 try:
@@ -122,27 +133,36 @@ class ClientCreateView(CompanyRequiredMixin, View):
                                 subscriptions.append(json.loads(line.strip()))
                 except Exception as e:
                     logger.error(f"Push: Error reading subscriptions: {e}")
-                    
+                
                 logger.error(f"Push: Found {len(subscriptions)} subscriptions")
                 
                 if subscriptions:
-                    VAPID_PRIVATE_KEY = "kb_zvHKqPQVSJrCwCVh7aPrrKNPPHHv3Cj1DNcUGrCk"
-                    
+                    # Ler tokens únicos dos endpoints
+                    tokens = []
                     for sub in subscriptions:
+                        endpoint = sub.get('endpoint', '')
+                        if endpoint and endpoint not in tokens:
+                            # Extrair token do endpoint do FCM
+                            if 'fcm.googleapis.com' in endpoint:
+                                token = endpoint.split('/send/')[-1].split(':')[0] if '/send/' in endpoint else None
+                                if token and token not in tokens:
+                                    tokens.append(token)
+                    
+                    logger.error(f"Push: FCM tokens: {tokens}")
+                    
+                    for token in tokens:
                         try:
-                            result = pywebpush.webpush(
-                                sub,
-                                json.dumps({
-                                    "title": "Novo Cliente",
-                                    "body": f"'{client.name}' foi adicionado",
-                                    "icon": "/static/img/logo7event.png"
-                                }),
-                                vapid_private_key=VAPID_PRIVATE_KEY,
-                                vapid_claims={"sub": "mailto:contato@7event.com.br"}
+                            message = messaging.Message(
+                                notification=messaging.Notification(
+                                    title="Novo Cliente",
+                                    body=f"'{client.name}' foi adicionado"
+                                ),
+                                token=token,
                             )
-                            logger.error(f"Push: Sent to {sub.get('endpoint', 'unknown')[:50]}...")
+                            response = messaging.send(message)
+                            logger.error(f"Push: Sent to {token[:30]}...")
                         except Exception as e:
-                            logger.error(f"Push: Error sending: {e}")
+                            logger.error(f"Push: Error sending to {token[:30]}: {e}")
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
