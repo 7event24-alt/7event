@@ -41,22 +41,24 @@ const firebaseConfig = {
     appId: "1:1054649753947:web:bfd8fafe405f866abf3a7e"
 };
 
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging({
-    serviceWorkerRegistration: null
-});
-
-messaging.onBackgroundMessage((payload) => {
-    console.log('Background:', payload);
-});
+let messaging;
 
 async function sendTestPush() {
     try {
+        firebase.initializeApp(firebaseConfig);
+        
         // Registrar service worker explicitamente
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
             scope: '/firebase-cloud-messaging-push-scope'
         });
-        messaging.useServiceWorker(registration);
+        
+        messaging = firebase.messaging({
+            serviceWorkerRegistration: registration
+        });
+        
+        messaging.onBackgroundMessage((payload) => {
+            console.log('Background:', payload);
+        });
         
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
