@@ -13,6 +13,13 @@ def firebase_sw(request):
     with open(sw_path, "r") as f:
         return HttpResponse(f.read(), content_type="application/javascript")
 
+@never_cache
+def sw_js(request):
+    import os
+    sw_path = os.path.join(settings.BASE_DIR, "base", "static", "sw.js")
+    with open(sw_path, "r") as f:
+        return HttpResponse(f.read(), content_type="application/javascript")
+
 # Custom error handlers
 from base.core.error_views import (
     bad_request,
@@ -29,6 +36,7 @@ handler500 = server_error
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("firebase-messaging-sw.js", firebase_sw, name="firebase-sw"),
+    path("sw.js", sw_js, name="sw-js"),
     path("api/v1/", include("base.accounts.api_urls")),
     path("api/v1/", include("base.clients.api_urls")),
     path("api/v1/", include("base.jobs.api_urls")),
