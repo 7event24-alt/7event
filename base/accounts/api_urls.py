@@ -84,8 +84,8 @@ def send_fcm_notification(request):
     return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @csrf_exempt
+@api_view(['POST'])
 def send_fcm_test(request):
-    from rest_framework.decorators import api_view, permission_classes
     from rest_framework.permissions import IsAuthenticated
     from rest_framework.response import Response
     from rest_framework import status
@@ -94,76 +94,30 @@ def send_fcm_test(request):
     import json
     logger = logging.getLogger(__name__)
     
-    if request.method == 'POST':
-        try:
-            if not request.user.is_superuser:
-                return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-            
-            data = json.loads(request.body)
-            subscription_data = data.get('subscription')
-            
-            if not subscription_data:
-                return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Guardar subscription para uso posterior
-            from django.conf import settings
-            filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'push_subscriptions.txt')
-            with open(filename, 'a') as f:
-                f.write(subscription_data + '\n')
-            
-            return Response({
-                'status': 'success',
-                'message': 'Subscription registrada! Configure Web Push VAPID backend.',
-                'subscription_recebido': True
-            })
-            
-        except Exception as e:
-            logger.error(f"FCM Error: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-    return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-@csrf_exempt
-def send_push_notification(request):
-    from rest_framework.response import Response
-    from rest_framework import status
-    import os
-    import json
-    
-    if request.method == 'POST':
-        try:
-            from django.contrib.auth.decorators import login_required
-            from django.utils.decorators import method_decorator
-            
-            if not request.user.is_superuser:
-                return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-            
-            data = json.loads(request.body)
-            subscription_data = data.get('subscription')
-            title = data.get('title', '7event')
-            body = data.get('body', 'Teste de notificação')
-            
-            if not subscription_data:
-                return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            import pywebpush as wp
-            
-            # Save subscription
-            from django.conf import settings
-            filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'push_subscriptions.txt')
-            with open(filename, 'a') as f:
-                f.write(subscription_data + '\n')
-            
-            return Response({
-                'status': 'success',
-                'message': 'Subscription salva! Push funcionando.',
-                'saved': True
-            })
-            
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-    return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    try:
+        if not request.user.is_superuser:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        
+        data = json.loads(request.body)
+        subscription_data = data.get('subscription')
+        
+        if not subscription_data:
+            return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from django.conf import settings
+        filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'push_subscriptions.txt')
+        with open(filename, 'a') as f:
+            f.write(subscription_data + '\n')
+        
+        return Response({
+            'status': 'success',
+            'message': 'Subscription registrada!',
+            'subscription_recebido': True
+        })
+        
+    except Exception as e:
+        logger.error(f"FCM Error: {str(e)}")
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 urlpatterns = [
     path("", include(router.urls)),
