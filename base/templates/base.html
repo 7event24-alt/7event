@@ -65,6 +65,17 @@
         <span>Instalar App</span>
     </button>
     
+    <!-- Banner de Update PWA -->
+    <div id="update-banner" hidden class="fixed top-0 left-0 right-0 bg-green-600 text-white px-4 py-2 z-50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i>
+            <span>Nova versão disponível!</span>
+        </div>
+        <button onclick="installUpdate()" class="bg-white text-green-600 px-3 py-1 rounded font-medium hover:bg-green-50">
+            Atualizar
+        </button>
+    </div>
+    
     {% block body %}
         {% if user.is_authenticated %}
             <div class="flex flex-col h-screen">
@@ -491,6 +502,25 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
     if(pwaInstallBtn) pwaInstallBtn.hidden = true;
 } else if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     if(pwaInstallBtn) pwaInstallBtn.hidden = false;
+}
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('{% static "sw.js" %}')
+        .then(reg => {
+            reg.addEventListener('updatefound', () => {
+                if (reg.installing) {
+                    reg.installing.addEventListener('statechange', () => {
+                        if (reg.installing.state === 'installed' && navigator.serviceWorker.controller) {
+                            if(document.getElementById('update-banner')) document.getElementById('update-banner').hidden = false;
+                        }
+                    });
+                }
+            });
+        });
+}
+
+function installUpdate() {
+    navigator.serviceWorker?.skipWaiting().then(() => window.location.reload());
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
