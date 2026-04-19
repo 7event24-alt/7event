@@ -107,6 +107,40 @@ class ClientCreateView(CompanyRequiredMixin, View):
                     notification_type=NotificationType.CLIENT,
                 )
 
+            # Enviar push notification
+            try:
+                import pywebpush
+                import json
+                
+                subscriptions = []
+                try:
+                    with open('/tmp/push_subscriptions.txt', 'r') as f:
+                        for line in f:
+                            if line.strip():
+                                subscriptions.append(json.loads(line.strip()))
+                except:
+                    pass
+                
+                if subscriptions:
+                    VAPID_PRIVATE_KEY = "kb_zvHKqPQVSJrCwCVh7aPrrKNPPHHv3Cj1DNcUGrCk"
+                    
+                    for sub in subscriptions:
+                        try:
+                            pywebpush.webpush(
+                                sub,
+                                json.dumps({
+                                    "title": "Novo Cliente",
+                                    "body": f"'{client.name}' foi adicionado",
+                                    "icon": "/static/img/logo7event.png"
+                                }),
+                                vapid_private_key=VAPID_PRIVATE_KEY,
+                                vapid_claims={"sub": "mailto:contato@7event.com.br"}
+                            )
+                        except Exception as e:
+                            pass
+            except Exception as e:
+                pass
+
             messages.success(request, "Cliente criado com sucesso!")
             return redirect("clients:list")
         return render(request, self.template_name, {"form": form})
