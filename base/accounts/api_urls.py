@@ -91,10 +91,16 @@ def send_fcm_test(request):
         # Bypass auth
         
         import logging
+        import json
         logger = logging.getLogger(__name__)
         
         subscription_data = request.data.get('subscription')
-        logger.error(f"Push: subscription_data: {subscription_data[:50] if subscription_data else 'None'}...")
+        
+        # Convert to JSON string if it's a dict
+        if isinstance(subscription_data, dict):
+            subscription_data = json.dumps(subscription_data)
+        
+        logger.error(f"Push: subscription type: {type(subscription_data)}")
         
         if not subscription_data:
             return Response({'error': 'Subscription requerido'}, status=status.HTTP_400_BAD_REQUEST)
