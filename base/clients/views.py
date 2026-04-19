@@ -118,7 +118,17 @@ class ClientCreateView(CompanyRequiredMixin, View):
                 import os
                 
                 # Get service account key
-                service_account_path = os.path.join(settings.BASE_DIR, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json')
+                # Check multiple possible locations
+                possible_paths = [
+                    os.path.join(settings.BASE_DIR, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'),
+                    '/var/www/7event/event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json',
+                    '/home/bia/Projetos_Pessoais/7event/event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'
+                ]
+                service_account_path = None
+                for p in possible_paths:
+                    if os.path.exists(p):
+                        service_account_path = p
+                        break
                 logger.error(f"Push: SA path: {service_account_path}, exists: {os.path.exists(service_account_path)}")
                 
                 if not os.path.exists(service_account_path):
