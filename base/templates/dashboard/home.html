@@ -9,9 +9,74 @@
 <div class="space-y-6">
     {% include 'components/kpi_cards.html' %}
     
+    {% if user.is_superuser %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-semibold text-yellow-800">Teste de Push Notification</h3>
+                <p class="text-sm text-yellow-700">Envie uma notificação de teste para seu navegador</p>
+            </div>
+            <button onclick="sendTestPush()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                <i class="fas fa-bell"></i> Enviar Teste
+            </button>
+        </div>
+    </div>
+    {% endif %}
+    
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {% include 'components/recent_jobs.html' %}
         {% include 'components/upcoming_events.html' %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyAIhzei6yjpU60RADGO6lhuQ_l1iAqBq10",
+    authDomain: "event-b2848.firebaseapp.com",
+    projectId: "event-b2848",
+    storageBucket: "event-b2848.firebasestorage.app",
+    messagingSenderId: "1054649753947",
+    appId: "1:1054649753947:web:bfd8fafe405f866abf3a7e"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+async function sendTestPush() {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            alert('Por favor, permita notificações no navegador primeiro!');
+            return;
+        }
+        
+        const token = await messaging.getToken({
+            vapidKey: 'BEl62iUYgUivxIkv69yGyE3zEmvq5J4PSs5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQYJ5nM4JL3GQY'
+        });
+        
+        const response = await fetch('/api/fcm/test/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ token: token })
+        });
+        
+        if (response.ok) {
+            alert('Notificação de teste enviada! Verifique se recebeu no navegador.');
+        } else {
+            const error = await response.text();
+            alert('Erro ao enviar: ' + error);
+        }
+    } catch (err) {
+        alert('Erro: ' + err.message);
+    }
+}
+</script>
 {% endblock %}

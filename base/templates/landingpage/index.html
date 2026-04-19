@@ -838,8 +838,13 @@ if (!isPWAInstalled()) {
             if(pwaInstallBtn) pwaInstallBtn.hidden = true;
             return;
         }
-        // Already installed
-        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
+        // Desktop: mostrar instruções
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            alert('Para instalar o 7event:\n\n📱 Android: Menu → Adicionar à tela inicial\n🍎 iOS: Compartilhar → Tela de Início');
+        } else {
+            alert('Para instalar no computador:\n\nNo Chrome/Edge, procure o ícone de instalação na barra de endereços.');
+        }
     });
 // Service Worker
     if ('serviceWorker' in navigator) {

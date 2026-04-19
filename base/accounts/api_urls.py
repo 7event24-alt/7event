@@ -82,10 +82,75 @@ def send_fcm_notification(request):
     
     return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+def send_fcm_test(request):
+    from rest_framework.decorators import api_view, permission_classes
+    from rest_framework.permissions import IsAuthenticated, IsAdminUser
+    from rest_framework.response import Response
+    from rest_framework import status
+    import os
+    
+    if request.method == 'POST':
+        try:
+            if not request.user.is_superuser:
+                return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+            data = json.loads(request.body)
+            token = data.get('token')
+            
+            if not token:
+                return Response({'error': 'Token requerido'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Importar firebase-admin
+            try:
+                import firebase_admin
+                from firebase_admin import credentials
+                from firebase_admin import messaging
+            except ImportError:
+                return Response({'error': 'firebase-admin não instalado'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Verificar se já inicializado
+            if not firebase_admin._apps:
+                # Usar service account local
+                service_account_path = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))),
+                    'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'
+                )
+                
+                if os.path.exists(service_account_path):
+                    cred = credentials.Certificate(service_account_path)
+                    firebase_admin.initialize_app(cred)
+                else:
+                    return Response({
+                        'error': 'Service account não encontrado em: ' + service_account_path
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Enviar notificação
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title='Teste 7event',
+                    body='Notificação de teste enviada com sucesso!'
+                ),
+                token=token,
+            )
+            
+            response = messaging.send(message)
+            
+            return Response({
+                'status': 'success',
+                'message': 'Notificação enviada!',
+                'firebase_response': response
+            })
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 urlpatterns = [
     path("", include(router.urls)),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("fcm/token/", save_fcm_token, name="fcm_save_token"),
     path("fcm/send/", send_fcm_notification, name="fcm_send"),
+    path("fcm/test/", send_fcm_test, name="fcm_test"),
 ]

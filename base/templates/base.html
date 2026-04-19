@@ -59,12 +59,6 @@
     </script>
 </head>
 <body>
-    <!-- Botão de Instalação PWA -->
-    <button id="pwa-install-btn" hidden class="fixed bottom-4 right-4 bg-primary hover:bg-secondary text-white px-4 py-3 rounded-full shadow-lg z-50 flex items-center gap-2">
-        <i class="fas fa-download"></i>
-        <span>Instalar App</span>
-    </button>
-    
     {% block body %}
         {% if user.is_authenticated %}
             <div class="flex flex-col h-screen">
@@ -482,45 +476,9 @@ function getCookie(name) {
             if (container) container.style.opacity = '0';
             setTimeout(() => container?.remove(), 300);
         }, 5000);
-// PWA Install Prompt
-let deferredPrompt;
-const pwaInstallBtn = document.getElementById('pwa-install-btn');
-
-// Função para verificar se já está instalado como PWA
-function isPWAInstalled() {
-    return window.matchMedia('(display-mode: standalone)').matches || 
-           window.navigator.standalone === true ||
-           window.matchMedia('(display-mode: fullscreen').matches;
-}
-
-// Mostrar botão apenas se não estiver instalado
-if (!isPWAInstalled()) {
-    if(pwaInstallBtn) pwaInstallBtn.hidden = false;
-}
-
 // Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('{% static "sw.js" %}').catch(() => {});
-}
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    if(pwaInstallBtn) pwaInstallBtn.hidden = false;
-});
-
-pwaInstallBtn?.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        if(pwaInstallBtn) pwaInstallBtn.hidden = true;
-    }
-});
-
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('{% static "sw.js" %}').then(reg => console.log('SW registered')).catch(err => console.log('SW error', err));
 }
 </script>
 {% endif %}
