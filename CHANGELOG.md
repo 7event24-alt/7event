@@ -2,6 +2,37 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [1.5.0] - 2026-04-21
+
+### Feat
+- **Agenda com calendário FullCalendar funcional**:
+  - Calendário renderiza eventos da API `/app/agenda/api/eventos/`
+  - Botão "Novo Trabalho" com data do calendário
+  - Página de dia (`/app/agenda/dia/`) com link para criar trabalho
+- **Despesas com trabalho pré-selecionado**:
+  - Ao criar despesa da página de detalhes do trabalho, trabalho já vem selecionado
+- **Landingpage mobile responsivo**:
+  - Phone hero centralizado no mobile
+  - Trust badges aparecem no mobile
+  - Design otimizado para telas menores
+
+### Fix
+- **Agenda**: Todos usuários da conta veem todos os trabalhos (remove filtro `user`)
+- **Agenda API**: Corrigido filtro de users para não-superuser
+- **Agenda calendário**: URL da API corrigida (`/app/agenda/api/eventos/`)
+- **Jobs**: Data do evento preenchida ao criar da agenda
+- **Jobs**: URLs corrigidas com prefixo `/app/`
+- **FCM**: Métricas corrigidas usando `PlanType` ao invés de string
+- **Jobs Detail**: Seção "Workers" removida (campo não existe no modelo)
+
+### Remov
+- **Workers/Equipes**: Removido código e referências que usavam campo inexistente
+  - `agenda/views.py`, `agenda/serializers.py`, `jobs/views.py`
+  - Templates: `jobs/detail.html`, `landingpage/index.html`
+  - Settings: referência `jobs.JobWorker`
+
+---
+
 ## [1.4.1] - 2026-04-19
 
 ### Fix
