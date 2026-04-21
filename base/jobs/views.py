@@ -167,8 +167,10 @@ class JobCreateView(CompanyRequiredMixin, View):
                 # Enviar email de notificação (opcional)
                 try:
                     from base.core.emails import send_new_job_notification
+                    from base.core.utils import get_base_url
 
-                    send_new_job_notification(request.user, job)
+                    job_url = f"{get_base_url(request)}/app/trabalhos/{job.pk}/"
+                    send_new_job_notification(request.user, job, job_url)
                 except Exception as e:
                     print(f"Erro ao enviar email: {e}")
 

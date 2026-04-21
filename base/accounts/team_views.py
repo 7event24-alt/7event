@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.utils import timezone
 from base.accounts.models import User
+from base.core.utils import get_base_url
 
 
 class TeamRequiredMixin(LoginRequiredMixin):
@@ -65,7 +66,7 @@ class TeamCreateView(TeamRequiredMixin, View):
         from django.core.mail import send_mail
 
         invite_url = (
-            f"{request.scheme}://{request.get_host()}/accounts/accept-invite/{token}/"
+            f"{get_base_url(request)}/accounts/accept-invite/{token}/"
         )
 
         try:

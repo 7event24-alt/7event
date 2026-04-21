@@ -15,19 +15,7 @@ from django.contrib.sites.models import Site
 from django.conf import settings
 
 from .forms import RegisterForm
-
-
-def get_base_url(request):
-    """Obtém URL base de forma segura"""
-    try:
-        # Tenta pegar o Site primeiro (se existir)
-        site = Site.objects.first()
-        if site:
-            return f"https://{site.domain}"
-    except Exception:
-        pass
-    # Fallback para domínio do request
-    return request.build_absolute_uri("/").rstrip("/")
+from base.core.utils import get_base_url
 
 
 class CustomLoginView(LoginView):
