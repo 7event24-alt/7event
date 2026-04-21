@@ -11,6 +11,9 @@ from .views import (
     JobCompleteView,
     JobCancelView,
     JobApproveView,
+    JobConfirmPaymentView,
+    JobConfirmPartialPaymentView,
+    JobConfirmRemainingPaymentView,
 )
 
 app_name = "jobs"
@@ -28,5 +31,8 @@ urlpatterns = [
     path("<int:pk>/concluir/", JobCompleteView.as_view(), name="complete"),
     path("<int:pk>/cancelar/", JobCancelView.as_view(), name="cancel"),
     path("<int:pk>/aprovar/", JobApproveView.as_view(), name="approve"),
+    path("<int:pk>/confirmar-pagamento/", JobConfirmPaymentView.as_view(), name="confirm_payment"),
+    path("<int:pk>/confirmar-parcela/", JobConfirmPartialPaymentView.as_view(), name="confirm_partial"),
+    path("<int:pk>/confirmar-restante/", JobConfirmRemainingPaymentView.as_view(), name="confirm_remaining"),
     path("api/", include(router.urls)),
 ]

@@ -94,7 +94,6 @@ class JobForm(forms.ModelForm):
             "payment_remaining_value",
             "payment_remaining_date",
             "status",
-            "payment_status",
         ]
         widgets = {
             "client": forms.Select(
@@ -201,7 +200,6 @@ class JobForm(forms.ModelForm):
         self.fields["end_date"].required = False
         self.fields["payment_type"].required = False
         self.fields["status"].required = False
-        self.fields["payment_status"].required = False
         self.fields["event_type"].required = False
         self.fields["client"].required = True
         self.fields["title"].required = True

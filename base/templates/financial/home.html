@@ -95,29 +95,33 @@
         <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Trabalho</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cliente</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase hidden md:table-cell">Local</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status do Evento</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Valor</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Pagto</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase w-28 whitespace-nowrap">Restante</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase w-36 whitespace-nowrap">Status de Pagamento</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 {% for job in jobs_period %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ job.start_date|date:"d/m/Y" }}</td>
                     <td class="px-4 py-3">
-                        <a href="{% url 'clients:detail' job.client.pk %}" class="text-primary hover:text-secondary font-medium">
-                            {{ job.client.name }}
+                        <a href="{% url 'jobs:detail' job.pk %}" class="text-primary hover:text-secondary font-medium">
+                            {{ job.title|truncatechars:30 }}
                         </a>
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{{ job.location|truncatechars:30 }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ job.start_date|date:"d/m/Y" }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ job.client.name }}</td>
                     <td class="px-4 py-3">
                         {% include 'components/badge_status.html' with status=job.status type='job' %}
                     </td>
-                    <td class="px-4 py-3 text-right font-medium text-gray-800">{{ job.cache|brl }}</td>
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-4 py-3 text-right font-medium text-gray-800 whitespace-nowrap">{{ job.cache|brl }}</td>
+                    <td class="px-4 py-3 text-right text-sm text-gray-600 whitespace-nowrap">
+                        {% if job.payment_status == 'PARTIAL' %}{{ job.payment_remaining_value|brl }}{% else %}-{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-center w-36 whitespace-nowrap">
                         {% include 'components/badge_status.html' with status=job.payment_status type='payment' %}
                     </td>
                 </tr>
@@ -125,9 +129,10 @@
             </tbody>
             <tfoot class="bg-gray-50">
                 <tr>
-                    <td colspan="4" class="px-4 py-3 font-semibold text-gray-800 text-right">Total:</td>
-                    <td class="px-4 py-3 text-right font-bold text-green-600">{{ total_revenue|brl }}</td>
-                    <td></td>
+                    <td colspan="5" class="px-1 py-3 font-semibold text-gray-800 text-right">Total:</td>
+                    <td class="px-1 text-right font-bold text-green-600 whitespace-nowrap">{{ total_revenue|brl }}</td>
+                    <td class="px-1"></td>
+                    <td class="px-1"></td>
                 </tr>
             </tfoot>
         </table>

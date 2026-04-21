@@ -253,12 +253,19 @@ class JobConfirmView(CompanyRequiredMixin, View):
             job.status = JobStatus.CONFIRMED
             job.save()
 
+            # Pagamento antecipado é automático ao confirmar
+            if job.payment_type == PaymentType.ADVANCE and job.payment_status != PaymentStatusJob.PAID:
+                job.payment_status = PaymentStatusJob.PAID
+                job.save()
+                messages.success(request, "Trabalho confirmado! Pagamento antecipado registrado.")
+            else:
+                messages.success(request, "Trabalho confirmado com sucesso!")
+
             if job.account.notify_on_job_confirmed:
                 from base.core.emails import send_job_confirmation_to_client
 
                 send_job_confirmation_to_client(job)
 
-        messages.success(request, "Trabalho confirmado com sucesso!")
         return redirect("jobs:detail", pk=job.pk)
 
 
@@ -290,6 +297,48 @@ class JobApproveView(CompanyRequiredMixin, View):
         job.approved_at = timezone.now()
         job.save()
         messages.success(request, "Trabalho aprovado com sucesso!")
+        return redirect("jobs:detail", pk=job.pk)
+
+
+class JobConfirmPaymentView(CompanyRequiredMixin, View):
+    """Confirma pagamento total ou antecipado"""
+    def post(self, request, pk):
+        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        if job.payment_status == PaymentStatusJob.PAID:
+            messages.info(request, "Pagamento já está confirmado.")
+        else:
+            job.payment_status = PaymentStatusJob.PAID
+            job.payment_confirmed_at = timezone.now()
+            job.save()
+            messages.success(request, "Pagamento confirmado com sucesso!")
+        return redirect("jobs:detail", pk=job.pk)
+
+
+class JobConfirmPartialPaymentView(CompanyRequiredMixin, View):
+    """Confirma 1ª parcela do pagamento parcial"""
+    def post(self, request, pk):
+        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        if job.payment_type == PaymentType.PARTIAL and job.payment_status == PaymentStatusJob.PENDING:
+            job.payment_status = PaymentStatusJob.PARTIAL
+            job.payment_partial_confirmed_at = timezone.now()
+            job.save()
+            messages.success(request, "1ª parcela confirmada!")
+        else:
+            messages.info(request, "Não é possível confirmar 1ª parcela.")
+        return redirect("jobs:detail", pk=job.pk)
+
+
+class JobConfirmRemainingPaymentView(CompanyRequiredMixin, View):
+    """Confirma 2ª parcela do pagamento parcial"""
+    def post(self, request, pk):
+        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        if job.payment_type == PaymentType.PARTIAL and job.payment_status in [PaymentStatusJob.PENDING, PaymentStatusJob.PARTIAL]:
+            job.payment_status = PaymentStatusJob.PAID
+            job.payment_remaining_confirmed_at = timezone.now()
+            job.save()
+            messages.success(request, "2ª parcela confirmada! Pagamento completo.")
+        else:
+            messages.info(request, "Não é possível confirmar 2ª parcela.")
         return redirect("jobs:detail", pk=job.pk)
 
 

@@ -7,7 +7,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta, date
 from decimal import Decimal
 
-from base.jobs.models import Job, PaymentStatusJob, JobStatus
+from base.jobs.models import Job, PaymentStatusJob, JobStatus, PaymentType
 from base.expenses.models import Expense
 
 
@@ -208,12 +208,34 @@ class FinancialView(LoginRequiredMixin, View):
             start_date__lte=end_date,
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
 
-        revenue_pending = Job.objects.filter(
+        # Receita de parcelas parciais confirmadas
+        revenue_from_partial = Job.objects.filter(
             account=account,
-            payment_status__in=[PaymentStatusJob.PENDING, PaymentStatusJob.PARTIAL],
+            payment_status=PaymentStatusJob.PARTIAL,
+            start_date__gte=start_date,
+            start_date__lte=end_date,
+        ).aggregate(total=Sum("payment_partial_value"))["total"] or Decimal("0")
+        
+        revenue_received = revenue_received + revenue_from_partial
+
+        # Receita pendente de antecipado/total
+        pending_full = Job.objects.filter(
+            account=account,
+            payment_status=PaymentStatusJob.PENDING,
+            payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL],
             start_date__gte=start_date,
             start_date__lte=end_date,
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
+
+        # Receita pendente de parcial (2ª parcela)
+        pending_partial = Job.objects.filter(
+            account=account,
+            payment_status=PaymentStatusJob.PARTIAL,
+            start_date__gte=start_date,
+            start_date__lte=end_date,
+        ).aggregate(total=Sum("payment_remaining_value"))["total"] or Decimal("0")
+
+        revenue_pending = pending_full + pending_partial
 
         total_expenses = sum(
             item["total"] for item in expenses_data if item.get("total")

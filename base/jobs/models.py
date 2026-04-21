@@ -120,6 +120,15 @@ class Job(models.Model):
     payment_remaining_date = models.DateField(
         null=True, blank=True, verbose_name=_("Data Pagamento Restante")
     )
+    payment_confirmed_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="Data Confirmação Pagamento"
+    )
+    payment_partial_confirmed_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="Data Confirmação 1ª Parcela"
+    )
+    payment_remaining_confirmed_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="Data Confirmação 2ª Parcela"
+    )
 
     status = models.CharField(
         max_length=20,

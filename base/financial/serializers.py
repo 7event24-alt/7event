@@ -5,7 +5,7 @@ from rest_framework import viewsets
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 
-from base.jobs.models import Job, JobStatus, PaymentStatusJob
+from base.jobs.models import Job, JobStatus, PaymentStatusJob, PaymentType
 from base.expenses.models import Expense, ExpenseCategory
 
 
@@ -52,13 +52,34 @@ class FinancialViewSet(viewsets.ViewSet):
             or 0
         )
 
+        # Receita de parcelas parciais confirmadas
+        revenue_from_partial = (
+            Job.objects.filter(
+                user=user, payment_status=PaymentStatusJob.PARTIAL
+            ).aggregate(total=Sum("payment_partial_value"))["total"]
+            or 0
+        )
+        
+        revenue_received = revenue_received + revenue_from_partial
+
         revenue_pending = (
             Job.objects.filter(
                 user=user,
-                payment_status__in=[PaymentStatusJob.PENDING, PaymentStatusJob.PARTIAL],
+                payment_status=PaymentStatusJob.PENDING,
+                payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL],
             ).aggregate(total=Sum("cache"))["total"]
             or 0
         )
+
+        pending_partial = (
+            Job.objects.filter(
+                user=user,
+                payment_status=PaymentStatusJob.PARTIAL,
+            ).aggregate(total=Sum("payment_remaining_value"))["total"]
+            or 0
+        )
+        
+        revenue_pending = revenue_pending + pending_partial
 
         total_expenses = (
             Expense.objects.filter(user=user).aggregate(total=Sum("value"))["total"]

@@ -7,7 +7,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from base.clients.models import Client
-from base.jobs.models import Job, JobStatus, PaymentStatusJob
+from base.jobs.models import Job, JobStatus, PaymentStatusJob, PaymentType
 from base.expenses.models import Expense
 from base.services.models import Service
 from base.quote.models import Quote
@@ -63,10 +63,27 @@ class DashboardView(LoginRequiredMixin, View):
             account=company, payment_status=PaymentStatusJob.PAID
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
 
-        revenue_pending = Job.objects.filter(
+        # Receita de parcelas parciais confirmadas
+        revenue_from_partial = Job.objects.filter(
+            account=company, payment_status=PaymentStatusJob.PARTIAL
+        ).aggregate(total=Sum("payment_partial_value"))["total"] or Decimal("0")
+        
+        revenue_received = revenue_received + revenue_from_partial
+
+        # Receita pendente de antecipado/total (cache completo)
+        pending_full = Job.objects.filter(
             account=company,
-            payment_status__in=[PaymentStatusJob.PENDING, PaymentStatusJob.PARTIAL],
+            payment_status=PaymentStatusJob.PENDING,
+            payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL]
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
+
+        # Receita pendente de parcial (2ª parcela)
+        pending_partial = Job.objects.filter(
+            account=company,
+            payment_status=PaymentStatusJob.PARTIAL
+        ).aggregate(total=Sum("payment_remaining_value"))["total"] or Decimal("0")
+
+        revenue_pending = pending_full + pending_partial
 
         # Expenses
         total_expenses = Expense.objects.filter(account=company).aggregate(

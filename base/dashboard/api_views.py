@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-from base.jobs.models import Job
+from base.jobs.models import Job, PaymentType, PaymentStatusJob
 from base.clients.models import Client
 from base.quote.models import Quote
 from base.expenses.models import Expense
@@ -21,27 +21,41 @@ def dashboard_api(request):
     jobs_count = Job.objects.filter(account=account).count()
     quotes_count = Quote.objects.filter(account=account).count()
 
-    from django.db.models import Sum
+    from django.db.models import Sum, F, Value, Case, When, DecimalField
+    from decimal import Decimal
 
-    revenue = (
-        Job.objects.filter(account=account, status=Job.JobStatus.COMPLETED).aggregate(
-            total=Sum("cache")
-        )["total"]
-        or 0
+    # Receita de antecipado/total (pagamento completo)
+    revenue_full = (
+        Job.objects.filter(
+            account=account,
+            payment_status=PaymentStatusJob.PAID,
+            payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL]
+        ).aggregate(total=Sum("cache"))["total"]
+        or Decimal("0.00")
     )
+
+    # Receita parcial (1ª parcela confirmada, 2ª ainda não)
+    revenue_partial = (
+        Job.objects.filter(
+            account=account,
+            payment_status=PaymentStatusJob.PARTIAL
+        ).aggregate(total=Sum("payment_partial_value"))["total"]
+        or Decimal("0.00")
+    )
+
+    # Receita total (paga + parcial confirmada)
+    revenue = revenue_full + revenue_partial
 
     expenses_total = (
         Expense.objects.filter(account=account).aggregate(total=Sum("value"))["total"]
-        or 0
+        or Decimal("0.00")
     )
 
     pending_quotes = Quote.objects.filter(
-        account=account, status=Quote.QuoteStatus.DRAFT
+        account=account
     ).count()
 
-    accepted_quotes = Quote.objects.filter(
-        account=account, status=Quote.QuoteStatus.ACCEPTED
-    ).count()
+    accepted_quotes = 0
 
     pending_jobs = Job.objects.filter(
         account=account, status=Job.JobStatus.PENDING
@@ -53,6 +67,8 @@ def dashboard_api(request):
             "jobs_count": jobs_count,
             "quotes_count": quotes_count,
             "revenue": float(revenue),
+            "revenue_full": float(revenue_full),
+            "revenue_partial": float(revenue_partial),
             "expenses": float(expenses_total),
             "pending_quotes": pending_quotes,
             "accepted_quotes": accepted_quotes,
