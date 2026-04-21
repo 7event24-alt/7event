@@ -146,8 +146,12 @@ class AuthViewSet(viewsets.ViewSet):
         try:
             from base.core.emails import send_verification_email
 
-            base_url = request.data.get("base_url", "http://127.0.0.1:8000")
-            verification_url = f"{base_url}/api/v1/auth/verify/{verification_token}/"
+            base_url = request.data.get("base_url", "")
+            verification_url = f"{base_url}/api/v1/auth/verify/{verification_token}/" if base_url else f"https://7event.com.br/api/v1/auth/verify/{verification_token}/"
+            
+            if 'ngrok' in base_url or '127.0.0.1' in base_url or 'localhost' in base_url or not base_url:
+                verification_url = f"https://7event.com.br/api/v1/auth/verify/{verification_token}/"
+            
             send_verification_email(user, verification_url)
         except Exception as e:
             print(f"Erro ao enviar email de verificação: {e}")
@@ -232,8 +236,12 @@ class AuthViewSet(viewsets.ViewSet):
         try:
             from base.core.emails import send_verification_email
 
-            base_url = request.data.get("base_url", "http://127.0.0.1:8000")
-            verification_url = f"{base_url}/api/v1/auth/verify/{verification_token}/"
+            base_url = request.data.get("base_url", "")
+            verification_url = f"{base_url}/api/v1/auth/verify/{verification_token}/" if base_url else f"https://7event.com.br/api/v1/auth/verify/{verification_token}/"
+            
+            if 'ngrok' in base_url or '127.0.0.1' in base_url or 'localhost' in base_url or not base_url:
+                verification_url = f"https://7event.com.br/api/v1/auth/verify/{verification_token}/"
+            
             send_verification_email(user, verification_url)
         except Exception as e:
             print(f"Erro ao enviar email de verificação: {e}")

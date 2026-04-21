@@ -128,6 +128,10 @@ class AdminResendActivationView(View):
                     verification_url = (
                         f"{base_url}/accounts/ativar/{user.verification_token}/"
                     )
+                    
+                    if 'ngrok' in base_url or '127.0.0.1' in base_url or 'localhost' in base_url:
+                        verification_url = f"https://7event.com.br/accounts/ativar/{user.verification_token}/"
+                    
                     send_verification_email(user, verification_url)
 
                     from django.contrib import messages
@@ -232,6 +236,9 @@ class RegisterView(View):
                 verification_url = (
                     f"{base_url}/accounts/ativar/{user.verification_token}/"
                 )
+                
+                if 'ngrok' in base_url or '127.0.0.1' in base_url or 'localhost' in base_url:
+                    verification_url = f"https://7event.com.br/accounts/ativar/{user.verification_token}/"
 
                 email_sent = send_verification_email(user, verification_url)
 
@@ -336,6 +343,10 @@ class ResendActivationView(View):
                     verification_url = (
                         f"{base_url}/accounts/ativar/{user.verification_token}/"
                     )
+                    
+                    if 'ngrok' in base_url or '127.0.0.1' in base_url or 'localhost' in base_url:
+                        verification_url = f"https://7event.com.br/accounts/ativar/{user.verification_token}/"
+                    
                     send_verification_email(user, verification_url)
 
                     return render(
@@ -376,6 +387,10 @@ class ResendActivationView(View):
             base_url = get_base_url(request)
 
             verification_url = f"{base_url}/accounts/ativar/{user.verification_token}/"
+            
+            if 'ngrok' in base_url or '127.0.0.1' in base_url or 'localhost' in base_url:
+                verification_url = f"https://7event.com.br/accounts/ativar/{user.verification_token}/"
+            
             send_verification_email(user, verification_url)
 
             messages.success(
