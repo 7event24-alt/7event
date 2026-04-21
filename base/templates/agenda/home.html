@@ -4,7 +4,7 @@
 {% block page_title %}Agenda de Eventos{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'jobs:create' %}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+<a href="#" id="newJobBtn" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
     <i class="fas fa-plus"></i> <span class="hidden sm:inline">Novo Trabalho</span>
 </a>
 {% endblock %}
@@ -237,20 +237,53 @@ document.addEventListener('DOMContentLoaded', function() {
             locale: 'pt-br',
             headerToolbar: false,
             initialDate: initialDate,
-            eventSources: [fetchEvents],
             eventClick: function(info) {
-                window.location.href = '/trabalhos/' + info.event.id + '/';
+                window.location.href = '/app/trabalhos/' + info.event.id + '/';
             },
             dateClick: function(info) {
                 var date = info.date;
                 var year = date.getFullYear();
                 var month = String(date.getMonth() + 1).padStart(2, '0');
                 var day = String(date.getDate()).padStart(2, '0');
-                window.location.href = '/agenda/dia/' + year + '/' + month + '/' + day + '/';
+                window.location.href = '/app/agenda/dia/' + year + '/' + month + '/' + day + '/';
             },
             height: 'auto'
         });
         calendar.render();
+        
+        // Carrega eventos após renderizar
+        console.log('Fetching events from /app/agenda/api/eventos/...');
+        fetch('/app/agenda/api/eventos/', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(response) {
+            console.log('Response status:', response.status);
+            if (response.ok) return response.json();
+            throw new Error('HTTP Error: ' + response.status);
+        })
+        .then(function(data) {
+            console.log('API returned', data.length, 'events:', JSON.stringify(data));
+            allEvents = data;
+            data.forEach(function(event) {
+                console.log('Adding event:', event.title, event.start);
+                calendar.addEvent(event);
+            });
+            console.log('Total events in calendar:', calendar.getEvents().length);
+        })
+        .catch(function(error) {
+            console.error('Fetch error:', error);
+            // Fallback: mostra eventos da variável Django
+            console.log('Trying fallback events from page...');
+            if (typeof allEvents !== 'undefined' && allEvents.length > 0) {
+                allEvents.forEach(function(event) {
+                    calendar.addEvent(event);
+                });
+            }
+        });
         
         document.getElementById('prevMonth').addEventListener('click', function() {
             calendar.prev();
@@ -266,8 +299,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.getElementById('addJobBtn').addEventListener('click', function() {
             var date = calendar.getDate();
-            var dateStr = date.toISOString().split('T')[0];
-            window.location.href = '/trabalhos/novo/?date=' + dateStr;
+            var y = date.getFullYear();
+            var m = date.getMonth() + 1;
+            var d = date.getDate();
+            var dateStr = y + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+            window.location.href = '/app/trabalhos/novo/?date=' + dateStr;
         });
         document.getElementById('viewSelector').addEventListener('change', function() {
             calendar.changeView(this.value);
@@ -291,6 +327,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
             checkbox.addEventListener('change', refreshCalendarEvents);
         });
+        
+        // Botão Novo Trabalho com data do calendário
+        var newJobBtn = document.getElementById('newJobBtn');
+        if (newJobBtn) {
+            newJobBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var date = calendar.getDate();
+                var y = date.getFullYear();
+                var m = date.getMonth() + 1;
+                var d = date.getDate();
+                var dateStr = y + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+                console.log('Date clicked:', dateStr);
+                window.location.href = '/app/trabalhos/novo/?date=' + dateStr;
+            });
+        }
     }
 });
 </script>

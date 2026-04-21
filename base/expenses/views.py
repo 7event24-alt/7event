@@ -154,7 +154,14 @@ class ExpenseCreateView(CompanyRequiredMixin, View):
             jobs = Job.objects.filter(account=request.user.account)
         else:
             jobs = Job.objects.filter(user=request.user)
-        return render(request, self.template_name, {"form": form, "jobs": jobs})
+        
+        # Pré-selecionar trabalho se vier parâmetro na URL
+        preselected_job = request.GET.get("job", "")
+        if preselected_job:
+            form.fields["job"].initial = preselected_job
+            form.fields["job"].disabled = True
+        
+        return render(request, self.template_name, {"form": form, "jobs": jobs, "preselected_job": preselected_job})
 
     def post(self, request):
         form = ExpenseForm(request.POST, user=request.user)

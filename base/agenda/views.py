@@ -1,5 +1,4 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.utils import timezone
@@ -55,7 +54,6 @@ class AgendaView(LoginRequiredMixin, View):
                     start_date__gte=first_day.date(),
                     start_date__lte=last_day.date(),
                 )
-                .filter(Q(user=user) | Q(workers=user))
                 .select_related("client")
                 .order_by("start_date", "start_time")
             )
@@ -125,9 +123,7 @@ class AgendaView(LoginRequiredMixin, View):
             start_date__gte=now.date(),
             status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
         )
-        if not is_superuser:
-            upcoming_jobs = upcoming_jobs.filter(Q(user=user) | Q(workers=user))
-        elif user_filter:
+        if user_filter and is_superuser:
             upcoming_jobs = upcoming_jobs.filter(user_id=user_filter)
 
         upcoming_jobs = upcoming_jobs.select_related("client").order_by("start_date")[

@@ -32,16 +32,22 @@ class AdminPanelViewSet(viewsets.ViewSet):
     permission_classes = [IsAdminUser]
 
     def list(self, request):
+        from base.accounts.models import PlanType, SubscriptionStatus
+
         total_users = User.objects.count()
         active_users = User.objects.filter(is_active=True).count()
         blocked_users = User.objects.filter(is_blocked=True).count()
 
-        trial_users = User.objects.filter(plan="trial").count()
-        monthly_users = User.objects.filter(plan="monthly").count()
-        annual_users = User.objects.filter(plan="annual").count()
+        trial_users = User.objects.filter(plan__type=PlanType.TESTER).count()
+        monthly_users = User.objects.filter(plan__type=PlanType.BASIC).count()
+        annual_users = User.objects.filter(plan__type=PlanType.BUSINESS).count()
 
-        pending_payments = User.objects.filter(payment_status="pending").count()
-        inadimplente_users = User.objects.filter(payment_status="inadimplente").count()
+        pending_payments = User.objects.filter(
+            account__subscription__payment_status="pending"
+        ).count()
+        inadimplente_users = User.objects.filter(
+            account__subscription__payment_status="overdue"
+        ).count()
 
         total_clients = Client.objects.count()
         total_jobs = Job.objects.count()

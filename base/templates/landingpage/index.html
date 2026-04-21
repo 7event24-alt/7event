@@ -145,6 +145,71 @@
             left: 50%;
             transform: translateX(-50%);
         }
+
+        /* Mobile phone hero */
+        @media (max-width: 1023px) {
+            .phone-hero-mobile {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .phone-hero-mobile img {
+                max-width: 240px;
+            }
+            
+            .hero-section .grid {
+                display: flex !important;
+                flex-direction: column;
+            }
+            
+            .hero-top {
+                display: block !important;
+            }
+            
+            .hero-desktop {
+                display: none !important;
+            }
+            
+            .hero-mobile-below {
+                display: block !important;
+            }
+            
+            .floating-card-top,
+            .floating-card-right,
+            .floating-card-bottom {
+                display: none !important;
+            }
+            
+            .mobile-cards {
+                display: flex !important;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .phone-hero-desktop {
+                display: flex;
+                justify-content: flex-end;
+            }
+            
+            .hero-top {
+                display: none !important;
+            }
+            
+            .hero-mobile-below {
+                display: none !important;
+            }
+            
+            .floating-card-top,
+            .floating-card-right,
+            .floating-card-bottom {
+                display: flex !important;
+            }
+            
+            .mobile-cards {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -182,11 +247,12 @@
     </header>
 
     <!-- ==================== HERO SECTION ==================== -->
-    <section id="inicio" class="pt-32 pb-20 md:pt-40 md:pb-32 bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <section id="inicio" class="hero-section pt-20 pb-12 md:pt-32 md:pb-20 bg-gradient-to-br from-gray-50 via-white to-blue-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                <!-- Left Column - Text -->
-                <div class="text-center lg:text-left">
+                
+                <!-- Left Column - Text (Desktop) -->
+                <div class="hero-desktop hidden lg:block text-center lg:text-left">
                     <div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
                         <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         Sistema de Gestão de Eventos #1
@@ -232,77 +298,57 @@
                     </div>
                 </div>
                 
-                <!-- Right Column - Visual -->
-                <div class="relative hidden lg:block">
+<!-- Right Column - Visual (Phone Hero) -->
+                <div class="phone-hero-mobile lg:phone-hero-desktop">
+                    <!-- Tag + Título (Mobile) -->
+                    <div class="hero-top lg:hidden text-center mb-4">
+                        <div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-medium mb-4">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            Sistema de Gestão de Eventos #1
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900">
+                            Organize eventos <span class="text-primary">como um profissional</span>
+                        </h2>
+                    </div>
+                    
                     <!-- Main dashboard image -->
-                    <div class="relative animate-float">
-                        <div class="p-4">
-                            <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto drop-shadow-xl">
-                        </div>
+                    <div class="p-4 flex justify-center animate-float relative">
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto drop-shadow-xl">
                     </div>
                     
-                    <!-- Floating cards - Distributed harmoniously -->
-                    <!-- Top right - Trabalho Confirmado -->
-                    <div class="absolute -top-6 -right-4 bg-white rounded-xl shadow-xl p-4 animate-float-delayed">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-check text-green-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-800">Trabalho Confirmado</p>
-                                <p class="text-xs text-gray-500">Casamento Silva</p>
-                            </div>
+                    <!-- Mobile: Descrição + CTAs -->
+                    <div class="hero-mobile-below lg:hidden text-center px-4 mt-6">
+                        <p class="text-sm text-gray-600 mb-4">
+                            A plataforma completa para gerenciar seus eventos.
+                        </p>
+                        
+                        <div class="flex flex-col gap-3">
+                            <a href="/app/accounts/register/" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-xl font-semibold transition-all btn-shine">
+                                <i class="fas fa-rocket mr-2"></i>
+                                Começar agora
+                            </a>
+                            <a href="#contato" class="border-2 border-gray-300 hover:border-primary text-gray-700 hover:text-primary px-6 py-3 rounded-xl font-semibold transition-all">
+                                <i class="fas fa-comments mr-2"></i>
+                                Falar com equipe
+                            </a>
                         </div>
-                    </div>
-                    
-                    <!-- Top left - Evento Confirmado (small) -->
-                    <div class="absolute top-8 -left-6 bg-white rounded-xl shadow-xl p-3 animate-float-slow">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-calendar-check text-blue-600 text-xs"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-gray-800">Evento Confirmado</p>
-                                <p class="text-[10px] text-gray-500">15/04</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Middle right - Orçamento Aceito -->
-                    <div class="absolute top-1/3 -right-2 bg-white rounded-xl shadow-xl p-4 animate-float-fast">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-file-invoice-dollar text-green-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-800">Orçamento Aceito</p>
-                                <p class="text-xs text-gray-500">Corporativo XYZ</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Bottom left - +5 Clientes -->
-                    <div class="absolute top-[40%] -left-4 bg-white rounded-xl shadow-xl p-3 animate-float-reverse">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-users text-purple-600 text-xs"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-gray-800">+5 Clientes</p>
-                                <p class="text-[10px] text-gray-500">Este mês</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Middle - Receita do mês -->
-                    <div class="absolute bottom-1/3 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl p-4 animate-float-delayed">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
-                                <i class="fas fa-chart-line text-gold"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-800">Receita do mês</p>
-                                <p class="text-xs text-gray-500">R$ 15.000</p>
+                        
+                        <!-- Trust badges -->
+                        <div class="mt-8 pt-6 border-t border-gray-200">
+                            <p class="text-xs text-gray-500 mb-3">Confiado por +500 profissionais</p>
+                            <div class="flex justify-center gap-4">
+                                <div class="flex items-center gap-1 text-gray-400 text-xs">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>100% Seguro</span>
+                                </div>
+                                <div class="flex items-center gap-1 text-gray-400 text-xs">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Suporte 24/7</span>
+                                </div>
+                                <div class="flex items-center gap-1 text-gray-400 text-xs">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Gratuito</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -476,14 +522,9 @@
                         {% if plan.max_users > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Gestão de equipe</span>
-                        </li>
-                        {% endif %}
-                        
-                        <li class="flex items-center gap-3 text-gray-600">
-                            <i class="fas fa-check text-green-500"></i>
                             <span>Suporte por email</span>
                         </li>
+                        {% endif %}
                     </ul>
                     
                     <a href="/app/accounts/register/" class="block text-center mt-auto {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-3 rounded-xl font-semibold transition-all">

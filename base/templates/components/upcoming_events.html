@@ -6,7 +6,7 @@
     <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
         {% if upcoming_events %}
             {% for event in upcoming_events %}
-            <div class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50">
+            <a href="/app/trabalhos/{{ event.id }}/" class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                 <div class="w-12 h-12 rounded-lg bg-primary text-white flex flex-col items-center justify-center flex-shrink-0">
                     <span class="text-xs font-bold">{{ event.start_date|date:"d" }}</span>
                     <span class="text-xs font-medium uppercase">{{ event.start_date|date:"M" }}</span>
@@ -16,7 +16,7 @@
                     <p class="text-sm text-gray-500 truncate">{{ event.client.name }} - {{ event.location|default:"Local não definido" }}</p>
                 </div>
                 {% include 'components/badge_status.html' with status=event.status type='job' %}
-            </div>
+            </a>
             {% endfor %}
         {% else %}
         <div class="p-8 text-center text-gray-500">

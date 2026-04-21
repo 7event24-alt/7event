@@ -207,20 +207,13 @@ class JobForm(forms.ModelForm):
         self.fields["title"].required = True
         self.order_fields(["client", "event_type", "title"])
 
-        # Definir datas default para pagamento (20 dias após evento) se não for edição
-        start_date = None
+        # Definir datas de pagamento (20 dias após evento) se não for edição
         if not instance:
-            # Check both form initial and field initial
-            if self.initial.get("start_date"):
-                start_date = self.initial.get("start_date")
-            elif self.fields["start_date"].initial:
-                start_date = self.fields["start_date"].initial
-
-            if start_date:
-                from datetime import timedelta, date
-
-                if isinstance(start_date, str):
-                    start_date = date.fromisoformat(start_date)
+            from datetime import timedelta, date
+            
+            start_date = self.fields["start_date"].initial
+            
+            if start_date and isinstance(start_date, date):
                 payment_date = start_date + timedelta(days=20)
                 self.fields["payment_date"].initial = payment_date
                 self.fields["payment_partial_date"].initial = payment_date

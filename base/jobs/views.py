@@ -129,7 +129,7 @@ class JobCreateView(CompanyRequiredMixin, View):
         if initial_date:
             try:
                 dt = datetime.strptime(initial_date, "%Y-%m-%d")
-                form.fields["start_date"].initial = dt.strftime("%Y-%m-%d")
+                form.fields["start_date"].initial = dt.date()
             except ValueError:
                 pass
 
@@ -175,18 +175,11 @@ class JobCreateView(CompanyRequiredMixin, View):
             messages.success(request, "Trabalho criado com sucesso!")
             return redirect("jobs:detail", pk=job.pk)
 
-        from base.accounts.models import User
-
-        available_workers = User.objects.filter(account=request.user.account).exclude(
-            id=request.user.id
-        )
         return render(
             request,
             self.template_name,
             {
                 "form": form,
-                "available_workers": available_workers,
-                "selected_workers": [],
             },
         )
 

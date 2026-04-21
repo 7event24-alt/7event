@@ -304,7 +304,6 @@ JAZZMIN_SETTINGS = {
         "clients.ClientPhone": "fas fa-phone",
         "clients.ClientEmail": "fas fa-envelope",
         "jobs.Job": "fas fa-calendar-check",
-        "jobs.JobWorker": "fas fa-users",
         "expenses.Expense": "fas fa-receipt",
         "expenses.ExpenseCategory": "fas fa-tags",
         "quote.Quote": "fas fa-file-invoice-dollar",

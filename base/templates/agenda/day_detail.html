@@ -8,7 +8,7 @@
 <a href="{% url 'agenda:home' %}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
     <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Voltar</span>
 </a>
-<a href="{% url 'jobs:create' %}?date={{ selected_date }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+<a href="{% url 'jobs:create' %}?date={{ selected_date|date:"Y-m-d" }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
     <i class="fas fa-plus"></i> <span class="hidden sm:inline">Novo Trabalho</span>
 </a>
 {% endblock %}
@@ -108,7 +108,7 @@
         <i class="fas fa-calendar-times text-5xl text-gray-300 mb-4"></i>
         <h3 class="text-lg font-semibold text-gray-800 mb-2">Nenhum trabalho neste dia</h3>
         <p class="text-gray-500 mb-6">Não há trabalhos agendados para {{ day }}/{{ month }}/{{ year }}</p>
-        <a href="{% url 'jobs:create' %}?date={{ selected_date }}" class="inline-block bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium transition">
+        <a href="{% url 'jobs:create' %}?date={{ selected_date|date:"Y-m-d" }}" class="inline-block bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium transition">
             <i class="fas fa-plus mr-2"></i> Criar novo trabalho
         </a>
     </div>

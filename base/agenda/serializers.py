@@ -81,11 +81,6 @@ class AgendaEventsView(APIView):
 
         jobs = Job.objects.filter(account=company).select_related("client")
 
-        if not is_superuser:
-            from django.db.models import Q
-
-            jobs = jobs.filter(Q(user=user) | Q(workers=user))
-
         user_filter = request.GET.get("user", "")
         if is_superuser and user_filter:
             jobs = jobs.filter(user_id=user_filter)
@@ -100,15 +95,25 @@ class AgendaViewSet(viewsets.ViewSet):
 
     def list(self, request):
         user = request.user
+        is_superuser = user.is_superuser
         year = int(request.query_params.get("year", timezone.now().year))
         month = int(request.query_params.get("month", timezone.now().month))
 
         first_day = datetime(year, month, 1)
         last_day = datetime(year, month, monthrange(year, month)[1])
 
-        jobs = Job.objects.filter(
-            user=user, start_date__gte=first_day.date(), start_date__lte=last_day.date()
-        ).select_related("client")
+        if is_superuser:
+            jobs = Job.objects.filter(
+                account=user.account,
+                start_date__gte=first_day.date(),
+                start_date__lte=last_day.date()
+            ).select_related("client")
+        else:
+            jobs = Job.objects.filter(
+                account=user.account,
+                start_date__gte=first_day.date(),
+                start_date__lte=last_day.date()
+            ).select_related("client")
 
         serializer = AgendaEventSerializer(jobs, many=True)
         return Response(serializer.data)
