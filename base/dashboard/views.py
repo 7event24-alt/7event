@@ -3,6 +3,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from datetime import timedelta
 from decimal import Decimal
 
@@ -19,11 +21,7 @@ class DashboardView(LoginRequiredMixin, View):
     def get(self, request):
         company = request.user.account
         if not company:
-            return render(
-                request,
-                self.template_name,
-                {"error": "Você precisa estar associado a uma empresa."},
-            )
+            return HttpResponseRedirect(reverse("plans:list"))
 
         now = timezone.now()
         month_start = now.replace(day=1)

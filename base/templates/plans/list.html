@@ -81,13 +81,15 @@
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                    {% if plan.price_monthly > 0 %}
                     <button type="submit" class="w-full py-3 px-6 rounded-lg font-semibold transition-colors {% if plan.highlight %}bg-primary hover:bg-secondary text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %}">
-                        {% if plan.price_monthly > 0 %}
                         Assinar Agora
-                        {% else %}
-                        Começar Grátis
-                        {% endif %}
                     </button>
+                    {% else %}
+                    <button type="submit" formaction="{% url 'plans:activate_free' %}" class="w-full py-3 px-6 rounded-lg font-semibold transition-colors bg-green-600 hover:bg-green-700 text-white">
+                        Usar Plano Grátis
+                    </button>
+                    {% endif %}
                 </form>
             </div>
         </div>
