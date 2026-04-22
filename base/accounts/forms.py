@@ -76,10 +76,12 @@ class RegisterForm(UserCreationForm):
         max_length=200,
         required=False,
         label="Nome da Empresa/Organização",
+        initial="Conta Profissional",
         widget=forms.TextInput(
             attrs={
                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm",
                 "placeholder": "Nome da sua empresa ou organização",
+                "value": "Conta Profissional",
             }
         ),
     )
@@ -203,7 +205,7 @@ class RegisterForm(UserCreationForm):
 
             # Fallback final
             if not company_name or not company_name.strip():
-                company_name = f"Usuario-{user.id}"
+                company_name = "Conta Profissional"
 
             base_slug = slugify(company_name)
             if not base_slug:
