@@ -76,9 +76,11 @@ class CompanyRequiredMixin(LoginRequiredMixin):
             return redirect_to_login(request.get_full_path())
 
         if not request.user.account:
-            from django.http import HttpResponseForbidden
+            from django.http import HttpResponseRedirect
+            from django.urls import reverse
 
-            return HttpResponseForbidden("Você precisa estar associado a uma empresa.")
+            return HttpResponseRedirect(reverse("plans:list"))
+
         return super().dispatch(request, *args, **kwargs)
 
 
