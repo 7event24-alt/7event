@@ -121,7 +121,7 @@ class AdminResendActivationView(View):
                 user.save()
 
                 try:
-from base.core.emails import send_verification_email
+                    from base.core.emails import send_verification_email
 
                     verification_url = f"https://7event.com.br/app/accounts/ativar/{user.verification_token}/"
                     
