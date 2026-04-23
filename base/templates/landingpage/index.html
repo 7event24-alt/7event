@@ -78,17 +78,6 @@
             50% { transform: translateY(-15px); }
         }
         
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-float-delayed { animation: float-delayed 7s ease-in-out infinite; }
-        .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-        .animate-float-fast { animation: float-fast 5s ease-in-out infinite; }
-        .animate-float-reverse { animation: float-reverse 9s ease-in-out infinite; }
-        
-        @keyframes float-slow {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
         @keyframes float-fast {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-8px); }
@@ -254,7 +243,7 @@
                 <!-- Left Column - Text (Desktop) -->
                 <div class="hero-desktop hidden lg:block text-center lg:text-left">
                     <div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
                         Sistema de Gestão de Eventos #1
                     </div>
                     
@@ -303,7 +292,7 @@
                     <!-- Tag + Título (Mobile) -->
                     <div class="hero-top lg:hidden text-center mb-4">
                         <div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-medium mb-4">
-                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
                             Sistema de Gestão de Eventos #1
                         </div>
                         <h2 class="text-2xl font-bold text-gray-900">
@@ -312,8 +301,8 @@
                     </div>
                     
                     <!-- Main dashboard image -->
-                    <div class="p-4 flex justify-center animate-float relative">
-                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto drop-shadow-xl">
+                    <div class="p-4 flex justify-center">
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
