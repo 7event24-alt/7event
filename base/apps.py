@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 import logging
 import os
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,19 @@ class BaseConfig(AppConfig):
             return
         
         try:
+            # Try environment variable first
+            firebase_creds = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+            if firebase_creds:
+                cred = credentials.Certificate(json.loads(firebase_creds))
+                firebase_admin.initialize_app(cred)
+                logger.info('Firebase initialized from env')
+                return
+            
+            # Try file path
             if os.path.exists(CRED_FILE):
                 cred = credentials.Certificate(CRED_FILE)
                 firebase_admin.initialize_app(cred)
+                logger.info(f'Firebase initialized from {CRED_FILE}')
             else:
                 logger.warning(f'Firebase creds not found at {CRED_FILE}')
         except Exception as e:
