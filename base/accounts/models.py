@@ -527,12 +527,15 @@ class FCMToken(models.Model):
         related_name="fcm_tokens",
         verbose_name=_("Usuário"),
     )
-    token = models.CharField(max_length=500, verbose_name=_("Token FCM"))
+    token = models.CharField(max_length=500, verbose_name=_("Token P256DH"), blank=True)
+    auth = models.CharField(max_length=100, verbose_name=_("Token Auth"), blank=True)
+    subscription = models.TextField(verbose_name=_("Subscription JSON"), blank=True)
     device_type = models.CharField(
         max_length=20,
         blank=True,
         verbose_name=_("Tipo do Dispositivo"),
     )
+    is_active = models.BooleanField(default=True, verbose_name=_("Ativo"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Criado em"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Atualizado em"))
 
@@ -540,11 +543,11 @@ class FCMToken(models.Model):
         db_table = "fcm_tokens"
         verbose_name = _("Token FCM")
         verbose_name_plural = _("Tokens FCM")
-        unique_together = [["user", "token"]]
+        unique_together = [["user", "device_type"]]
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"FCM Token - {self.user.username}"
+        return f"FCM Token - {self.user.username} ({self.device_type})"
 
 
 Company = Account
