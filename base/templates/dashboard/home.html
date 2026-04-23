@@ -7,6 +7,7 @@
 
 {% block content %}
 <div class="space-y-6">
+    {% include 'components/welcome_banner.html' %}
     {% include 'components/kpi_cards.html' %}
     
     {% if user.is_superuser %}
