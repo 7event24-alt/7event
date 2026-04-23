@@ -78,12 +78,12 @@ class ServiceUpdateView(CompanyRequiredMixin, View):
     template_name = "services/form.html"
 
     def get(self, request, pk):
-        service = get_object_or_404(Service, pk=pk, account=request.user.account)
+        service = get_object_or_404(Service, pk=pk, account=request.user.account, is_active=True)
         form = ServiceForm(instance=service)
         return render(request, self.template_name, {"form": form, "object": service})
 
     def post(self, request, pk):
-        service = get_object_or_404(Service, pk=pk, account=request.user.account)
+        service = get_object_or_404(Service, pk=pk, account=request.user.account, is_active=True)
         form = ServiceForm(request.POST, instance=service)
         if form.is_valid():
             form.save()
@@ -96,11 +96,11 @@ class ServiceDeleteView(CompanyRequiredMixin, View):
     template_name = "services/confirm_delete.html"
 
     def get(self, request, pk):
-        service = get_object_or_404(Service, pk=pk, account=request.user.account)
+        service = get_object_or_404(Service, pk=pk, account=request.user.account, is_active=True)
         return render(request, self.template_name, {"service": service})
 
     def post(self, request, pk):
-        service = get_object_or_404(Service, pk=pk, account=request.user.account)
+        service = get_object_or_404(Service, pk=pk, account=request.user.account, is_active=True)
         service.is_active = False
         service.save()
         messages.success(request, "Serviço excluído (inativado) com sucesso!")

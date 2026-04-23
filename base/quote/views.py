@@ -81,7 +81,7 @@ class QuoteDetailView(CompanyRequiredMixin, View):
     template_name = "quote/detail.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         expenses = quote.expenses.all()
         return render(
             request,
@@ -94,7 +94,7 @@ class QuoteUpdateView(CompanyRequiredMixin, View):
     template_name = "quote/form.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         form = QuoteForm(instance=quote, account=request.user.account)
         return render(
             request,
@@ -103,7 +103,7 @@ class QuoteUpdateView(CompanyRequiredMixin, View):
         )
 
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         form = QuoteForm(request.POST, instance=quote, account=request.user.account)
 
         if form.is_valid():
@@ -121,11 +121,11 @@ class QuoteDeleteView(CompanyRequiredMixin, View):
     template_name = "quote/confirm_delete.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         return render(request, self.template_name, {"quote": quote})
 
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         quote.delete()
         messages.success(request, "Orçamento excluído com sucesso!")
         return redirect("quote:list")
@@ -135,12 +135,12 @@ class QuoteAddExpenseView(CompanyRequiredMixin, View):
     template_name = "quote/expense_form.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         form = QuoteExpenseForm()
         return render(request, self.template_name, {"form": form, "quote": quote})
 
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         form = QuoteExpenseForm(request.POST)
 
         if form.is_valid():
@@ -156,7 +156,7 @@ class QuoteAddExpenseView(CompanyRequiredMixin, View):
 
 class QuoteDeleteExpenseView(CompanyRequiredMixin, View):
     def post(self, request, pk, expense_pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         expense = get_object_or_404(QuoteExpense, pk=expense_pk, quote=quote)
         expense.delete()
         quote.save()
@@ -166,7 +166,7 @@ class QuoteDeleteExpenseView(CompanyRequiredMixin, View):
 
 class QuotePDFView(CompanyRequiredMixin, View):
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
         expenses = quote.expenses.all()
 
         from datetime import datetime
@@ -199,7 +199,7 @@ class QuotePDFView(CompanyRequiredMixin, View):
 
 class QuoteSendView(CompanyRequiredMixin, View):
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account)
+        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
 
         if not quote.client or not quote.client.email:
             messages.error(request, "Orçamento sem cliente ou email.")

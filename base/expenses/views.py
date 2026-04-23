@@ -201,7 +201,7 @@ class ExpenseUpdateView(CompanyRequiredMixin, View):
     template_name = "expenses/form.html"
 
     def get(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account)
+        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
         form = ExpenseForm(instance=expense, user=request.user)
         if request.user.is_superuser:
             jobs = Job.objects.filter(account=request.user.account)
@@ -212,7 +212,7 @@ class ExpenseUpdateView(CompanyRequiredMixin, View):
         )
 
     def post(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account)
+        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
         form = ExpenseForm(request.POST, instance=expense, user=request.user)
         if form.is_valid():
             form.save()
@@ -231,11 +231,11 @@ class ExpenseDeleteView(CompanyRequiredMixin, View):
     template_name = "expenses/confirm_delete.html"
 
     def get(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account)
+        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
         return render(request, self.template_name, {"expense": expense})
 
     def post(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account)
+        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
         expense.delete()
         messages.success(request, "Despesa excluída com sucesso!")
         return redirect("expenses:list")

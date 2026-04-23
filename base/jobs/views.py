@@ -194,7 +194,7 @@ class JobUpdateView(CompanyRequiredMixin, View):
     def get(self, request, pk):
         from .forms import JobForm
 
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         form = JobForm(instance=job, user=request.user)
 
         return render(
@@ -209,7 +209,7 @@ class JobUpdateView(CompanyRequiredMixin, View):
     def post(self, request, pk):
         from .forms import JobForm
 
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         form = JobForm(request.POST, instance=job, user=request.user)
         if form.is_valid():
             form.save()
@@ -232,7 +232,7 @@ class JobDetailView(CompanyRequiredMixin, View):
     template_name = "jobs/detail.html"
 
     def get(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         expenses = job.expenses.all()
         total_expenses = sum(e.value for e in expenses)
         net_profit = (job.cache or 0) - total_expenses
@@ -251,7 +251,7 @@ class JobDetailView(CompanyRequiredMixin, View):
 
 class JobConfirmView(CompanyRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
 
         if job.status == JobStatus.PENDING:
             job.status = JobStatus.CONFIRMED
@@ -275,7 +275,7 @@ class JobConfirmView(CompanyRequiredMixin, View):
 
 class JobCompleteView(CompanyRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         job.status = JobStatus.COMPLETED
         job.save()
         messages.success(request, "Trabalho marcado como concluído!")
@@ -284,7 +284,7 @@ class JobCompleteView(CompanyRequiredMixin, View):
 
 class JobCancelView(CompanyRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         job.status = JobStatus.CANCELLED
         job.save()
         messages.success(request, "Trabalho cancelado!")
@@ -293,7 +293,7 @@ class JobCancelView(CompanyRequiredMixin, View):
 
 class JobApproveView(CompanyRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         if not request.user.is_account_admin:
             messages.error(request, "Apenas administradores podem aprovar trabalhos.")
             return redirect("jobs:detail", pk=job.pk)
@@ -307,7 +307,7 @@ class JobApproveView(CompanyRequiredMixin, View):
 class JobConfirmPaymentView(CompanyRequiredMixin, View):
     """Confirma pagamento total ou antecipado"""
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         if job.payment_status == PaymentStatusJob.PAID:
             messages.info(request, "Pagamento já está confirmado.")
         else:
@@ -321,7 +321,7 @@ class JobConfirmPaymentView(CompanyRequiredMixin, View):
 class JobConfirmPartialPaymentView(CompanyRequiredMixin, View):
     """Confirma 1ª parcela do pagamento parcial"""
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         if job.payment_type == PaymentType.PARTIAL and job.payment_status == PaymentStatusJob.PENDING:
             job.payment_status = PaymentStatusJob.PARTIAL
             job.payment_partial_confirmed_at = timezone.now()
@@ -335,7 +335,7 @@ class JobConfirmPartialPaymentView(CompanyRequiredMixin, View):
 class JobConfirmRemainingPaymentView(CompanyRequiredMixin, View):
     """Confirma 2ª parcela do pagamento parcial"""
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         if job.payment_type == PaymentType.PARTIAL and job.payment_status in [PaymentStatusJob.PENDING, PaymentStatusJob.PARTIAL]:
             job.payment_status = PaymentStatusJob.PAID
             job.payment_remaining_confirmed_at = timezone.now()
@@ -350,11 +350,11 @@ class JobDeleteView(CompanyRequiredMixin, View):
     template_name = "jobs/confirm_delete.html"
 
     def get(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         return render(request, self.template_name, {"job": job})
 
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account)
+        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
         job.delete()
         messages.success(request, "Trabalho excluído com sucesso!")
         return redirect("jobs:list")

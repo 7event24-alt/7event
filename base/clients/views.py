@@ -229,12 +229,12 @@ class ClientUpdateView(CompanyRequiredMixin, View):
     template_name = "clients/form.html"
 
     def get(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account)
+        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
         form = ClientForm(instance=client)
         return render(request, self.template_name, {"form": form, "object": client})
 
     def post(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account)
+        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
         form = ClientForm(request.POST, instance=client)
         if form.is_valid():
             form.save()
@@ -260,11 +260,11 @@ class ClientDeleteView(CompanyRequiredMixin, View):
     template_name = "clients/confirm_delete.html"
 
     def get(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account)
+        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
         return render(request, self.template_name, {"client": client})
 
     def post(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account)
+        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
         client.delete()
         messages.success(request, "Cliente excluído com sucesso!")
         return redirect("clients:list")
