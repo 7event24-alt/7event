@@ -1,5 +1,4 @@
 from django.db import migrations, models
-import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -28,13 +27,5 @@ class Migration(migrations.Migration):
             model_name='fcmtoken',
             name='token',
             field=models.CharField(blank=True, max_length=500, verbose_name='Token P256DH'),
-        ),
-        migrations.RemoveConstraint(
-            model_name='fcmtoken',
-            name='unique_together',
-        ),
-        migrations.AddConstraint(
-            model_name='fcmtoken',
-            constraint=models.UniqueConstraint(fields=('user', 'device_type'), name='unique_user_device_type'),
         ),
     ]
