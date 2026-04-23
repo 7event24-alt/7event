@@ -50,15 +50,13 @@ def send_web_push(subscription, title, body):
 def save_fcm_token(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            subscription = data.get('subscription')
-            device_type = data.get('device_type', 'web')
+            subscription = request.data.get('subscription')
+            device_type = request.data.get('device_type', 'web')
             
             if subscription:
                 from .models import FCMToken
                 from rest_framework.response import Response
                 
-                # Extrair keys do subscription
                 keys = subscription.get('keys', {})
                 p256dh = keys.get('p256dh', '')
                 auth = keys.get('auth', '')
@@ -95,9 +93,8 @@ def send_fcm_notification(request):
             if not request.user.is_staff:
                 return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
             
-            data = json.loads(request.body)
-            title = data.get('title', '7event')
-            body = data.get('body', '')
+            title = request.data.get('title', '7event')
+            body = request.data.get('body', '')
             
             # Buscar subscriptions da base de dados
             tokens = FCMToken.objects.filter(is_active=True)
