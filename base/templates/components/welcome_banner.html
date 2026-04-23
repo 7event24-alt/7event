@@ -1,7 +1,7 @@
 {% load static %}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch mb-6">
-    <!-- Welcome Banner - sem card -->
-    <div class="flex flex-row items-center justify-between gap-4">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch mb-6">
+    <!-- Welcome Banner - 1/4 do espaço -->
+    <div class="lg:col-span-1 flex flex-row items-center justify-between gap-4">
         <div class="flex-1 flex flex-row items-center gap-4">
             <div class="flex-1">
                 <p class="text-gray-500 text-sm mb-1">
@@ -16,7 +16,7 @@
                 <img src="{% static 'img/dashboard-welcome-mobile.png' %}" alt="Dashboard" class="w-full h-full object-contain">
             </div>
             <!-- Desktop image -->
-            <div class="hidden lg:w-24 lg:h-24">
+            <div class="hidden lg:w-20 lg:h-20">
                 <img src="{% static 'img/dashboard-welcome.png' %}" alt="Dashboard" class="w-full h-full object-contain">
             </div>
         </div>
