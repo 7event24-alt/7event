@@ -1,9 +1,10 @@
 {% load static %}
-<div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch mb-6">
-    <!-- Welcome Banner - mínimo 500px = 1/5 do grid -->
-    <div class="lg:col-span-1 lg:min-w-[500px] flex flex-row items-center justify-between gap-4">
-        <div class="flex-1 flex flex-row items-center gap-4">
-            <div class="flex-1">
+<!-- Welcome Banner + KPI Cards -->
+<div class="flex flex-col lg:flex-row gap-6 mb-6">
+    <!-- Welcome Banner - largura fixa -->
+    <div class="w-full lg:min-w-[400px] lg:max-w-[400px] flex flex-row items-center gap-4">
+        <div class="flex-1 flex flex-row items-center gap-3">
+            <div>
                 <p class="text-gray-500 text-sm mb-1">
                     Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
                 </p>
@@ -11,14 +12,13 @@
                     Vamos organizar seu dia?
                 </h2>
             </div>
-            <!-- Imagem - mostra em ambos -->
-            <img src="/static/img/dashboard-welcome.png" alt="7event" class="w-16 h-16 lg:w-24 lg:h-24 object-contain">
+            <img src="/static/img/dashboard-welcome.png" alt="7event" class="w-12 h-12 lg:w-16 lg:h-16 object-contain">
         </div>
     </div>
     
-    <!-- KPI Cards - 3/4 do espaço -->
+    <!-- KPI Cards - ocupam restante -->
     {% load currency_tags %}
-    <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-lg shadow p-4 lg:p-6">
             <div class="flex items-center justify-between">
                 <div>
