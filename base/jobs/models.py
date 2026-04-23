@@ -237,7 +237,7 @@ class Job(models.Model):
                     }
                 )
 
-def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):
         # Calcular valores de pagamento automaticamente antes de salvar
         self.calculate_payment_values()
         super().save(*args, **kwargs)
