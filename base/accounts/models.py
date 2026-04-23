@@ -520,6 +520,33 @@ class Notification(models.Model):
         Notification.objects.filter(user=self.user, created_at__lt=cutoff).delete()
 
 
+class FCMToken(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="fcm_tokens",
+        verbose_name=_("Usuário"),
+    )
+    token = models.CharField(max_length=500, verbose_name=_("Token FCM"))
+    device_type = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_("Tipo do Dispositivo"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Criado em"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Atualizado em"))
+
+    class Meta:
+        db_table = "fcm_tokens"
+        verbose_name = _("Token FCM")
+        verbose_name_plural = _("Tokens FCM")
+        unique_together = [["user", "token"]]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"FCM Token - {self.user.username}"
+
+
 Company = Account
 
 

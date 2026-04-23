@@ -9,6 +9,8 @@
   "theme_color": "#1e3a5f",
   "scope": "/",
   "prefer_related_applications": false,
+  "gcm_sender_id": "1054649753947",
+  "gcm_user_visible_only": true,
   "icons": [
     {
       "src": "/static/img/icon-192.png",

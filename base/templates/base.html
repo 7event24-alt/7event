@@ -479,6 +479,7 @@ function getCookie(name) {
 // Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('{% static "sw.js" %}').catch(() => {});
+    navigator.serviceWorker.register('{% static "firebase-messaging-sw.js" %}').catch(() => {});
 }
 </script>
 {% endif %}

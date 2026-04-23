@@ -1,7 +1,7 @@
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import api_auth
@@ -13,29 +13,35 @@ router.register(r"auth", api_auth.AuthViewSet, basename="auth-api")
 router.register(r"users", api_auth.AuthViewSet, basename="users-api")
 
 # View para salvar token FCM
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def save_fcm_token(request):
-    from rest_framework.decorators import api_view, permission_classes
-    from rest_framework.permissions import AllowAny
-    from rest_framework.response import Response
-    from rest_framework import status
-    
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             token = data.get('token')
+            device_type = data.get('device_type', '')
             
             if token:
-                from django.conf import settings
+                from .models import FCMToken, User
+                from rest_framework.response import Response
                 
-                filename = os.path.join(settings.BASE_DIR, 'base', 'static', 'fcm_tokens.txt')
-                with open(filename, 'a') as f:
-                    f.write(f"{token}\n")
+                user = request.user if request.user.is_authenticated else None
                 
-                return Response({'status': 'saved'})
+                if user:
+                    FCMToken.objects.update_or_create(
+                        user=user,
+                        token=token,
+                        defaults={'device_type': device_type}
+                    )
+                    return Response({'status': 'saved', 'user': user.username})
+                else:
+                    return Response({'status': 'saved', 'user': 'anonymous'})
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=400)
     
-    return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    return Response({'error': 'Method not allowed'}, status=405)
 
 # View para enviar notificação FCM (admin)
 def send_fcm_notification(request):
