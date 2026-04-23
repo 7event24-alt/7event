@@ -26,11 +26,15 @@ class BaseConfig(AppConfig):
                     firebase_admin.initialize_app(cred)
                     logging.info('Firebase initialized from env')
                 else:
-                    # Try multiple paths
+                    # Try multiple paths (2 levels up from base/apps.py to project root)
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    project_dir = os.path.dirname(current_dir)
+                    
                     base_paths = [
-                        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                        project_dir,
                         '/var/www/7event',
-                        '/home/bia/Projetos_Pessoais/7event'
+                        '/home/bia/Projetos_Pessoais/7event',
+                        os.getcwd()
                     ]
                     
                     cred_file = None
@@ -38,6 +42,7 @@ class BaseConfig(AppConfig):
                         fpath = os.path.join(base, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json')
                         if os.path.exists(fpath):
                             cred_file = fpath
+                            logging.info(f'Found credentials at: {fpath}')
                             break
                     
                     if cred_file:
@@ -45,6 +50,6 @@ class BaseConfig(AppConfig):
                         firebase_admin.initialize_app(cred)
                         logging.info(f'Firebase initialized from {cred_file}')
                     else:
-                        logging.warning('Firebase credentials not found')
+                        logging.warning('Firebase credentials not found in any path')
         except Exception as e:
             logging.warning(f'Firebase initialization failed: {e}')
