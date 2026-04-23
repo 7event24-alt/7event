@@ -511,15 +511,17 @@ def notifications_unread_count_api(request):
 
 @csrf_exempt
 def mark_as_read(request, notification_id):
+    from django.http import HttpResponseRedirect
+    from django.urls import reverse
     from .models import Notification
 
     try:
         notification = Notification.objects.get(id=notification_id, user=request.user)
         notification.is_read = True
         notification.save()
-        return JsonResponse({"success": True})
+        return HttpResponseRedirect(reverse("accounts:notifications"))
     except Notification.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Notificação não encontrada"})
+        return HttpResponseRedirect(reverse("accounts:notifications"))
 
 
 def get_timesince(dt):
@@ -529,13 +531,14 @@ def get_timesince(dt):
 
 
 @csrf_exempt
-@csrf_exempt
 def mark_all_as_read(request):
+    from django.http import HttpResponseRedirect
+    from django.urls import reverse
     from .models import Notification
 
     if request.method == "POST":
         Notification.objects.filter(user=request.user, is_read=False).update(
             is_read=True
         )
-        return JsonResponse({"success": True})
-    return JsonResponse({"success": False})
+        return HttpResponseRedirect(reverse("accounts:notifications"))
+    return HttpResponseRedirect(reverse("accounts:notifications"))
