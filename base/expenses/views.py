@@ -180,7 +180,7 @@ class ExpenseCreateView(CompanyRequiredMixin, View):
                     user=request.user,
                     title="Nova despesa registrada",
                     message=f"Despesa de R$ {expense.value} foi registrada",
-                    action_url=f"/despesas/",
+                    action_url=f"/app/despesas/",
                     notification_type=NotificationType.EXPENSE,
                 )
 

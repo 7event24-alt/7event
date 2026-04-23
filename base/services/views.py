@@ -57,7 +57,7 @@ class ServiceCreateView(CompanyRequiredMixin, View):
                     user=request.user,
                     title="Novo serviço criado",
                     message=f"Serviço '{service.name}' foi adicionado",
-                    action_url=f"/servicos/",
+                    action_url=f"/app/servicos/",
                     notification_type=NotificationType.SERVICE,
                 )
 

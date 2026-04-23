@@ -68,7 +68,7 @@ class QuoteCreateView(CompanyRequiredMixin, View):
                     user=request.user,
                     title="Novo Orçamento",
                     message=f"Orçamento #{quote.pk} criado para {quote.client.name if quote.client else 'sem cliente'}.",
-                    action_url=f"/orcamentos/{quote.pk}/",
+                    action_url=f"/app/orcamentos/{quote.pk}/",
                     notification_type=NotificationType.QUOTE,
                 )
             messages.success(request, "Orçamento criado com sucesso!")

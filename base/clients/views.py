@@ -105,7 +105,7 @@ class ClientCreateView(CompanyRequiredMixin, View):
                     user=request.user,
                     title="Novo cliente criado",
                     message=f"Cliente '{client.name}' foi adicionado",
-                    action_url=f"/clientes/{client.pk}/",
+                    action_url=f"/app/clientes/{client.pk}/",
                     notification_type=NotificationType.CLIENT,
                 )
 
@@ -217,7 +217,7 @@ class ClientQuickCreateView(CompanyRequiredMixin, View):
                     user=request.user,
                     title="Novo cliente criado",
                     message=f"Cliente '{client.name}' foi adicionado",
-                    action_url=f"/clientes/{client.pk}/",
+                    action_url=f"/app/clientes/{client.pk}/",
                     notification_type=NotificationType.CLIENT,
                 )
 
