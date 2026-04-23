@@ -516,7 +516,7 @@ class Notification(models.Model):
         from datetime import timedelta
         from django.utils import timezone
 
-        cutoff = timezone.now() - timedelta(days=1)
+        cutoff = timezone.now() - timedelta(minutes=1)  # TODO: change back to days=1 after testing
         Notification.objects.filter(user=self.user, created_at__lt=cutoff).delete()
 
 
