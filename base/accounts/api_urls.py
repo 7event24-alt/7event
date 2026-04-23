@@ -83,16 +83,21 @@ def send_push_notification(user, title, body, action_url=None):
     from .models import FCMToken
     import firebase_admin
     from firebase_admin import messaging
+    import logging
+    logger = logging.getLogger(__name__)
     
     if not firebase_admin._apps:
+        logger.warning(f"Firebase not initialized, skipping push to {user}")
         return False
     
     try:
         tokens = FCMToken.objects.filter(user=user, is_active=True)
         if not tokens.exists():
+            logger.warning(f"No tokens found for user {user}")
             return False
         
         full_title = f"{APP_NAME} - {title}"
+        logger.info(f"Sending push: '{full_title}' - {body}")
         
         for fcm_token in tokens:
             try:

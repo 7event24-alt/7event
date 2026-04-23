@@ -16,21 +16,34 @@ class BaseConfig(AppConfig):
             import firebase_admin
             
             if not firebase_admin._apps:
+                from firebase_admin import credentials
+                
+                # Try environment variable first
                 firebase_creds = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
                 if firebase_creds:
-                    from firebase_admin import credentials
                     import json
                     cred = credentials.Certificate(json.loads(firebase_creds))
                     firebase_admin.initialize_app(cred)
                     logging.info('Firebase initialized from env')
                 else:
-                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    cred_file = os.path.join(base_dir, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json')
-                    if os.path.exists(cred_file):
-                        from firebase_admin import credentials
+                    # Try multiple paths
+                    base_paths = [
+                        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                        '/var/www/7event',
+                        '/home/bia/Projetos_Pessoais/7event'
+                    ]
+                    
+                    cred_file = None
+                    for base in base_paths:
+                        fpath = os.path.join(base, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json')
+                        if os.path.exists(fpath):
+                            cred_file = fpath
+                            break
+                    
+                    if cred_file:
                         cred = credentials.Certificate(cred_file)
                         firebase_admin.initialize_app(cred)
-                        logging.info('Firebase initialized from file')
+                        logging.info(f'Firebase initialized from {cred_file}')
                     else:
                         logging.warning('Firebase credentials not found')
         except Exception as e:
