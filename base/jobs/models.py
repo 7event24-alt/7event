@@ -61,6 +61,7 @@ class Job(models.Model):
         related_name="jobs",
         verbose_name=_("Cliente"),
     )
+    is_active = models.BooleanField(default=True, verbose_name=_("Ativo"))
 
     title = models.CharField(max_length=200, verbose_name=_("Título"))
     event_type = models.CharField(
@@ -240,3 +241,10 @@ class Job(models.Model):
         # Calcular valores de pagamento automaticamente antes de salvar
         self.calculate_payment_values()
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.is_active = False
+        self.save()
+
+    def __str__(self):
+        return self.title

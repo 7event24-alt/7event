@@ -40,9 +40,9 @@ class ClientListView(CompanyRequiredMixin, View):
         is_superuser = user.is_superuser
 
         if is_superuser:
-            clients = Client.objects.filter(account=company).order_by("name")
+            clients = Client.objects.filter(account=company, is_active=True).order_by("name")
         else:
-            clients = Client.objects.filter(account=company, created_by=user).order_by(
+            clients = Client.objects.filter(account=company, created_by=user, is_active=True).order_by(
                 "name"
             )
 

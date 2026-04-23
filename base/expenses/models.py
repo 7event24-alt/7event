@@ -41,6 +41,7 @@ class Expense(models.Model):
         default=ExpenseCategory.OTHER,
         verbose_name=_("Categoria"),
     )
+    is_active = models.BooleanField(default=True, verbose_name=_("Ativo"))
     value = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name=_("Valor")
     )
@@ -58,3 +59,7 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.category} - R$ {self.value}"
+
+    def delete(self, *args, **kwargs):
+        self.is_active = False
+        self.save()

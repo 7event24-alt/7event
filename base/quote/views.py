@@ -36,7 +36,7 @@ class QuoteListView(CompanyRequiredMixin, View):
 
     def get(self, request):
         company = request.user.account
-        quotes = Quote.objects.filter(account=company).order_by("-created_at")
+        quotes = Quote.objects.filter(account=company, is_active=True).order_by("-created_at")
         return render(request, self.template_name, {"quotes": quotes})
 
 

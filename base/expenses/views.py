@@ -94,18 +94,18 @@ class ExpenseListView(CompanyRequiredMixin, View):
 
         if is_superuser:
             expenses = (
-                Expense.objects.filter(account=company)
+                Expense.objects.filter(account=company, is_active=True)
                 .select_related("job", "user")
                 .order_by("-date")
             )
-            jobs = Job.objects.filter(account=company)
+            jobs = Job.objects.filter(account=company, is_active=True)
         else:
             expenses = (
-                Expense.objects.filter(account=company, user=user)
+                Expense.objects.filter(account=company, user=user, is_active=True)
                 .select_related("job", "user")
                 .order_by("-date")
             )
-            jobs = Job.objects.filter(user=user)
+            jobs = Job.objects.filter(user=user, is_active=True)
 
         query = request.GET.get("q", "")
         if query:

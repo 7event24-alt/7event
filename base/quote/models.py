@@ -59,6 +59,7 @@ class Quote(models.Model):
         default=QuoteStatus.DRAFT,
         verbose_name=_("Status"),
     )
+    is_active = models.BooleanField(default=True, verbose_name=_("Ativo"))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -71,6 +72,10 @@ class Quote(models.Model):
 
     def __str__(self):
         return self.title
+
+    def delete(self, *args, **kwargs):
+        self.is_active = False
+        self.save()
 
     def calculate(self):
         if not self.pk:

@@ -34,9 +34,9 @@ class JobListView(CompanyRequiredMixin, View):
 
         # Admin vê todos
         if user.is_account_admin:
-            jobs = Job.objects.filter(account=company)
+            jobs = Job.objects.filter(account=company, is_active=True)
         else:
-            jobs = Job.objects.filter(account=company, user=user)
+            jobs = Job.objects.filter(account=company, user=user, is_active=True)
 
         jobs = jobs.select_related("client", "user").order_by("-start_date")
 
