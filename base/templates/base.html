@@ -38,6 +38,8 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/jquery.inputmask.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -56,6 +58,18 @@
                 Inputmask({ mask: '99999-999' }).mask(document.querySelectorAll('[data-mask="cep"]'));
             });
         })();
+        
+        // Initialize Firebase Messaging
+        if (typeof firebase !== 'undefined' && firebase.messaging) {
+            firebase.initializeApp({
+                apiKey: "AIzaSyAIhzei6yjpU60RADGO6lhuQ_l1iAqBq10",
+                authDomain: "event-b2848.firebaseapp.com",
+                projectId: "event-b2848",
+                storageBucket: "event-b2848.firebasestorage.app",
+                messagingSenderId: "1054649753947",
+                appId: "1:1054649753947:web:bfd8fafe405f866abf3a7e"
+            });
+        }
     </script>
 </head>
 <body>
