@@ -7,119 +7,7 @@
 
 {% block content %}
 <div class="space-y-6">
-    <!-- 
-    Breakpoints:
-    - Mobile (< 1024px): stack vertical, imagem/direita texto/esquerda, cards abaixo
-    - Tablet (1024px - 1535px): texto + imagem lado a lado, cards abaixo  
-    - Desktop (> 1535px): inline (texto+imagem + cards lado a lado)
-    -->
-    <div class="flex flex-col lg:flex-row gap-6 items-stretch">
-        
-        <!-- Welcome Banner Section -->
-        <div class="flex-none self-center w-full lg:w-auto">
-            
-            <!-- Tablet (1024px-1535px): texto + imagem lado a lado -->
-            <div class="hidden lg:flex flex-row items-center gap-4 2xl:hidden">
-                <div class="w-32 h-32 flex-shrink-0">
-                    <img src="{% static 'img/dashboard-welcome.png' %}" alt="Dashboard" class="w-full h-full object-contain">
-                </div>
-                <div>
-                    <p class="text-gray-500 text-sm mb-1">
-                        Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
-                    </p>
-                    <h2 class="text-xl lg:text-2xl font-bold text-gray-900">
-                        Vamos organizar seu dia?
-                    </h2>
-                </div>
-            </div>
-            
-            <!-- Mobile (< 1024px): imagem à direita -->
-            <div class="lg:hidden flex flex-row items-center justify-between gap-4">
-                <div class="flex-1">
-                    <p class="text-gray-500 text-sm mb-1">
-                        Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
-                    </p>
-                    <h2 class="text-xl font-bold text-gray-900">
-                        Vamos organizar seu dia?
-                    </h2>
-                </div>
-                <div class="w-20 h-20">
-                    <img src="{% static 'img/dashboard-welcome-mobile.png' %}" alt="Dashboard" class="w-full h-full object-contain">
-                </div>
-            </div>
-            
-            <!-- Desktop only (> 1535px): inline com cards -->
-            <div class="hidden 2xl:flex flex-row items-center justify-between gap-6">
-                <div class="w-28 h-28 lg:w-44 lg:h-44 flex-shrink-0 self-center">
-                    <img src="{% static 'img/dashboard-welcome-mobile.png' %}" alt="Dashboard" class="w-full h-full object-contain lg:hidden">
-                    <img src="{% static 'img/dashboard-welcome.png' %}" alt="Dashboard" class="w-full h-full object-contain hidden lg:block">
-                </div>
-                <div class="flex-1 text-right lg:text-left self-center">
-                    <p class="text-gray-500 text-sm mb-2">
-                        Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
-                    </p>
-                    <h2 class="text-2xl lg:text-3xl font-bold text-gray-900">
-                        Vamos organizar seu dia?
-                    </h2>
-                </div>
-            </div>
-            
-        </div>
-        
-        <!-- KPI Cards Section -->
-        <div class="flex-1 self-center">
-            {% include 'components/kpi_cards.html' %}
-        </div>
-    </div>
-                <div>
-                    <p class="text-gray-500 text-sm mb-2">
-                        Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
-                    </p>
-                    <h2 class="text-xl lg:text-2xl font-bold text-gray-900">
-                        Vamos organizar seu dia?
-                    </h2>
-                </div>
-            </div>
-            
-            <!-- Desktop (> 1536px) ou Mobile (< 1024px): formato original -->
-            <div class="lg:hidden flex flex-row items-center justify-between gap-6">
-                <!-- Mobile: imagem à direita -->
-                <div class="flex-1">
-                    <p class="text-gray-500 text-sm mb-2">
-                        Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
-                    </p>
-                    <h2 class="text-xl lg:text-2xl font-bold text-gray-900">
-                        Vamos organizar seu dia?
-                    </h2>
-                </div>
-                <div class="w-20 h-20 lg:w-32 lg:h-32">
-                    <img src="{% static 'img/dashboard-welcome-mobile.png' %}" alt="Dashboard" class="w-full h-full object-contain lg:hidden">
-                </div>
-            </div>
-            
-            <!-- Desktop only (> 1536px): inline com cards -->
-            <div class="hidden 2xl:flex flex-row items-center justify-between gap-6">
-                <div class="w-28 h-28 lg:w-44 lg:h-44 flex-shrink-0 self-center">
-                    <img src="{% static 'img/dashboard-welcome-mobile.png' %}" alt="Dashboard" class="w-full h-full object-contain lg:hidden">
-                    <img src="{% static 'img/dashboard-welcome.png' %}" alt="Dashboard" class="w-full h-full object-contain hidden lg:block">
-                </div>
-                <div class="flex-1 text-right lg:text-left self-center">
-                    <p class="text-gray-500 text-sm mb-2">
-                        Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
-                    </p>
-                    <h2 class="text-2xl lg:text-3xl font-bold text-gray-900">
-                        Vamos organizar seu dia?
-                    </h2>
-                </div>
-            </div>
-            
-        </div>
-        
-        <!-- KPI Cards -->
-        <div class="flex-1 self-center">
-            {% include 'components/kpi_cards.html' %}
-        </div>
-    </div>
+    {% include 'components/welcome_banner.html' %}
     
     {% if user.is_superuser %}
     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -142,7 +30,6 @@
 </div>
 
 <script>
-// Initialize Firebase Messaging
 async function sendTestPush() {
     try {
         const permission = await Notification.requestPermission();
@@ -151,15 +38,11 @@ async function sendTestPush() {
             return;
         }
         
-        // Get Firebase Messaging instance
         const messaging = firebase.messaging();
-        
-        // Get token
         const token = await messaging.getToken({
             vapidKey: 'BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM'
         });
         
-        // Send to backend
         const response = await fetch('/api/v1/fcm/token/', {
             method: 'POST',
             headers: {
@@ -173,31 +56,12 @@ async function sendTestPush() {
         });
         
         if (response.ok) {
-            const data = await response.json();
             alert('Notificação configurada! Você receberá push notifications.');
         } else {
             alert('Erro ao configurar');
         }
     } catch (err) {
         alert('Erro: ' + err.message);
-    }
-}
-
-async function sendTestNotification() {
-    try {
-        const response = await fetch('/api/v1/fcm/send/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ 
-                title: '7event - Teste',
-                body: 'Push notification funcionando!'
-            })
-        });
-    } catch (err) {
-        console.log('Erro:', err);
     }
 }
 </script>
