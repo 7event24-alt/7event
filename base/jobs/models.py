@@ -237,12 +237,14 @@ class Job(models.Model):
                     }
                 )
 
-    def save(self, *args, **kwargs):
+def save(self, *args, **kwargs):
         # Calcular valores de pagamento automaticamente antes de salvar
         self.calculate_payment_values()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        from base.accounts.models import Notification
+        Notification.objects.filter(action_url__contains=f"/app/trabalhos/{self.pk}/").delete()
         self.is_active = False
         self.save()
 

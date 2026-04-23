@@ -74,6 +74,8 @@ class Quote(models.Model):
         return self.title
 
     def delete(self, *args, **kwargs):
+        from base.accounts.models import Notification
+        Notification.objects.filter(action_url__contains=f"/app/orcamentos/{self.pk}/").delete()
         self.is_active = False
         self.save()
 

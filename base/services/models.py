@@ -43,6 +43,12 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
+    def delete(self, *args, **kwargs):
+        from base.accounts.models import Notification
+        Notification.objects.filter(action_url="/app/servicos/", user=self.user).delete()
+        self.is_active = False
+        self.save()
+
     @property
     def estimated_total(self):
         return (

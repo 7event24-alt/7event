@@ -40,6 +40,12 @@ class Client(models.Model):
     def __str__(self):
         return self.name
 
+    def delete(self, *args, **kwargs):
+        from base.accounts.models import Notification
+        Notification.objects.filter(action_url__contains=f"/app/clientes/{self.pk}/").delete()
+        self.is_active = False
+        self.save()
+
     @property
     def jobs_count(self):
         return self.jobs.count()

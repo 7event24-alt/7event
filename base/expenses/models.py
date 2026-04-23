@@ -61,5 +61,7 @@ class Expense(models.Model):
         return f"{self.category} - R$ {self.value}"
 
     def delete(self, *args, **kwargs):
+        from base.accounts.models import Notification
+        Notification.objects.filter(action_url="/app/despesas/", user=self.user).delete()
         self.is_active = False
         self.save()
