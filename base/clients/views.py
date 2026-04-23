@@ -108,93 +108,18 @@ class ClientCreateView(CompanyRequiredMixin, View):
                     action_url=f"/app/clientes/{client.pk}/",
                     notification_type=NotificationType.CLIENT,
                 )
-
-            # Enviar push notification via HTTP to FCM
-            import logging
-            from django.conf import settings
-            logger = logging.getLogger(__name__)
-            logger.error("=== Push: Starting ===")
-            
-            try:
-                import json
-                import requests
-                import os
                 
-                # Get service account key
-                # Check multiple possible locations
-                possible_paths = [
-                    os.path.join(settings.BASE_DIR, 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'),
-                    '/var/www/7event/event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json',
-                    '/home/bia/Projetos_Pessoais/7event/event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'
-                ]
-                service_account_path = None
-                for p in possible_paths:
-                    if os.path.exists(p):
-                        service_account_path = p
-                        break
-                logger.error(f"Push: SA path: {service_account_path}, exists: {os.path.exists(service_account_path)}")
-                
-                if not os.path.exists(service_account_path):
-                    logger.error("Push: Service account not found")
-                
-                # Ler service account
-                import google.auth.transport.requests as google_requests
-                from oauth2client.service_account import ServiceAccountCredentials
-                
-                credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                    service_account_path,
-                    scopes=['https://www.googleapis.com/auth/firebase.messaging']
-                )
-                
-                access_token_info = credentials.get_access_token()
-                access_token = access_token_info.access_token
-                
-                subscriptions = []
+                # Enviar push notification
                 try:
-                    with open('/tmp/push_subscriptions.txt', 'r') as f:
-                        for line in f:
-                            if line.strip():
-                                subscriptions.append(json.loads(line.strip()))
+                    from base.accounts.api_urls import send_push_notification
+                    send_push_notification(
+                        user=request.user,
+                        title="Novo cliente",
+                        body=f"'{client.name}' foi adicionado",
+                        action_url=f"/app/clientes/{client.pk}/"
+                    )
                 except Exception as e:
-                    logger.error(f"Push: Error reading: {e}")
-                
-                logger.error(f"Push: Found {len(subscriptions)} subscriptions")
-                
-                if subscriptions:
-                    for sub in subscriptions:
-                        endpoint = sub.get('endpoint', '')
-                        if 'fcm.googleapis.com' in endpoint and ':' in endpoint:
-                            # Extract token from endpoint: https://fcm.googleapis.com/fcm/send/{token}
-                            token = endpoint.split('/send/')[-1]
-                            
-                            logger.error(f"Push: Token: {token[:50]}...")
-                            
-                            # Send via FCM HTTP v1 API
-                            url = f"https://fcm.googleapis.com/v1/projects/event-b2848/messages:send"
-                            headers = {
-                                "Authorization": f"Bearer {access_token}",
-                                "Content-Type": "application/json"
-                            }
-                            payload = {
-                                "message": {
-                                    "token": token,
-                                    "notification": {
-                                        "title": "Novo Cliente",
-                                        "body": f"'{client.name}' foi adicionado"
-                                    }
-                                }
-                            }
-                            
-                            try:
-                                resp = requests.post(url, headers=headers, json=payload)
-                                logger.error(f"Push: Response {resp.status_code}: {resp.text[:200]}")
-                            except Exception as e:
-                                logger.error(f"Push: HTTP error: {e}")
-                                
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Push: Outer error: {e}")
+                    pass
 
             messages.success(request, "Cliente criado com sucesso!")
             return redirect("clients:list")
@@ -220,6 +145,18 @@ class ClientQuickCreateView(CompanyRequiredMixin, View):
                     action_url=f"/app/clientes/{client.pk}/",
                     notification_type=NotificationType.CLIENT,
                 )
+                
+                # Enviar push notification
+                try:
+                    from base.accounts.api_urls import send_push_notification
+                    send_push_notification(
+                        user=request.user,
+                        title="Novo cliente",
+                        body=f"'{client.name}' foi adicionado",
+                        action_url=f"/app/clientes/{client.pk}/"
+                    )
+                except Exception as e:
+                    pass
 
             return JsonResponse({"id": client.pk, "name": client.name})
         return JsonResponse({"error": "Erro ao criar cliente"}, status=400)

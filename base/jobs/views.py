@@ -165,6 +165,18 @@ class JobCreateView(CompanyRequiredMixin, View):
                     action_url=f"/app/trabalhos/{job.pk}/",
                     notification_type=NotificationType.JOB,
                 )
+                
+                # Enviar push notification
+                try:
+                    from base.accounts.api_urls import send_push_notification
+                    send_push_notification(
+                        user=request.user,
+                        title="Novo trabalho",
+                        body=f"'{job.title}' foi criado com sucesso",
+                        action_url=f"/app/trabalhos/{job.pk}/"
+                    )
+                except Exception as e:
+                    pass
 
                 # Enviar email de notificação (opcional)
                 try:

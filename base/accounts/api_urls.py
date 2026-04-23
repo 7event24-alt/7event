@@ -76,6 +76,46 @@ def save_fcm_token(request):
     
     return Response({'error': 'Method not allowed'}, status=405)
 
+APP_NAME = "7event"
+
+def send_push_notification(user, title, body, action_url=None):
+    """Helper function to send push notification to a user"""
+    from .models import FCMToken
+    import firebase_admin
+    from firebase_admin import messaging
+    
+    if not firebase_admin._apps:
+        return False
+    
+    try:
+        tokens = FCMToken.objects.filter(user=user, is_active=True)
+        if not tokens.exists():
+            return False
+        
+        full_title = f"{APP_NAME} - {title}"
+        
+        for fcm_token in tokens:
+            try:
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=full_title,
+                        body=body
+                    ),
+                    token=fcm_token.token,
+                    data={
+                        'title': full_title,
+                        'body': body,
+                        'url': action_url or '/'
+                    }
+                )
+                messaging.send(message)
+            except Exception:
+                pass
+        
+        return True
+    except Exception:
+        return False
+
 # View para enviar notificação FCM via Firebase Admin SDK
 def send_fcm_notification(request):
     from rest_framework.response import Response
@@ -91,8 +131,10 @@ def send_fcm_notification(request):
     
     if request.method == 'POST':
         try:
-            title = request.data.get('title', '7event')
+            title = request.data.get('title', 'Notificação')
             body = request.data.get('body', '')
+            
+            full_title = f"{APP_NAME} - {title}"
             
             if request.user.is_staff:
                 tokens = FCMToken.objects.filter(is_active=True)
@@ -109,10 +151,15 @@ def send_fcm_notification(request):
                 try:
                     message = messaging.Message(
                         notification=messaging.Notification(
-                            title=title,
+                            title=full_title,
                             body=body
                         ),
-                        token=fcm_token.token
+                        token=fcm_token.token,
+                        data={
+                            'title': full_title,
+                            'body': body,
+                            'url': '/'
+                        }
                     )
                     messaging.send(message)
                     sent_count += 1
