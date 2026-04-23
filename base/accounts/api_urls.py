@@ -49,50 +49,51 @@ def send_web_push(subscription, title, body):
 def save_fcm_token(request):
     if request.method == 'POST':
         try:
-            subscription = request.data.get('subscription')
+            from .models import FCMToken
+            from rest_framework.response import Response
+            
+            token = request.data.get('token')
             device_type = request.data.get('device_type', 'web')
             
-            if subscription:
-                from .models import FCMToken
-                from rest_framework.response import Response
-                
-                keys = subscription.get('keys', {})
-                p256dh = keys.get('p256dh', '')
-                auth = keys.get('auth', '')
-                
-                user = request.user if request.user.is_authenticated else None
-                
-                if user:
-                    FCMToken.objects.update_or_create(
-                        user=user,
-                        device_type=device_type,
-                        defaults={
-                            'token': p256dh,
-                            'auth': auth,
-                            'subscription': json.dumps(subscription)
-                        }
-                    )
-                    return Response({'message': 'Notificação configurada! Você receberá push notifications.'})
-                else:
-                    return Response({'message': 'Notificação configurada (anon)'})
+            user = request.user if request.user.is_authenticated else None
+            
+            if token and user:
+                FCMToken.objects.update_or_create(
+                    user=user,
+                    device_type=device_type,
+                    defaults={
+                        'token': token,
+                        'is_active': True
+                    }
+                )
+                return Response({'message': 'Notificação configurada! Você receberá push notifications.'})
+            elif token:
+                return Response({'message': 'Token salvo (anon)'})
+            else:
+                return Response({'error': 'Token não fornecido'}, status=400)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
     
     return Response({'error': 'Method not allowed'}, status=405)
 
-# View para enviar notificação FCM (admin ou teste)
+# View para enviar notificação FCM via Firebase Admin SDK
 def send_fcm_notification(request):
-    from rest_framework.permissions import IsAdminUser
     from rest_framework.response import Response
     from rest_framework import status
     from .models import FCMToken
+    import firebase_admin
+    from firebase_admin import messaging
+    
+    if not firebase_admin._apps:
+        import logging
+        logging.getLogger(__name__).error("Firebase not initialized")
+        return Response({'error': 'Firebase not configured'}, status=500)
     
     if request.method == 'POST':
         try:
             title = request.data.get('title', '7event')
             body = request.data.get('body', '')
             
-            # Permite admin enviar para todos, ou usuário enviar para si mesmo
             if request.user.is_staff:
                 tokens = FCMToken.objects.filter(is_active=True)
             elif request.user.is_authenticated:
@@ -106,21 +107,22 @@ def send_fcm_notification(request):
             sent_count = 0
             for fcm_token in tokens:
                 try:
-                    if fcm_token.subscription:
-                        if send_web_push(fcm_token.subscription, title, body):
-                            sent_count += 1
-                except Exception as e:
-                    pass
-            
-            if not tokens.exists():
-                return Response({'error': 'Nenhum token cadastrado'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            sent_count = 0
-            for fcm_token in tokens:
-                try:
-                    if fcm_token.subscription:
-                        if send_web_push(fcm_token.subscription, title, body):
-                            sent_count += 1
+                    message = messaging.Message(
+                        notification=messaging.Notification(
+                            title=title,
+                            body=body
+                        ),
+                        token=fcm_token.token,
+                        webpush=messaging.WebpushConfig({
+                            'notification': {
+                                'title': title,
+                                'body': body,
+                                'icon': '/static/icons/icon-192.png'
+                            }
+                        })
+                    )
+                    messaging.send(message)
+                    sent_count += 1
                 except Exception as e:
                     pass
             

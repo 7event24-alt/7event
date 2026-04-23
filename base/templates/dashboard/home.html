@@ -30,29 +30,24 @@
 </div>
 
 <script>
+// Initialize Firebase Messaging
 async function sendTestPush() {
     try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            alert('Push notifications não suportadas neste navegador');
-            return;
-        }
-        
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
             alert('Permita notificações primeiro!');
             return;
         }
         
-        // Registrar service worker
-        await navigator.serviceWorker.register('/sw.js');
+        // Get Firebase Messaging instance
+        const messaging = firebase.messaging();
         
-        const registration = await navigator.serviceWorker.getRegistration();
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array('BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM')
+        // Get token
+        const token = await messaging.getToken({
+            vapidKey: 'BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM'
         });
         
-        // Salvar subscription
+        // Send to backend
         const response = await fetch('/api/v1/fcm/token/', {
             method: 'POST',
             headers: {
@@ -60,21 +55,16 @@ async function sendTestPush() {
                 'X-CSRFToken': '{{ csrf_token }}'
             },
             body: JSON.stringify({ 
-                subscription: subscription,
+                token: token,
                 device_type: 'web'
             })
         });
         
         if (response.ok) {
             const data = await response.json();
-            alert(data.message || 'Notificação configurada! Agora você receberá push notifications.');
-            
-            // Enviar notificação teste automaticamente
-            await sendTestNotification();
+            alert('Notificação configurada! Você receberá push notifications.');
         } else {
-            const text = await response.text();
-            const data = text ? JSON.parse(text) : {};
-            alert('Erro: ' + (data.error || 'Erro ' + response.status));
+            alert('Erro ao configurar');
         }
     } catch (err) {
         alert('Erro: ' + err.message);
@@ -94,25 +84,9 @@ async function sendTestNotification() {
                 body: 'Push notification funcionando!'
             })
         });
-        
-        const data = await response.json();
-        if (response.ok) {
-            alert('Notificação de teste enviada! Verifique sua barra de notificações.');
-        }
     } catch (err) {
-        console.log('Erro ao enviar teste:', err);
+        console.log('Erro:', err);
     }
-}
-
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
 }
 </script>
 {% endblock %}
