@@ -30,24 +30,31 @@ class BaseConfig(AppConfig):
                 logger.info('Firebase initialized from env')
                 return
             
-            # Direct paths to try
-            possible_paths = [
-                '/var/www/7event/event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json',
-                '/home/bia/Projetos_Pessoais/7event/event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json',
-            ]
+            # Try to find the credentials file
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            cred_filename = 'event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json'
+            cred_file = os.path.join(project_root, cred_filename)
             
-            logger.info(f'Paths to check: {possible_paths}')
-            logger.info(f'Current dir: {os.getcwd()}')
+            logger.info(f'Project root: {project_root}')
+            logger.info(f'Checking: {cred_file}')
             
-            for cred_file in possible_paths:
-                exists = os.path.exists(cred_file)
-                logger.info(f'Path {cred_file}: exists={exists}')
-                if exists:
-                    cred = credentials.Certificate(cred_file)
-                    firebase_admin.initialize_app(cred)
-                    logger.info(f'Firebase initialized from {cred_file}')
-                    return
+            if os.path.exists(cred_file):
+                cred = credentials.Certificate(cred_file)
+                firebase_admin.initialize_app(cred)
+                logger.info(f'Firebase initialized from {cred_file}')
+                return
             
-            logger.warning('Firebase credentials not found')
+            # Check parent directory (if running from venv)
+            parent_root = os.path.dirname(project_root)
+            cred_file2 = os.path.join(parent_root, cred_filename)
+            logger.info(f'Checking parent: {cred_file2}')
+            
+            if os.path.exists(cred_file2):
+                cred = credentials.Certificate(cred_file2)
+                firebase_admin.initialize_app(cred)
+                logger.info(f'Firebase initialized from {cred_file2}')
+                return
+            
+            logger.warning(f'Firebase credentials not found in {project_root} or {parent_root}')
         except Exception as e:
             logger.warning(f'Firebase initialization failed: {e}')
