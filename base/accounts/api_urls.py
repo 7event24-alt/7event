@@ -112,19 +112,13 @@ def send_fcm_notification(request):
                             title=title,
                             body=body
                         ),
-                        token=fcm_token.token,
-                        webpush=messaging.WebpushConfig({
-                            'notification': {
-                                'title': title,
-                                'body': body,
-                                'icon': '/static/icons/icon-192.png'
-                            }
-                        })
+                        token=fcm_token.token
                     )
                     messaging.send(message)
                     sent_count += 1
                 except Exception as e:
-                    pass
+                    import logging
+                    logging.getLogger(__name__).error(f'FCM send error: {e}')
             
             return Response({
                 'status': 'sent',
