@@ -88,6 +88,11 @@
             50% { transform: translateY(12px); }
         }
         
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delayed { animation: float-delayed 7s ease-in-out infinite; }
+        .animate-float-fast { animation: float-fast 5s ease-in-out infinite; }
+        .animate-float-reverse { animation: float-reverse 9s ease-in-out infinite; }
+        
         /* Gradient text */
         .text-gradient {
             background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
@@ -301,8 +306,9 @@
                     </div>
                     
                     <!-- Main dashboard image -->
-                    <div class="p-4 flex justify-center">
-                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto">
+                    <div class="p-4 flex justify-center relative">
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float">
+                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="w-full h-auto absolute top-0 left-0 animate-float-reverse" style="opacity: 0.9;">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
