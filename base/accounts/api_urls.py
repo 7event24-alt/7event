@@ -31,11 +31,10 @@ def send_web_push(subscription, title, body):
             subscription_dict,
             json.dumps({
                 'title': title,
-                'body': body,
-                'icon': '/static/icons/icon-192.png'
+                'body': body
             }),
             vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims={'subject': 'https://7event.com.br'}
+            vapid_claims={'sub': 'mailto:admin@7event.com.br'}
         )
         return True
     except Exception as e:

@@ -1,6 +1,43 @@
-// Service Worker 7event - Com update automático
+// Service Worker 7event - Com update automático e push notifications
 const CACHE_NAME = '7event-v1';
 const UPDATE_NOTIFICATION_KEY = '7event_update_available';
+
+// Push event handler
+self.addEventListener('push', function(event) {
+    console.log('SW: Push received:', event);
+    
+    let data = {};
+    try {
+        data = event.data.json();
+    } catch (e) {
+        data = { title: '7event', body: event.data.text() };
+    }
+    
+    const title = data.title || '7event';
+    const options = {
+        body: data.body || 'Nova notificação',
+        icon: '/static/icons/icon-192.png',
+        badge: '/static/icons/icon-72.png',
+        vibrate: [100, 50, 100],
+        data: {
+            url: data.url || '/'
+        }
+    };
+    
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
+});
+
+self.addEventListener('notificationclick', function(event) {
+    console.log('SW: Notification click:', event);
+    event.notification.close();
+    
+    const url = event.notification.data?.url || '/';
+    event.waitUntil(
+        clients.openWindow(url)
+    );
+});
 
 self.addEventListener('install', event => {
     console.log('SW: Installing new version...');
