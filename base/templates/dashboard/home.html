@@ -8,11 +8,11 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Desktop: inline / Mobile: stacked -->
-    <div class="flex flex-col lg:flex-row gap-6">
-        <div class="flex-none">
+    <div class="flex flex-col lg:flex-row gap-6 items-stretch">
+        <div class="flex-none self-center">
             {% include 'components/welcome_banner.html' %}
         </div>
-        <div class="flex-1">
+        <div class="flex-1 self-center">
             {% include 'components/kpi_cards.html' %}
         </div>
     </div>

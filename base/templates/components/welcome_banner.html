@@ -1,7 +1,7 @@
 {% load static %}
-<div class="flex flex-row items-center justify-between gap-6">
+<div class="flex flex-row items-center justify-between gap-6 h-full">
     <!-- Lado direito - Ilustração (visualmente primeiro no desktop) -->
-    <div class="w-28 h-28 lg:w-44 lg:h-44 flex-shrink-0">
+    <div class="w-28 h-28 lg:w-44 lg:h-44 flex-shrink-0 self-center">
         <!-- Mobile: usa imagem menor -->
         <img src="{% static 'img/dashboard-welcome-mobile.png' %}" alt="Dashboard" class="w-full h-full object-contain lg:hidden">
         <!-- Desktop: usa imagem maior -->
@@ -9,7 +9,7 @@
     </div>
     
     <!-- Lado esquerdo - Conteúdo textual (visualmente segundo no desktop) -->
-    <div class="flex-1 text-right lg:text-left">
+    <div class="flex-1 text-right lg:text-left self-center">
         <p class="text-gray-500 text-sm mb-2">
             Olá, <span class="font-semibold text-gray-700">{{ user.first_name|default:user.username }}</span> 👋
         </p>
