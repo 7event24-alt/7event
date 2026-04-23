@@ -81,7 +81,7 @@ def save_fcm_token(request):
     
     return Response({'error': 'Method not allowed'}, status=405)
 
-# View para enviar notificação FCM (admin)
+# View para enviar notificação FCM (admin ou teste)
 def send_fcm_notification(request):
     from rest_framework.permissions import IsAdminUser
     from rest_framework.response import Response
@@ -90,14 +90,28 @@ def send_fcm_notification(request):
     
     if request.method == 'POST':
         try:
-            if not request.user.is_staff:
-                return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-            
             title = request.data.get('title', '7event')
             body = request.data.get('body', '')
             
-            # Buscar subscriptions da base de dados
-            tokens = FCMToken.objects.filter(is_active=True)
+            # Permite admin enviar para todos, ou usuário enviar para si mesmo
+            if request.user.is_staff:
+                tokens = FCMToken.objects.filter(is_active=True)
+            elif request.user.is_authenticated:
+                tokens = FCMToken.objects.filter(user=request.user, is_active=True)
+            else:
+                return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            if not tokens.exists():
+                return Response({'error': 'Nenhum token cadastrado'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            sent_count = 0
+            for fcm_token in tokens:
+                try:
+                    if fcm_token.subscription:
+                        if send_web_push(fcm_token.subscription, title, body):
+                            sent_count += 1
+                except Exception as e:
+                    pass
             
             if not tokens.exists():
                 return Response({'error': 'Nenhum token cadastrado'}, status=status.HTTP_400_BAD_REQUEST)

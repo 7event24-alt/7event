@@ -43,16 +43,16 @@ async function sendTestPush() {
             return;
         }
         
-        // Registrar ambos os service workers
+        // Registrar service worker
         await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.register('{% static "firebase-messaging-sw.js" %}');
         
-        const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+        const registration = await navigator.serviceWorker.getRegistration();
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array('BKyYU7KuJKgqgkv2I9zMKvO86H9nbXWluSaPXjjxa02i9TkD9z2gcMypUiyCUrmZEi4weSQSK4MfE97TlzFkQyM')
         });
         
+        // Salvar subscription
         const response = await fetch('/api/v1/fcm/token/', {
             method: 'POST',
             headers: {
@@ -67,7 +67,10 @@ async function sendTestPush() {
         
         if (response.ok) {
             const data = await response.json();
-            alert(data.message || 'Notificação configurada com sucesso! Agora você receberá push notifications.');
+            alert(data.message || 'Notificação configurada! Agora você receberá push notifications.');
+            
+            // Enviar notificação teste automaticamente
+            await sendTestNotification();
         } else {
             const text = await response.text();
             const data = text ? JSON.parse(text) : {};
@@ -75,6 +78,29 @@ async function sendTestPush() {
         }
     } catch (err) {
         alert('Erro: ' + err.message);
+    }
+}
+
+async function sendTestNotification() {
+    try {
+        const response = await fetch('/api/v1/fcm/send/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ 
+                title: '7event - Teste',
+                body: 'Push notification funcionando!'
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            alert('Notificação de teste enviada! Verifique sua barra de notificações.');
+        }
+    } catch (err) {
+        console.log('Erro ao enviar teste:', err);
     }
 }
 
