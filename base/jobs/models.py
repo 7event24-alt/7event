@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from base.accounts.models import ProfessionalRole
+
 
 class EventType(models.TextChoices):
     CORPORATIVO = "corporativo", _("Corporativo")
@@ -40,14 +42,17 @@ class PaymentStatusJob(models.TextChoices):
     PAID = "paid", _("Pago")
 
 
+class JobStaffStatus(models.TextChoices):
+    PENDING = "pending", _("pendente")
+    ACCEPTED = "accepted", _("Aceito")
+    CONFIRMED = "confirmed", _("Confirmado")
+    REJECTED = "rejected", _("Recusado")
+    CANCELLED_BY_PROF = "cancelled_by_prof", _("Cancelado pelo Profissional")
+    PAID = "paid", _("Pago")
+
+
 class Job(models.Model):
-    account = models.ForeignKey(
-        "accounts.Account",
-        on_delete=models.CASCADE,
-        related_name="jobs",
-        verbose_name=_("Conta"),
-    )
-    user = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name="jobs_created",
@@ -81,6 +86,13 @@ class Job(models.Model):
     location = models.CharField(max_length=300, blank=True, verbose_name=_("Local"))
     description = models.TextField(blank=True, verbose_name=_("Descrição"))
 
+    total_budget = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Orçamento Total (Valor Bruto)"),
+    )
     cache = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Cachê")
     )
@@ -191,30 +203,28 @@ class Job(models.Model):
 
         return self.start_date < timezone.now().date()
 
+    def get_professionals(self):
+        return self.job_staff.all()
+
     def calculate_payment_values(self):
-        """Calcula automaticamente os valores de pagamento baseados no cache e tipo de pagamento"""
         if not self.cache:
             return
 
-        # O payment_total SEMPRE deve ser igual ao cache
         self.payment_total = self.cache
 
         if self.payment_type == PaymentType.FULL:
-            # Pagamento total - não precisa de valores parciais/restantes
             self.payment_partial_value = None
             self.payment_partial_date = None
             self.payment_remaining_value = None
             self.payment_remaining_date = None
 
         elif self.payment_type == PaymentType.PARTIAL:
-            # Pagamento parcial - o restante é calculado automaticamente
             if self.payment_partial_value:
                 self.payment_remaining_value = self.cache - self.payment_partial_value
             else:
                 self.payment_remaining_value = self.cache
 
         elif self.payment_type == PaymentType.ADVANCE:
-            # Pagamento antecipado - o restante é calculado automaticamente
             if self.payment_partial_value:
                 self.payment_remaining_value = self.cache - self.payment_partial_value
             else:
@@ -238,15 +248,65 @@ class Job(models.Model):
                 )
 
     def save(self, *args, **kwargs):
-        # Calcular valores de pagamento automaticamente antes de salvar
         self.calculate_payment_values()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         from base.accounts.models import Notification
+
         Notification.objects.filter(action_url__contains=f"/app/trabalhos/{self.pk}/").delete()
         self.is_active = False
         self.save()
 
+
+class JobStaff(models.Model):
+    job = models.ForeignKey(
+        Job,
+        on_delete=models.CASCADE,
+        related_name="job_staff",
+        verbose_name=_("Trabalho"),
+    )
+    professional = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="job_assignments",
+        verbose_name=_("Profissional"),
+    )
+    cache_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Valor do Cachê"),
+    )
+    role = models.CharField(
+        max_length=50,
+        choices=ProfessionalRole.choices,
+        blank=True,
+        verbose_name=_("Função/Cargo no Trabalho"),
+    )
+    payment_type = models.CharField(
+        max_length=20,
+        choices=PaymentType.choices,
+        blank=True,
+        verbose_name=_("Tipo de Pagamento (Contrato Individual)"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=JobStaffStatus.choices,
+        default=JobStaffStatus.PENDING,
+        verbose_name=_("Status"),
+    )
+    notes = models.TextField(blank=True, verbose_name=_("Observações"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "jobs_jobstaff"
+        verbose_name = _("Equipe do Trabalho")
+        verbose_name_plural = _("Equipes dos Trabalhos")
+        ordering = ["-created_at"]
+        unique_together = [["job", "professional"]]
+
     def __str__(self):
-        return self.title
+        return f"{self.professional.username} - {self.job.title}"
