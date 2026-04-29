@@ -162,6 +162,45 @@
                 </div>
             </div>
             
+            <!-- Despesas -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-semibold text-gray-700">Despesas</h4>
+                    <a href="{% url 'expenses:create' %}?job={{ job.pk }}" class="text-sm text-primary hover:text-secondary flex items-center gap-1">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </a>
+                </div>
+                
+                {% if expenses %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 text-left text-sm text-gray-600">
+                                <th class="px-4 py-3">Descrição</th>
+                                <th class="px-4 py-3">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for expense in expenses %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ expense.description|default:"-" }}</td>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-800">{{ expense.value|brl }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-gray-50 font-semibold">
+                                <td class="px-4 py-3">Total</td>
+                                <td class="px-4 py-3 text-green-600">{{ total_expenses|brl }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">Nenhuma despesa registrada.</p>
+                {% endif %}
+            </div>
+            
             <!-- Pagamentos -->
             {% if job.payment_type == 'partial' %}
             <!-- Pagamento Parcial -->
@@ -312,45 +351,6 @@
                 </div>
                 {% endif %}
             {% endif %}
-            
-            <!-- Despesas -->
-            <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="font-semibold text-gray-700">Despesas</h4>
-                    <a href="{% url 'expenses:create' %}?job={{ job.pk }}" class="text-sm text-primary hover:text-secondary flex items-center gap-1">
-                        <i class="fas fa-plus"></i> Adicionar
-                    </a>
-                </div>
-                
-                {% if expenses %}
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50 text-left text-sm text-gray-600">
-                                <th class="px-4 py-3">Descrição</th>
-                                <th class="px-4 py-3">Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% for expense in expenses %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-sm text-gray-600">{{ expense.description|default:"-" }}</td>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-800">{{ expense.value|brl }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        <tfoot>
-                            <tr class="bg-gray-50 font-semibold">
-                                <td class="px-4 py-3">Total</td>
-                                <td class="px-4 py-3 text-green-600">{{ total_expenses|brl }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-sm text-gray-500">Nenhuma despesa registrada.</p>
-                {% endif %}
-            </div>
             
             <!-- Lucro Líquido (Owner only) -->
             <div class="mt-6 pt-6 border-t border-gray-200">
