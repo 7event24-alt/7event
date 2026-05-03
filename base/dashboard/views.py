@@ -120,7 +120,6 @@ class DashboardView(LoginRequiredMixin, View):
 
         # Tarefas pessoais para o widget do dashboard
         from base.accounts.models import PersonalTask
-        from django.utils import timezone
         today = timezone.now().date()
         today_tasks = PersonalTask.objects.filter(
             user=user,
