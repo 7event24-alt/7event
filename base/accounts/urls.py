@@ -84,4 +84,5 @@ urlpatterns = [
         name="accept_invite",
     ),
     path("api/quick-worker/", api_quick_worker.quick_worker, name="quick_worker"),
+    path("minhas-tarefas/", views.personal_tasks, name="personal_tasks"),
 ]

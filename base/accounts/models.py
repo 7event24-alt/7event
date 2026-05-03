@@ -480,3 +480,30 @@ class FCMToken(models.Model):
 
     def __str__(self):
         return f"FCM Token - {self.user.username} ({self.device_type})"
+
+
+class PersonalTask(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="personal_tasks",
+        verbose_name=_("Usuário")
+    )
+    title = models.CharField(max_length=200, verbose_name=_("Título da Tarefa"))
+    date = models.DateField(verbose_name=_("Data"))
+    time = models.TimeField(null=True, blank=True, verbose_name=_("Horário"))
+    is_completed = models.BooleanField(default=False, verbose_name=_("Concluída"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Criada em"))
+
+    class Meta:
+        db_table = "personal_tasks"
+        verbose_name = _("Tarefa Pessoal")
+        verbose_name_plural = _("Tarefas Pessoais")
+        ordering = ["date", "time"]
+        indexes = [
+            models.Index(fields=["user", "date"]),
+            models.Index(fields=["user", "is_completed"]),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"

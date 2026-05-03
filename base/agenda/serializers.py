@@ -78,14 +78,58 @@ class AgendaEventsView(APIView):
         user = request.user
         is_superuser = user.is_superuser
 
+        # Jobs (código existente)
         if is_superuser:
             jobs = Job.objects.filter(is_active=True).select_related("client")
         else:
             jobs = Job.objects.filter(created_by=user, is_active=True).select_related("client")
 
         jobs = jobs.order_by("start_date")
-        serializer = AgendaEventSerializer(jobs, many=True)
-        return Response(serializer.data)
+        job_serializer = AgendaEventSerializer(jobs, many=True)
+        job_events = job_serializer.data
+
+        # PersonalTasks do usuário
+        try:
+            from base.accounts.models import PersonalTask
+            from datetime import datetime
+            from calendar import monthrange
+            from django.utils import timezone
+
+            year = int(request.query_params.get("year", timezone.now().year))
+            month = int(request.query_params.get("month", timezone.now().month))
+            first_day = datetime(year, month, 1)
+            last_day = datetime(year, month, monthrange(year, month)[1])
+
+            tasks = PersonalTask.objects.filter(
+                user=user,
+                date__gte=first_day.date(),
+                date__lte=last_day.date()
+            ).order_by("time")
+
+            task_events = []
+            for task in tasks:
+                start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
+                task_events.append({
+                    "id": f"task_{task.id}",
+                    "title": task.title,
+                    "start": start_dt,
+                    "end": start_dt,  # FullCalendar exige end
+                    "backgroundColor": "#bfdbfe",  # bg-blue-200
+                    "borderColor": "#93c5fd",     # border blue-300
+                    "textColor": "#1e40af",        # text-blue-800
+                    "extendedProps": {
+                        "type": "task",
+                        "is_completed": task.is_completed
+                    }
+                })
+
+            # Unificar eventos
+            all_events = job_events + task_events
+            return Response(all_events)
+
+        except Exception as e:
+            # Se der erro, retorna apenas jobs (compatibilidade)
+            return Response(job_events)
 
 
 class AgendaViewSet(viewsets.ViewSet):
@@ -114,5 +158,39 @@ class AgendaViewSet(viewsets.ViewSet):
                 start_date__lte=last_day.date()
             ).select_related("client")
 
-        serializer = AgendaEventSerializer(jobs, many=True)
-        return Response(serializer.data)
+        job_serializer = AgendaEventSerializer(jobs, many=True)
+        job_events = job_serializer.data
+
+        # PersonalTasks do usuário
+        try:
+            from base.accounts.models import PersonalTask
+
+            tasks = PersonalTask.objects.filter(
+                user=user,
+                date__gte=first_day.date(),
+                date__lte=last_day.date()
+            ).order_by("time")
+
+            task_events = []
+            for task in tasks:
+                start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
+                task_events.append({
+                    "id": f"task_{task.id}",
+                    "title": task.title,
+                    "start": start_dt,
+                    "end": start_dt,
+                    "backgroundColor": "#bfdbfe",  # bg-blue-200
+                    "borderColor": "#93c5fd",     # border blue-300
+                    "textColor": "#1e40af",        # text-blue-800
+                    "extendedProps": {
+                        "type": "task",
+                        "is_completed": task.is_completed
+                    }
+                })
+
+            all_events = job_events + task_events
+            return Response(all_events)
+
+        except Exception as e:
+            # Se der erro, retorna apenas jobs
+            return Response(job_events)

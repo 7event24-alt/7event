@@ -192,7 +192,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return events.filter(function(event) {
-            return checkedStatuses.includes(event.status);
+            // Se for PersonalTask (tipo task)
+            if (event.extendedProps && event.extendedProps.type === 'task') {
+                // Sempre mostrar tasks (ou filtrar por is_completed se necessário)
+                return true;
+            }
+            // Se for Job normal
+            return checkedStatuses.includes(event.extendedProps?.status || event.status);
         });
     }
     
@@ -238,7 +244,12 @@ document.addEventListener('DOMContentLoaded', function() {
             headerToolbar: false,
             initialDate: initialDate,
             eventClick: function(info) {
-                window.location.href = '/app/trabalhos/' + info.event.id + '/';
+                if (info.event.extendedProps.type === 'task') {
+                    // Tarefas abrem na página de listagem
+                    window.location.href = '/app/accounts/minhas-tarefas/';
+                } else {
+                    window.location.href = '/app/trabalhos/' + info.event.id + '/';
+                }
             },
             dateClick: function(info) {
                 var date = info.date;
@@ -246,6 +257,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 var month = String(date.getMonth() + 1).padStart(2, '0');
                 var day = String(date.getDate()).padStart(2, '0');
                 window.location.href = '/app/agenda/dia/' + year + '/' + month + '/' + day + '/';
+            },
+            eventClassNames: function(info) {
+                if (info.event.extendedProps.type === 'task' && info.event.extendedProps.is_completed) {
+                    return ['opacity-50', 'line-through'];
+                }
+                return [];
             },
             height: 'auto'
         });

@@ -668,3 +668,80 @@ def user_profile_detail(request, user_id=None):
     }
     
     return render(request, "accounts/user_profile_detail.html", context)
+
+
+class PersonalTasksView(LoginRequiredMixin, View):
+    template_name = "accounts/personal_tasks.html"
+    
+    def get(self, request):
+        from .models import PersonalTask
+        
+        # Filtros
+        filter_status = request.GET.get("status", "pending")  # pending, completed, all
+        
+        # Base query - APENAS tarefas do usuário logado
+        tasks = PersonalTask.objects.filter(user=request.user)
+        
+        # Aplicar filtro de status
+        if filter_status == "pending":
+            tasks = tasks.filter(is_completed=False)
+        elif filter_status == "completed":
+            tasks = tasks.filter(is_completed=True)
+        
+        tasks = tasks.order_by("-date", "is_completed", "time")
+        
+        # Tarefas de hoje (para exibição rápida)
+        from django.utils import timezone
+        today = timezone.now().date()
+        today_tasks = PersonalTask.objects.filter(
+            user=request.user,
+            date=today,
+            is_completed=False
+        ).order_by("time")
+        
+        context = {
+            "tasks": tasks,
+            "today_tasks": today_tasks,
+            "today": today,
+            "filter_status": filter_status,
+            "pending_count": PersonalTask.objects.filter(user=request.user, is_completed=False).count(),
+            "completed_count": PersonalTask.objects.filter(user=request.user, is_completed=True).count(),
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        from .models import PersonalTask
+        import json
+        
+        try:
+            data = json.loads(request.body)
+            action = data.get("action")
+            task_id = data.get("task_id")
+            
+            if action == "create":
+                task = PersonalTask.objects.create(
+                    user=request.user,
+                    title=data.get("title"),
+                    date=data.get("date"),
+                    time=data.get("time") or None,
+                )
+                return JsonResponse({"success": True, "task_id": task.id})
+            
+            elif action == "toggle_complete":
+                task = PersonalTask.objects.get(id=task_id, user=request.user)
+                task.is_completed = not task.is_completed
+                task.save(update_fields=["is_completed"])
+                return JsonResponse({"success": True, "is_completed": task.is_completed})
+            
+            elif action == "delete":
+                task = PersonalTask.objects.get(id=task_id, user=request.user)
+                task.delete()
+                return JsonResponse({"success": True})
+            
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+        
+        return JsonResponse({"success": False})
+
+
+personal_tasks = PersonalTasksView.as_view()
