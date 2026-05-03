@@ -12,7 +12,6 @@ from base.jobs.models import Job
 
 class AgendaEventSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True)
-    status_color = serializers.SerializerMethodField()
     textColor = serializers.SerializerMethodField()
     start = serializers.SerializerMethodField()
     end = serializers.SerializerMethodField()
@@ -31,44 +30,21 @@ class AgendaEventSerializer(serializers.ModelSerializer):
             "end_time",
             "location",
             "status",
-            "status_color",
             "textColor",
-            "event_type",
         ]
-
-    def get_status_color(self, obj):
-        colors = {
-            "pending": "#f59e0b",
-            "confirmed": "#10b981",
-            "completed": "#6366f1",
-            "cancelled": "#ef4444",
-        }
-        return colors.get(obj.status, "#1e3a5f")
-
-    def get_textColor(self, obj):
-        return "#ffffff"
 
     def get_start(self, obj):
         if obj.start_date:
-            date_str = str(obj.start_date)
-            if obj.start_time:
-                time_str = str(obj.start_time)
-                if len(time_str) == 5:
-                    return f"{date_str}T{time_str}:00"
-                return f"{date_str}T{time_str}"
-            return date_str
+            return str(obj.start_date)
         return None
-
+    
     def get_end(self, obj):
         if obj.end_date:
-            date_str = str(obj.end_date)
-            if obj.end_time:
-                time_str = str(obj.end_time)
-                if len(time_str) == 5:
-                    return f"{date_str}T{time_str}:00"
-                return f"{date_str}T{time_str}"
-            return date_str
+            return str(obj.end_date)
         return None
+
+    def get_textColor(self, obj):
+        return "#ffffff"
 
 
 class AgendaEventsView(APIView):
@@ -78,22 +54,46 @@ class AgendaEventsView(APIView):
         user = request.user
         is_superuser = user.is_superuser
 
-        # Jobs (código existente)
+        # Jobs
         if is_superuser:
             jobs = Job.objects.filter(is_active=True).select_related("client")
         else:
             jobs = Job.objects.filter(created_by=user, is_active=True).select_related("client")
 
         jobs = jobs.order_by("start_date")
-        job_serializer = AgendaEventSerializer(jobs, many=True)
-        job_events = job_serializer.data
+
+        all_events = []
+
+        # Gerar eventos para cada job
+        for job in jobs:
+            # Evento do Job normal
+            job_serializer = AgendaEventSerializer(job)
+            job_event = job_serializer.data
+            job_event["backgroundColor"] = "#1e3a5f"  # blue-900
+            job_event["borderColor"] = "#1e3a5f"
+            all_events.append(job_event)
+
+            # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
+            if job.has_technical_visit and job.technical_visit_date:
+                visit_date = str(job.technical_visit_date)
+
+                all_events.append({
+                    "id": f"visit_{job.id}",
+                    "title": f"VT: {job.title}",
+                    "start": visit_date,
+                    "end": visit_date,
+                    "backgroundColor": "#fbbf24",  # yellow-400 (amarelinho)
+                    "borderColor": "#f59e0b",      # yellow-500
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "technical_visit",
+                        "job_id": job.id
+                    }
+                })
 
         # PersonalTasks do usuário
         try:
             from base.accounts.models import PersonalTask
-            from datetime import datetime
-            from calendar import monthrange
-            from django.utils import timezone
 
             year = int(request.query_params.get("year", timezone.now().year))
             month = int(request.query_params.get("month", timezone.now().month))
@@ -106,30 +106,26 @@ class AgendaEventsView(APIView):
                 date__lte=last_day.date()
             ).order_by("time")
 
-            task_events = []
             for task in tasks:
                 start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
-                task_events.append({
+                all_events.append({
                     "id": f"task_{task.id}",
                     "title": task.title,
                     "start": start_dt,
-                    "end": start_dt,  # FullCalendar exige end
-                    "backgroundColor": "#bfdbfe",  # bg-blue-200
-                    "borderColor": "#93c5fd",     # border blue-300
-                    "textColor": "#1e40af",        # text-blue-800
+                    "end": start_dt,
+                    "backgroundColor": "#60a5fa",  # blue-400 (baby blue)
+                    "borderColor": "#3b82f6",     # blue-500
+                    "textColor": "#ffffff",
                     "extendedProps": {
                         "type": "task",
                         "is_completed": task.is_completed
                     }
                 })
 
-            # Unificar eventos
-            all_events = job_events + task_events
-            return Response(all_events)
-
         except Exception as e:
-            # Se der erro, retorna apenas jobs (compatibilidade)
-            return Response(job_events)
+            pass
+
+        return Response(all_events)
 
 
 class AgendaViewSet(viewsets.ViewSet):
@@ -158,8 +154,33 @@ class AgendaViewSet(viewsets.ViewSet):
                 start_date__lte=last_day.date()
             ).select_related("client")
 
-        job_serializer = AgendaEventSerializer(jobs, many=True)
-        job_events = job_serializer.data
+        all_events = []
+
+        for job in jobs:
+            # Evento do Job normal
+            job_serializer = AgendaEventSerializer(job)
+            job_event = job_serializer.data
+            job_event["backgroundColor"] = "#1e3a5f"  # blue-900
+            job_event["borderColor"] = "#1e3a5f"
+            all_events.append(job_event)
+
+            # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
+            if job.has_technical_visit and job.technical_visit_date:
+                visit_date = str(job.technical_visit_date)
+
+                all_events.append({
+                    "id": f"visit_{job.id}",
+                    "title": f"VT: {job.title}",
+                    "start": visit_date,
+                    "end": visit_date,
+                    "backgroundColor": "#fbbf24",  # yellow-400 (amarelinho)
+                    "borderColor": "#f59e0b",      # yellow-500
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "technical_visit",
+                        "job_id": job.id
+                    }
+                })
 
         # PersonalTasks do usuário
         try:
@@ -171,26 +192,23 @@ class AgendaViewSet(viewsets.ViewSet):
                 date__lte=last_day.date()
             ).order_by("time")
 
-            task_events = []
             for task in tasks:
                 start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
-                task_events.append({
+                all_events.append({
                     "id": f"task_{task.id}",
                     "title": task.title,
                     "start": start_dt,
                     "end": start_dt,
-                    "backgroundColor": "#2563eb",  # bg-blue-600 (baby blue / more vibrant)
-                    "borderColor": "#1d4ed8",     # border blue-400
-                    "textColor": "#ffffff",        # white text for contrast
+                    "backgroundColor": "#60a5fa",  # blue-400 (baby blue)
+                    "borderColor": "#3b82f6",     # blue-500
+                    "textColor": "#ffffff",
                     "extendedProps": {
                         "type": "task",
                         "is_completed": task.is_completed
                     }
                 })
 
-            all_events = job_events + task_events
-            return Response(all_events)
-
         except Exception as e:
-            # Se der erro, retorna apenas jobs
-            return Response(job_events)
+            pass
+
+        return Response(all_events)

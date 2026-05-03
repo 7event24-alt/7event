@@ -101,17 +101,44 @@
 .fc .fc-toolbar-title { font-size: 1.25rem !important; }
 .fc .fc-button { background: #1e3a5f !important; border-color: #1e3a5f !important; }
 .fc .fc-button:hover { background: #2d5a8a !important; }
-        .fc .fc-daygrid-event { border: none; padding: 2px 6px; border-radius: 4px; color: white !important; }
-        /* Jobs (normais) - Cor primária */
-        .fc .fc-event:not([style*="background:#"]) { background: #1e3a5f !important; }
-        /* Visitas Técnicas - Verde água */
-        .fc .fc-event[style*="rgb(147, 197, 253)"] { background: #0d9488 !important; border-color: #0f766a !important; }
-        .fc .fc-event[style*="background:#5eead"] { background: #0d9488 !important; }
-        .fc .fc-event[style*="background:#3b82f6"] { background: #2563eb !important; }
-        .fc .fc-event[style*="background:#1d4ed8"] { background: #1d4ed8 !important; }
-.fc .fc-event { cursor: pointer; color: white !important; }
-.fc .fc-event .fc-event-main { color: white !important; }
-
+        .fc .fc-daygrid-event { border: none; padding: 2px 6px; border-radius: 4px; }
+        /* Forçar cores de fundo com máxima especificidade */
+        html body .fc .fc-daygrid-event.event-job,
+        html body .fc .fc-daygrid-event.event-job .fc-event-main { background-color: #1e3a5f !important; border-color: #1e3a5f !important; color: #ffffff !important; }
+        
+        html body .fc .fc-daygrid-event.event-technical-visit,
+        html body .fc .fc-daygrid-event.event-technical-visit .fc-event-main { background-color: #fbbf24 !important; border-color: #f59e0b !important; color: #000000 !important; }
+        
+        html body .fc .fc-daygrid-event.event-task,
+        html body .fc .fc-daygrid-event.event-task .fc-event-main { background-color: #60a5fa !important; border-color: #3b82f6 !important; color: #ffffff !important; }
+        
+        .fc .fc-event { cursor: pointer; }
+        .fc .fc-event .fc-event-main { color: #ffffff !important; }
+        
+        /* Estilo moderno para o botão "+ X more" */
+        .fc .fc-daygrid-more-link {
+            display: block !important;
+            text-align: center !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: #3b82f6 !important;
+            background: #eff6ff !important;
+            border: 1px solid #bfdbfe !important;
+            border-radius: 4px !important;
+            padding: 2px 6px !important;
+            margin: 2px auto 0 auto !important;
+            text-decoration: none !important;
+            transition: all 0.2s ease !important;
+            max-width: 80% !important;
+        }
+        
+        .fc .fc-daygrid-more-link:hover {
+            background: #dbeafe !important;
+            border-color: #93c5fd !important;
+            color: #1d4ed8 !important;
+            transform: scale(1.05) !important;
+        }
+        
 /* Mobile optimizations */
 @media (max-width: 1024px) {
     .fc .fc-toolbar { flex-direction: column !important; gap: 0.5rem !important; }
@@ -201,8 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return events.filter(function(event) {
             // Se for PersonalTask (tipo task)
             if (event.extendedProps && event.extendedProps.type === 'task') {
-                // Sempre mostrar tasks (ou filtrar por is_completed se necessário)
                 return true;
+            }
+            // Se for Visita Técnica
+            if (event.extendedProps && event.extendedProps.type === 'technical_visit') {
+                return true; // Sempre mostrar visitas técnicas
             }
             // Se for Job normal
             return checkedStatuses.includes(event.extendedProps?.status || event.status);
@@ -249,31 +279,77 @@ document.addEventListener('DOMContentLoaded', function() {
             initialView: 'dayGridMonth',
             locale: 'pt-br',
             headerToolbar: false,
+            dayMaxEventRows: 4,  // Limita visualmente a 4 eventos por dia
+            moreLinkClick: function(info) {
+                // Pegar data do elemento do dia (funciona em qualquer versão)
+                var dateStr = info.dayEl.getAttribute('data-date'); // Formato: YYYY-MM-DD
+                if (dateStr) {
+                    var parts = dateStr.split('-');
+                    window.location.href = '/app/agenda/dia/' + parts[0] + '/' + parts[1] + '/' + parts[2] + '/';
+                }
+                return false;
+            },
             initialDate: initialDate,
             eventClick: function(info) {
                 if (info.event.extendedProps.type === 'task') {
                     // Tarefas abrem na página de listagem
                     window.location.href = '/app/accounts/minhas-tarefas/';
+                } else if (info.event.extendedProps.type === 'technical_visit') {
+                    // Visitas técnicas levam aos dados do job
+                    window.location.href = '/app/trabalhos/' + info.event.extendedProps.job_id + '/';
                 } else {
                     window.location.href = '/app/trabalhos/' + info.event.id + '/';
                 }
             },
             dateClick: function(info) {
-                var date = info.date;
-                var year = date.getFullYear();
-                var month = String(date.getMonth() + 1).padStart(2, '0');
-                var day = String(date.getDate()).padStart(2, '0');
-                window.location.href = '/app/agenda/dia/' + year + '/' + month + '/' + day + '/';
+                var dateOnly = info.dateStr.split('T')[0];
+                var parts = dateOnly.split('-');
+                window.location.href = '/app/agenda/dia/' + parts[0] + '/' + parts[1] + '/' + parts[2] + '/';
             },
             eventClassNames: function(info) {
+                var classes = [];
                 if (info.event.extendedProps.type === 'task' && info.event.extendedProps.is_completed) {
-                    return ['opacity-50', 'line-through'];
+                    classes.push('opacity-50', 'line-through');
                 }
-                return [];
+                // Adicionar classe baseada no tipo para CSS
+                if (info.event.extendedProps.type === 'technical_visit') {
+                    classes.push('event-technical-visit');
+                } else if (info.event.extendedProps.type === 'task') {
+                    classes.push('event-task');
+                } else {
+                    classes.push('event-job');
+                }
+                return classes;
+            },
+            eventDidMount: function(info) {
+                // Forçar cor de fundo e borda baseado no tipo via style inline com !important
+                var el = info.el;
+                if (info.event.extendedProps.type === 'technical_visit') {
+                    el.setAttribute('style', el.getAttribute('style') + '; background-color: #fbbf24 !important; border-color: #f59e0b !important; color: #000000 !important;');
+                } else if (info.event.extendedProps.type === 'task') {
+                    el.setAttribute('style', el.getAttribute('style') + '; background-color: #60a5fa !important; border-color: #3b82f6 !important; color: #ffffff !important;');
+                } else {
+                    el.setAttribute('style', el.getAttribute('style') + '; background-color: #1e3a5f !important; border-color: #1e3a5f !important; color: #ffffff !important;');
+                }
             },
             height: 'auto'
         });
         calendar.render();
+        
+        // Adicionar href nos botões "+ X more" após renderizar
+        setTimeout(function() {
+            document.querySelectorAll('.fc-daygrid-more-link').forEach(function(link) {
+                var cell = link.closest('.fc-daygrid-day');
+                if (cell) {
+                    var dateStr = cell.getAttribute('data-date'); // YYYY-MM-DD
+                    if (dateStr) {
+                        link.href = '/app/agenda/dia/' + dateStr.replace(/-/g, '/') + '/';
+                        link.removeAttribute('aria-haspopup');
+                        link.removeAttribute('aria-expanded');
+                    }
+                }
+            });
+        }, 500);
         
         // Carrega eventos após renderizar
         console.log('Fetching events from /app/agenda/api/eventos/...');

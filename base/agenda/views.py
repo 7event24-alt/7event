@@ -167,16 +167,35 @@ class DayDetailView(LoginRequiredMixin, View):
         except ValueError:
             selected_date = timezone.now().date()
 
+        # Jobs normais (na data do evento)
         if is_superuser:
             jobs = Job.objects.filter(start_date=selected_date)
         else:
-            # Mostrar trabalhos criados pelo user OU onde ele é staff
             jobs = Job.objects.filter(
                 models.Q(created_by=user) | models.Q(job_staff__professional=user),
                 start_date=selected_date
             ).distinct()
 
         jobs = jobs.select_related("client").order_by("start_time")
+
+        # Visitas Técnicas (na data da visita técnica)
+        if is_superuser:
+            visits = Job.objects.filter(
+                has_technical_visit=True,
+                technical_visit_date=selected_date
+            ).select_related("client")
+        else:
+            visits = Job.objects.filter(
+                (models.Q(created_by=user) | models.Q(job_staff__professional=user)) &
+                models.Q(has_technical_visit=True, technical_visit_date=selected_date)
+            ).select_related("client").distinct()
+
+        # Tarefas Pessoais
+        from base.accounts.models import PersonalTask
+        tasks = PersonalTask.objects.filter(
+            user=user,
+            date=selected_date
+        ).order_by("time")
 
         month_names = {
             1: "Janeiro",
@@ -207,6 +226,10 @@ class DayDetailView(LoginRequiredMixin, View):
             "month_name": month_name,
             "jobs": jobs,
             "jobs_count": jobs.count(),
+            "visits": visits,
+            "visits_count": visits.count(),
+            "tasks": tasks,
+            "tasks_count": tasks.count(),
             "total_cache": total_cache,
             "prev_day": prev_day,
             "next_day": next_day,

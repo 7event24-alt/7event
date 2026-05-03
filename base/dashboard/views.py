@@ -147,20 +147,6 @@ class DashboardView(LoginRequiredMixin, View):
             created_at__gte=month_start
         ).count()
 
-        # Tarefas pessoais para o widget do dashboard
-        from base.accounts.models import PersonalTask
-        today = timezone.now().date()
-        today_tasks = PersonalTask.objects.filter(
-            user=user,
-            date=today,
-            is_completed=False
-        ).order_by("time")[:5]
-
-        pending_tasks_count = PersonalTask.objects.filter(
-            user=user,
-            is_completed=False
-        ).count()
-
         context = {
             "total_revenue": total_revenue,
             "revenue_this_month": revenue_this_month,
@@ -183,8 +169,6 @@ class DashboardView(LoginRequiredMixin, View):
             "clients_total": clients_total,
             "clients_this_month": clients_this_month,
             "company": user,
-            "today_tasks": today_tasks,
-            "pending_tasks_count": pending_tasks_count,
             # Novos cards
             "upcoming_jobs": upcoming_jobs,
             "upcoming_jobs_count": upcoming_jobs_count,
