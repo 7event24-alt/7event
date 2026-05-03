@@ -185,11 +185,11 @@
             </div>
             
             <!-- Despesas -->
-            <div class="mt-6 pt-6 border-t border-gray-200">
+            <div class="bg-gray-50 rounded-lg mt-6 p-6 border-b border-gray-200">
                 <div class="flex justify-between items-center mb-4">
                     <h4 class="font-semibold text-gray-700">Despesas</h4>
-                    <a href="{% url 'expenses:create' %}?job={{ job.pk }}" class="text-sm text-primary hover:text-secondary flex items-center gap-1">
-                        <i class="fas fa-plus"></i> Adicionar
+                    <a href="{% url 'expenses:create' %}?job={{ job.pk }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Adicionar Despesas
                     </a>
                 </div>
                 
@@ -226,7 +226,7 @@
             <!-- Pagamentos -->
             {% if job.payment_type == 'partial' %}
             <!-- Pagamento Parcial -->
-            <div class="space-y-4 mb-6">
+            <div class="space-y-4 my-6">
                 <!-- 1ª Parcela -->
                 <div class="bg-gray-50 rounded-xl p-4 {% if job.payment_status == 'paid' %}border-l-4 border-green-500{% endif %}">
                     <div class="flex items-center justify-between mb-2">
@@ -319,7 +319,7 @@
             {% else %}
                 {% if job.payment_type == 'full' %}
                 <!-- Pagamento Total -->
-                <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                <div class="my-6">
                     <div class="flex items-center justify-between mb-2">
                         <span class="font-medium text-gray-700">Pagamento</span>
                         <span class="text-lg font-semibold text-gray-800">{{ job.payment_total|brl }}</span>
@@ -345,7 +345,7 @@
                 </div>
                 {% else %}
                 <!-- Pagamento Antecipado -->
-                <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                <div class="my-6">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
                             <span class="font-medium text-gray-700">Pagamento Antecipado</span>
@@ -417,7 +417,7 @@
     
     <!-- Equipe/Staff - Visible to Owner (Agency) and Staff Members -->
     {% if can_manage_staff or is_staff_member %}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden my-6">
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap justify-between items-center gap-2">
             <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <i class="fas fa-users text-primary"></i>

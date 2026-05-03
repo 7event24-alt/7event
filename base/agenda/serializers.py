@@ -179,9 +179,9 @@ class AgendaViewSet(viewsets.ViewSet):
                     "title": task.title,
                     "start": start_dt,
                     "end": start_dt,
-                    "backgroundColor": "#bfdbfe",  # bg-blue-200
-                    "borderColor": "#93c5fd",     # border blue-300
-                    "textColor": "#1e40af",        # text-blue-800
+                    "backgroundColor": "#3b82f6",  # bg-blue-500 (more vibrant)
+                    "borderColor": "#1d4ed8",     # border blue-400
+                    "textColor": "#ffffff",        # white text for contrast
                     "extendedProps": {
                         "type": "task",
                         "is_completed": task.is_completed

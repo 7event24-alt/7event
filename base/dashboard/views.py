@@ -104,14 +104,43 @@ class DashboardView(LoginRequiredMixin, View):
             .select_related("client")
             .order_by("start_date")
         )
-
+        
         upcoming_events_count = upcoming_events.count()
-
+        
         if upcoming_events_count == 0:
             upcoming_events = (
                 base_jobs.select_related("client").order_by("-start_date")[:10]
             )
             upcoming_events_count = base_jobs.count()
+        
+        # NOVO: Jobs normais (sem visita técnica)
+        upcoming_jobs = upcoming_events.filter(
+            has_technical_visit=False
+        ).order_by("start_date")[:10]
+        
+        upcoming_jobs_count = upcoming_events.filter(has_technical_visit=False).count()
+        
+        # NOVO: Visitas Técnicas
+        upcoming_visits = upcoming_events.filter(
+            has_technical_visit=True
+        ).order_by("start_date")[:10]
+        
+        upcoming_visits_count = upcoming_events.filter(has_technical_visit=True).count()
+        
+        # NOVO: Tarefas pessoais pendentes (próximos 90 dias)
+        from base.accounts.models import PersonalTask
+        today_date = timezone.now().date()
+        upcoming_tasks = PersonalTask.objects.filter(
+            user=user,
+            date__gte=today_date,
+            date__lte=today_date + timedelta(days=90),
+            is_completed=False
+        ).order_by("date", "time")[:10]
+        
+        upcoming_tasks_count = PersonalTask.objects.filter(
+            user=user,
+            is_completed=False
+        ).count()
 
         clients_total = base_clients.count()
         clients_this_month = base_clients.filter(
@@ -156,6 +185,13 @@ class DashboardView(LoginRequiredMixin, View):
             "company": user,
             "today_tasks": today_tasks,
             "pending_tasks_count": pending_tasks_count,
+            # Novos cards
+            "upcoming_jobs": upcoming_jobs,
+            "upcoming_jobs_count": upcoming_jobs_count,
+            "upcoming_visits": upcoming_visits,
+            "upcoming_visits_count": upcoming_visits_count,
+            "upcoming_tasks": upcoming_tasks,
+            "upcoming_tasks_count": upcoming_tasks_count,
         }
 
         return render(request, self.template_name, context)

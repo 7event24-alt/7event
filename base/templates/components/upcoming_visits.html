@@ -1,0 +1,32 @@
+{% load static %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="font-semibold text-gray-800">Próximas Visitas Técnicas</h3>
+        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+            {% if upcoming_visits_count > 0 %}{{ upcoming_visits_count }} visitas{% else %}--{% endif %}
+        </span>
+    </div>
+    <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+        {% if upcoming_visits %}
+            {% for visit in upcoming_visits %}
+            <a href="/app/trabalhos/{{ visit.id }}/" class="block p-4 hover:bg-gray-50 transition border-l-4" style="border-left-color: #3b82f6;">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex flex-col items-center justify-center flex-shrink-0">
+                        <span class="text-xs font-bold">{{ visit.start_date|date:"d" }}</span>
+                        <span class="text-[10px] font-medium uppercase">{{ visit.start_date|date:"M" }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-800 truncate">{{ visit.title }} - Visita Técnica</div>
+                        <div class="text-sm text-gray-500 truncate">{{ visit.client.name }}</div>
+                        {% if visit.technical_visit_date %}
+                        <div class="text-xs text-gray-400">Data: {{ visit.technical_visit_date|date:"d/m/Y" }} {% if visit.technical_visit_time %}{{ visit.technical_visit_time|time:"H:i" }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-500 text-center py-4">Nenhuma visita técnica agendada</p>
+        {% endif %}
+    </div>
+</div>
