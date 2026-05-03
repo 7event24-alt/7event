@@ -179,7 +179,7 @@ class AgendaViewSet(viewsets.ViewSet):
                     "title": task.title,
                     "start": start_dt,
                     "end": start_dt,
-                    "backgroundColor": "#3b82f6",  # bg-blue-500 (more vibrant)
+                    "backgroundColor": "#2563eb",  # bg-blue-600 (baby blue / more vibrant)
                     "borderColor": "#1d4ed8",     # border blue-400
                     "textColor": "#ffffff",        # white text for contrast
                     "extendedProps": {

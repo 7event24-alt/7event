@@ -101,7 +101,14 @@
 .fc .fc-toolbar-title { font-size: 1.25rem !important; }
 .fc .fc-button { background: #1e3a5f !important; border-color: #1e3a5f !important; }
 .fc .fc-button:hover { background: #2d5a8a !important; }
-.fc .fc-daygrid-event { background: #1e3a5f; border: none; padding: 2px 6px; border-radius: 4px; color: white !important; }
+        .fc .fc-daygrid-event { border: none; padding: 2px 6px; border-radius: 4px; color: white !important; }
+        /* Jobs (normais) - Cor primária */
+        .fc .fc-event:not([style*="background:#"]) { background: #1e3a5f !important; }
+        /* Visitas Técnicas - Verde água */
+        .fc .fc-event[style*="rgb(147, 197, 253)"] { background: #0d9488 !important; border-color: #0f766a !important; }
+        .fc .fc-event[style*="background:#5eead"] { background: #0d9488 !important; }
+        .fc .fc-event[style*="background:#3b82f6"] { background: #2563eb !important; }
+        .fc .fc-event[style*="background:#1d4ed8"] { background: #1d4ed8 !important; }
 .fc .fc-event { cursor: pointer; color: white !important; }
 .fc .fc-event .fc-event-main { color: white !important; }
 
