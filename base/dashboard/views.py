@@ -92,35 +92,31 @@ class DashboardView(LoginRequiredMixin, View):
         )
 
         from datetime import date
-
+        
         today = date.today()
         three_months_later = today + timedelta(days=90)
-
-        upcoming_events = (
-            base_jobs.filter(
-                start_date__gte=today,
-                start_date__lte=three_months_later,
-            )
-            .select_related("client")
-            .order_by("start_date")
-        )
+        
+        # QuerySet base sem fatiamento
+        upcoming_events = base_jobs.filter(
+            start_date__gte=today,
+            start_date__lte=three_months_later,
+        ).select_related("client").order_by("start_date")
         
         upcoming_events_count = upcoming_events.count()
         
         if upcoming_events_count == 0:
-            upcoming_events = (
-                base_jobs.select_related("client").order_by("-start_date")[:10]
-            )
+            # Usar base_jobs (sem fatiamento) para contar e listar
+            upcoming_events = base_jobs.select_related("client").order_by("-start_date")
             upcoming_events_count = base_jobs.count()
         
-        # NOVO: Jobs normais (sem visita técnica)
+        # NOVO: Jobs normais (sem visita técnica) - filtrar antes de fatiar
         upcoming_jobs = upcoming_events.filter(
             has_technical_visit=False
         ).order_by("start_date")[:10]
         
         upcoming_jobs_count = upcoming_events.filter(has_technical_visit=False).count()
         
-        # NOVO: Visitas Técnicas
+        # NOVO: Visitas Técnicas - filtrar antes de fatiar
         upcoming_visits = upcoming_events.filter(
             has_technical_visit=True
         ).order_by("start_date")[:10]
