@@ -12,7 +12,7 @@ class ClientSerializer(serializers.ModelSerializer):
         model = Client
         fields = [
             "id",
-            "account",
+            "created_by",
             "name",
             "email",
             "phone",
@@ -27,5 +27,5 @@ class ClientSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        validated_data["account"] = self.context["request"].user.account
+        validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)

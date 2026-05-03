@@ -4,8 +4,8 @@ from .models import Expense
 
 @admin.register(Expense)
 class ExpenseAdmin(admin.ModelAdmin):
-    list_display = ["job", "account", "category", "value", "date", "created_at"]
-    list_filter = ["category", "date", "account"]
+    list_display = ["job", "performed_by", "category", "value", "date", "created_at"]
+    list_filter = ["category", "date", "job"]
     search_fields = ["description", "job__title"]
     ordering = ["-date"]
     date_hierarchy = "date"

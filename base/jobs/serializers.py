@@ -4,7 +4,7 @@ from .models import Job, EventType, JobStatus, PaymentStatusJob
 
 class JobSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True)
-    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    created_by_name = serializers.CharField(source="created_by.get_full_name", read_only=True)
     total_expenses = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
@@ -17,9 +17,8 @@ class JobSerializer(serializers.ModelSerializer):
         model = Job
         fields = [
             "id",
-            "account",
-            "user",
-            "user_name",
+            "created_by",
+            "created_by_name",
             "client",
             "client_name",
             "title",
@@ -30,6 +29,7 @@ class JobSerializer(serializers.ModelSerializer):
             "end_time",
             "location",
             "description",
+            "total_budget",
             "cache",
             "payment_date",
             "status",
@@ -43,6 +43,5 @@ class JobSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        validated_data["account"] = self.context["request"].user.account
-        validated_data["user"] = self.context["request"].user
+        validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)

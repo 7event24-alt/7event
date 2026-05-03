@@ -12,11 +12,11 @@ class ServiceAdmin(admin.ModelAdmin):
         "estimated_total",
         "is_active",
     ]
-    list_filter = ["is_active", "account"]
+    list_filter = ["is_active"]
     search_fields = ["name", "description"]
 
     fieldsets = (
-        (None, {"fields": ("account", "name", "description")}),
+        (None, {"fields": ("name", "description")}),
         (
             "Estimativas",
             {"fields": ("estimated_duration_hours", "hourly_rate", "typical_expenses")},

@@ -74,11 +74,6 @@ class UserManager(DjangoUserManager):
         return super().create_superuser(username, email, password, **extra_fields)
 
 
-class AccountType(models.TextChoices):
-    AUTONOMOUS = "autonomous", _("Autônomo")
-    COMPANY = "company", _("Empresa")
-
-
 class PlanType(models.TextChoices):
     TESTER = "tester", _("Teste")
     BASIC = "basic", _("Básico")
@@ -139,6 +134,13 @@ class Plan(models.Model):
         default=10, verbose_name=_("Máximo de Eventos")
     )
 
+    can_associate_professionals = models.BooleanField(
+        default=False, verbose_name=_("Pode Associar Profissionais")
+    )
+    job_creation_limit = models.IntegerField(
+        default=-1, verbose_name=_("Limite de Criação de Jobs (-1 = ilimitado)")
+    )
+
     price_monthly = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name=_("Preço Mensal")
     )
@@ -178,129 +180,19 @@ class Plan(models.Model):
     def get_tester(cls):
         return cls.objects.filter(type=PlanType.TESTER, is_active=True).first()
 
-
-class Account(models.Model):
-    account_type = models.CharField(
-        max_length=20,
-        choices=AccountType.choices,
-        default=AccountType.AUTONOMOUS,
-        verbose_name=_("Tipo de Conta"),
-    )
-    name = models.CharField(max_length=200, verbose_name=_("Nome"))
-    slug = models.SlugField(max_length=50, unique=True, verbose_name=_("Slug"))
-    cnpj = models.CharField(max_length=18, blank=True, verbose_name=_("CNPJ"))
-    phone = models.CharField(max_length=20, blank=True, verbose_name=_("Telefone"))
-    email = models.EmailField(blank=True, unique=True, verbose_name=_("Email"))
-    address = models.TextField(blank=True, verbose_name=_("Endereço"))
-    logo = models.ImageField(
-        upload_to="accounts/logos/", blank=True, null=True, verbose_name=_("Logo")
-    )
-
-    notify_on_job_created = models.BooleanField(
-        default=True, verbose_name=_("Notificar ao criar trabalho")
-    )
-    notify_on_job_confirmed = models.BooleanField(
-        default=True, verbose_name=_("Notificar cliente ao confirmar trabalho")
-    )
-    notify_on_client_created = models.BooleanField(
-        default=True, verbose_name=_("Notificar ao criar cliente")
-    )
-    notify_on_service_created = models.BooleanField(
-        default=True, verbose_name=_("Notificar ao criar serviço")
-    )
-    notify_on_expense_created = models.BooleanField(
-        default=True, verbose_name=_("Notificar ao criar despesa")
-    )
-    notify_on_quote_created = models.BooleanField(
-        default=True, verbose_name=_("Notificar ao criar orçamento")
-    )
-
-    plan = models.ForeignKey(
-        Plan,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="accounts",
-        verbose_name=_("Plano"),
-    )
-
-    is_active = models.BooleanField(default=True, verbose_name=_("Ativa"))
-    is_blocked = models.BooleanField(default=False, verbose_name=_("Bloqueada"))
-    blocked_reason = models.TextField(blank=True, verbose_name=_("Motivo do Bloqueio"))
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "accounts"
-        verbose_name = _("Conta")
-        verbose_name_plural = _("Contas")
-        ordering = ["name"]
-
-    def __str__(self):
-        return self.name
-
     @property
-    def user_count(self):
-        return self.users.count()
-
-    @property
-    def client_count(self):
-        from base.clients.models import Client
-
-        return Client.objects.filter(account=self).count()
-
-    @property
-    def job_count(self):
-        from base.jobs.models import Job
-
-        return Job.objects.filter(account=self).count()
-
-    @property
-    def expense_count(self):
-        from base.expenses.models import Expense
-
-        return Expense.objects.filter(account=self).count()
-
-    @property
-    def can_access(self):
-        if self.is_blocked:
-            return False
-        if hasattr(self, "subscription"):
-            if self.subscription.status in [
-                SubscriptionStatus.OVERDUE,
-                SubscriptionStatus.CANCELLED,
-            ]:
-                return False
-        return True
-
-    @property
-    def is_at_user_limit(self):
-        if not self.plan:
-            return True
-        return self.user_count >= self.plan.max_users
-
-    def has_feature(self, feature_key):
-        if not self.plan:
-            return False
-        if self.plan.type == PlanType.TESTER:
-            return True
-        return self.plan.features.filter(key=feature_key).exists()
-
-    def can_add_user(self):
-        if not self.plan:
-            return False
-        if self.is_at_user_limit:
-            return False
-        return self.can_access
+    def is_agency_plan(self):
+        return self.can_associate_professionals
 
 
 class Subscription(models.Model):
-    account = models.OneToOneField(
-        Account,
+    user = models.OneToOneField(
+        "User",
         on_delete=models.CASCADE,
         related_name="subscription",
-        verbose_name=_("Conta"),
+        verbose_name=_("Usuário"),
+        null=True,
+        blank=True,
     )
     plan = models.ForeignKey(
         Plan, on_delete=models.SET_NULL, null=True, verbose_name=_("Plano")
@@ -322,8 +214,8 @@ class Subscription(models.Model):
     price = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name=_("Valor")
     )
-    start_date = models.DateField(verbose_name=_("Início"))
-    end_date = models.DateField(verbose_name=_("Fim"))
+    start_date = models.DateField(null=True, blank=True, verbose_name=_("Início"))
+    end_date = models.DateField(null=True, blank=True, verbose_name=_("Fim"))
     next_billing_date = models.DateField(
         null=True, blank=True, verbose_name=_("Próxima Cobrança")
     )
@@ -344,7 +236,7 @@ class Subscription(models.Model):
         verbose_name_plural = _("Assinaturas")
 
     def __str__(self):
-        return f"{self.account.name} - {self.plan.name if self.plan else 'Sem plano'}"
+        return f"{self.user.username} - {self.plan.name if self.plan else 'Sem plano'}"
 
     def is_active(self):
         return self.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]
@@ -368,15 +260,21 @@ class User(AbstractUser):
 
     email = models.EmailField(blank=True, unique=True, verbose_name=_("Email"))
 
-    account = models.ForeignKey(
-        Account,
-        on_delete=models.CASCADE,
-        related_name="users",
-        verbose_name=_("Conta"),
-        null=True,
-        blank=True,
+    # Dados sensíveis (LGPD)
+    full_name = models.CharField(max_length=200, blank=True, verbose_name=_("Nome Completo"))
+    cpf = models.CharField(max_length=14, blank=True, verbose_name=_("CPF"))
+    rg = models.CharField(max_length=20, blank=True, verbose_name=_("RG"))
+
+    legal_name = models.CharField(
+        max_length=200, blank=True, verbose_name=_("Nome Fantasia / Razão Social")
     )
+    cnpj = models.CharField(max_length=18, blank=True, verbose_name=_("CNPJ"))
     phone = models.CharField(max_length=20, blank=True, verbose_name=_("Telefone"))
+    address = models.TextField(blank=True, verbose_name=_("Endereço"))
+    company_logo = models.ImageField(
+        upload_to="users/logos/", blank=True, null=True, verbose_name=_("Logo da Empresa")
+    )
+
     photo = models.ImageField(
         upload_to="users/%Y/%m/", blank=True, null=True, verbose_name=_("Foto")
     )
@@ -387,9 +285,33 @@ class User(AbstractUser):
         verbose_name=_("Função/Cargo"),
     )
 
-    is_account_admin = models.BooleanField(
-        default=False, verbose_name=_("É Admin da Conta")
+    # Campos Profissionais
+    bio = models.TextField(blank=True, verbose_name=_("Biografia"))
+    skills = models.CharField(max_length=500, blank=True, verbose_name=_("Habilidades"))
+    portfolio_url = models.URLField(blank=True, verbose_name=_("URL do Portfólio"))
+
+    # Controle de Privacidade
+    show_sensitive_data = models.BooleanField(
+        default=False, verbose_name=_("Permitir visualização de dados sensíveis")
     )
+    accepted_term = models.ForeignKey(
+        "PrivacyTerm",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users_accepted",
+        verbose_name=_("Termo aceito"),
+    )
+
+    plan = models.ForeignKey(
+        "Plan",
+        on_delete=models.SET_NULL,
+        related_name="users_with_plan",
+        verbose_name=_("Plano"),
+        null=True,
+        blank=True,
+    )
+
     is_verified = models.BooleanField(default=False, verbose_name=_("Email Verificado"))
     verification_token = models.CharField(
         max_length=64, blank=True, verbose_name=_("Token de Verificação")
@@ -412,26 +334,12 @@ class User(AbstractUser):
     )
 
     notes = models.TextField(blank=True, verbose_name=_("Anotações"))
-    plan = models.ForeignKey(
-        "Plan",
-        on_delete=models.SET_NULL,
-        related_name="users_with_plan",
-        verbose_name=_("Plano Individual"),
-        null=True,
-        blank=True,
-        help_text=_(
-            "Plano pessoal do usuário. Se não informado, usa o plano da empresa."
-        ),
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def get_plan(self):
-        """Retorna o plano do usuário, ou o plano da empresa se não tiver plano individual"""
         if self.plan:
             return self.plan
-        if self.account and self.account.plan:
-            return self.account.plan
         return Plan.get_default()
 
     def get_max_users(self):
@@ -449,8 +357,10 @@ class User(AbstractUser):
     def get_max_agenda_events(self):
         return self.get_plan().max_agenda_events
 
+    def can_associate_professionals(self):
+        return self.get_plan().can_associate_professionals
+
     def has_limit(self, model_class, current_count):
-        """Verifica se o usuário atingiu o limite do seu plano"""
         plan = self.get_plan()
         if model_class.__name__ == "Client":
             max_count = plan.max_clients if plan.max_clients > 0 else float("inf")
@@ -520,6 +430,28 @@ class Notification(models.Model):
         Notification.objects.filter(user=self.user, created_at__lt=cutoff).delete()
 
 
+class PrivacyTerm(models.Model):
+    version = models.CharField(max_length=20, unique=True, verbose_name=_("Versão"))
+    content = models.TextField(verbose_name=_("Conteúdo"))
+    is_active = models.BooleanField(default=False, verbose_name=_("Ativo"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Criado em"))
+
+    class Meta:
+        db_table = "privacy_terms"
+        verbose_name = _("Termo de Privacidade")
+        verbose_name_plural = _("Termos de Privacidade")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Termo v{self.version}"
+
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            # Desativa outros termos ativos
+            PrivacyTerm.objects.filter(is_active=True).exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+
 class FCMToken(models.Model):
     user = models.ForeignKey(
         User,
@@ -548,20 +480,3 @@ class FCMToken(models.Model):
 
     def __str__(self):
         return f"FCM Token - {self.user.username} ({self.device_type})"
-
-
-Company = Account
-
-
-class CompanyManager(models.Manager):
-    def get_queryset(self):
-        return Account.objects.all()
-
-    def all(self):
-        return Account.objects.all()
-
-    def filter(self, *args, **kwargs):
-        return Account.objects.filter(*args, **kwargs)
-
-    def get(self, *args, **kwargs):
-        return Account.objects.get(*args, **kwargs)

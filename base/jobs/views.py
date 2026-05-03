@@ -178,7 +178,7 @@ class JobDetailView(LoginRequiredMixin, View):
         if not (is_owner or is_staff_member or request.user.is_superuser):
             return redirect('jobs:list')
         
-        expenses = job.expenses.all()
+        expenses = job.expenses.filter(is_active=True)
         total_expenses = sum(e.value for e in expenses)
         net_profit = (job.cache or 0) - total_expenses
         staff = job.job_staff.all()
@@ -394,11 +394,11 @@ class ProfessionalSearchView(LoginRequiredMixin, View):
         from django.db.models import Q
         
         query = request.GET.get("q", "").strip()
-        job_id = request.GET.get("job_id")
         
         if len(query) < 2:
-            return JsonResponse([])
+            return JsonResponse({"professionals": []}, safe=False)
         
+        job_id = request.GET.get("job_id")
         current_staff_ids = []
         if job_id:
             current_staff_ids = list(JobStaff.objects.filter(job_id=job_id).values_list("professional_id", flat=True))
@@ -421,7 +421,7 @@ class ProfessionalSearchView(LoginRequiredMixin, View):
             "email": pro.email or ""
         } for pro in professionals]
         
-        return JsonResponse(data, safe=False)
+        return JsonResponse({"professionals": data}, safe=False)
 
 
 class JobUpdateStaffView(LoginRequiredMixin, View):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -75,15 +75,13 @@ class AgendaEventsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        company = request.user.account
         user = request.user
         is_superuser = user.is_superuser
 
-        jobs = Job.objects.filter(account=company).select_related("client")
-
-        user_filter = request.GET.get("user", "")
-        if is_superuser and user_filter:
-            jobs = jobs.filter(user_id=user_filter)
+        if is_superuser:
+            jobs = Job.objects.filter(is_active=True).select_related("client")
+        else:
+            jobs = Job.objects.filter(created_by=user, is_active=True).select_related("client")
 
         jobs = jobs.order_by("start_date")
         serializer = AgendaEventSerializer(jobs, many=True)
@@ -104,31 +102,17 @@ class AgendaViewSet(viewsets.ViewSet):
 
         if is_superuser:
             jobs = Job.objects.filter(
-                account=user.account,
+                is_active=True,
                 start_date__gte=first_day.date(),
                 start_date__lte=last_day.date()
             ).select_related("client")
         else:
             jobs = Job.objects.filter(
-                account=user.account,
+                created_by=user,
+                is_active=True,
                 start_date__gte=first_day.date(),
                 start_date__lte=last_day.date()
             ).select_related("client")
 
         serializer = AgendaEventSerializer(jobs, many=True)
         return Response(serializer.data)
-
-
-class AdminMetricsSerializer(serializers.Serializer):
-    total_users = serializers.IntegerField()
-    active_users = serializers.IntegerField()
-    blocked_users = serializers.IntegerField()
-    trial_users = serializers.IntegerField()
-    monthly_users = serializers.IntegerField()
-    annual_users = serializers.IntegerField()
-    pending_payments = serializers.IntegerField()
-    inadimplente_users = serializers.IntegerField()
-    total_clients = serializers.IntegerField()
-    total_jobs = serializers.IntegerField()
-    total_expenses = serializers.IntegerField()
-    total_revenue = serializers.DecimalField(max_digits=14, decimal_places=2)

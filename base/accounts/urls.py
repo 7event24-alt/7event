@@ -74,6 +74,8 @@ urlpatterns = [
         views.mark_all_as_read,
         name="mark_all_read",
     ),
+    path("perfil/<int:user_id>/", views.user_profile_detail, name="user_profile_detail"),
+    path("perfil/", views.user_profile_detail, name="my_profile"),
     path("equipe/", team_views.team_list, name="team"),
     path("equipe/novo/", team_views.team_create, name="team_create"),
     path(

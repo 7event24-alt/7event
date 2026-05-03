@@ -9,7 +9,7 @@
     </tr>
     <tr>
         <td style="font-family: Arial, sans-serif; color: #374151; font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
-            <p>Você foi convidado para fazer parte da equipe <strong>{{ invited_by.account.name }}</strong>.</p>
+            <p>Você foi convidado para fazer parte da equipe <strong>{{ invited_by.legal_name|default:invited_by.username }}</strong>.</p>
         </td>
     </tr>
     <tr>
@@ -45,7 +45,7 @@
     </tr>
     <tr>
         <td style="font-family: Arial, sans-serif; color: #374151; font-size: 14px; padding-top: 20px;">
-            <p>Atenciosamente,<br><strong>Equipe {{ invited_by.account.name }}</strong></p>
+            <p>Atenciosamente,<br><strong>Equipe {{ invited_by.legal_name|default:invited_by.username }}</strong></p>
         </td>
     </tr>
 </table>

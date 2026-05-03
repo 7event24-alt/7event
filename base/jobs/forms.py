@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob
+from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob, JobStaff
 
 User = get_user_model()
 
@@ -15,6 +15,16 @@ class JobForm(forms.ModelForm):
         ),
         required=False,
         label="Tipo de Serviço",
+    )
+    professionals = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.CheckboxSelectMultiple(
+            attrs={
+                "class": "flex flex-col space-y-2 mt-2"
+            }
+        ),
+        required=False,
+        label="Profissionais",
     )
     start_date = forms.DateField(
         widget=forms.TextInput(
@@ -85,6 +95,9 @@ class JobForm(forms.ModelForm):
             "end_time",
             "location",
             "description",
+            "has_technical_visit",
+            "technical_visit_date",
+            "technical_visit_time",
             "cache",
             "payment_type",
             "payment_date",
@@ -94,6 +107,7 @@ class JobForm(forms.ModelForm):
             "payment_remaining_value",
             "payment_remaining_date",
             "status",
+            "professionals",
         ]
         widgets = {
             "client": forms.Select(
@@ -135,6 +149,18 @@ class JobForm(forms.ModelForm):
                     "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
                     "rows": 3,
                     "placeholder": "Descrição",
+                }
+            ),
+            "technical_visit_date": forms.TextInput(
+                attrs={
+                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
+                    "type": "date",
+                }
+            ),
+            "technical_visit_time": forms.TimeInput(
+                attrs={
+                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
+                    "type": "time",
                 }
             ),
             "cache": forms.NumberInput(
@@ -190,12 +216,18 @@ class JobForm(forms.ModelForm):
         instance = kwargs.get("instance", None)
         super().__init__(*args, **kwargs)
 
-        # Filtrar clientes apenas da empresa do usuário
-        if user and hasattr(user, "account") and user.account:
-            self.fields["client"].queryset = user.account.clients.all()
-        elif user:
-            # Se não tem empresa vinculada, mostra só clientes que ele criou
-            self.fields["client"].queryset = user.clients_created.all()
+        if user:
+            if user.is_superuser:
+                from base.clients.models import Client
+                self.fields["client"].queryset = Client.objects.filter(is_active=True)
+                self.fields["professionals"].queryset = User.objects.filter(is_active=True, is_staff=False).exclude(pk=user.pk)
+            else:
+                self.fields["client"].queryset = user.clients_created.filter(is_active=True)
+                if user.can_associate_professionals():
+                    self.fields["professionals"].queryset = User.objects.filter(is_active=True, is_staff=False).exclude(pk=user.pk)
+                else:
+                    self.fields["professionals"].queryset = User.objects.none()
+                    self.fields.pop("professionals", None)
 
         self.fields["end_date"].required = False
         self.fields["payment_type"].required = False
@@ -205,12 +237,11 @@ class JobForm(forms.ModelForm):
         self.fields["title"].required = True
         self.order_fields(["client", "event_type", "title"])
 
-        # Definir datas de pagamento (20 dias após evento) se não for edição
         if not instance:
             from datetime import timedelta, date
-            
+
             start_date = self.fields["start_date"].initial
-            
+
             if start_date and isinstance(start_date, date):
                 payment_date = start_date + timedelta(days=20)
                 self.fields["payment_date"].initial = payment_date
@@ -223,3 +254,22 @@ class JobForm(forms.ModelForm):
                 field.widget.attrs["class"] = (
                     f"{current_class} border-red-500 focus:ring-red-500 focus:border-red-500".strip()
                 )
+
+    def save(self, commit=True):
+        job = super().save(commit=False)
+        professionals = self.cleaned_data.get("professionals", [])
+        
+        if commit:
+            job.save()
+            if professionals:
+                for professional in professionals:
+                    JobStaff.objects.get_or_create(
+                        job=job,
+                        professional=professional,
+                        defaults={"status": JobStaffStatus.PENDING}
+                    )
+            existing_staff = JobStaff.objects.filter(job=job).exclude(professional__in=professionals)
+            for staff in existing_staff:
+                staff.delete()
+        
+        return job

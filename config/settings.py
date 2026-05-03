@@ -222,7 +222,7 @@ CORS_ALLOWED_ORIGINS = [
 SESSION_COOKIE_AGE = 86400
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # Temporário para permitir leitura via JavaScript
 CSRF_TRUSTED_ORIGINS = [
     "https://*.ngrok-free.app",
     "https://*.ngrok.io",

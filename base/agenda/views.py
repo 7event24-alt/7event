@@ -2,23 +2,27 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.utils import timezone
-from django.urls import reverse
+from django.db import models
 from datetime import datetime, timedelta
 from calendar import monthrange, Calendar
 
-from base.jobs.models import Job, JobStatus
+from base.jobs.models import Job, JobStatus, JobStaff
 
 
 class AgendaView(LoginRequiredMixin, View):
     template_name = "agenda/home.html"
 
     def get(self, request):
-        if not request.user.account:
-            return render(request, self.template_name, self.get_context_data())
-
-        company = request.user.account
         user = request.user
         is_superuser = user.is_superuser
+
+        if is_superuser:
+            base_jobs = Job.objects.all()
+        else:
+            # Mostrar trabalhos criados pelo user OU onde ele é staff
+            base_jobs = Job.objects.filter(
+                models.Q(created_by=user) | models.Q(job_staff__professional=user)
+            ).distinct()
 
         now = timezone.now()
         year = int(request.GET.get("year") or now.year)
@@ -37,26 +41,14 @@ class AgendaView(LoginRequiredMixin, View):
         status_filter = request.GET.get("status", "")
         user_filter = request.GET.get("user", "")
 
-        if is_superuser:
-            jobs = (
-                Job.objects.filter(
-                    account=company,
-                    start_date__gte=first_day.date(),
-                    start_date__lte=last_day.date(),
-                )
-                .select_related("client")
-                .order_by("start_date", "start_time")
+        jobs = (
+            base_jobs.filter(
+                start_date__gte=first_day.date(),
+                start_date__lte=last_day.date(),
             )
-        else:
-            jobs = (
-                Job.objects.filter(
-                    account=company,
-                    start_date__gte=first_day.date(),
-                    start_date__lte=last_day.date(),
-                )
-                .select_related("client")
-                .order_by("start_date", "start_time")
-            )
+            .select_related("client")
+            .order_by("start_date", "start_time")
+        )
 
         if status_filter:
             jobs = jobs.filter(status=status_filter)
@@ -118,8 +110,7 @@ class AgendaView(LoginRequiredMixin, View):
                     )
             calendar_weeks.append(week_data)
 
-        upcoming_jobs = Job.objects.filter(
-            account=company,
+        upcoming_jobs = base_jobs.filter(
             start_date__gte=now.date(),
             status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
         )
@@ -132,10 +123,6 @@ class AgendaView(LoginRequiredMixin, View):
 
         for job in upcoming_jobs:
             job.status_color = self.get_status_color(job.status)
-
-        users = []
-        if is_superuser:
-            users = company.users.all()
 
         context = {
             "year": year,
@@ -150,7 +137,6 @@ class AgendaView(LoginRequiredMixin, View):
             "upcoming_jobs": upcoming_jobs,
             "status_filter": status_filter,
             "user_filter": user_filter,
-            "users": users,
             "is_superuser": is_superuser,
         }
 
@@ -165,16 +151,6 @@ class AgendaView(LoginRequiredMixin, View):
         }
         return colors.get(status, "#1e3a5f")
 
-    def get_context_data(self):
-        return {
-            "year": timezone.now().year,
-            "month": timezone.now().month,
-            "month_name": "Mês",
-            "calendar_weeks": [],
-            "jobs": [],
-            "upcoming_jobs": [],
-        }
-
 
 agenda = AgendaView.as_view()
 
@@ -183,22 +159,24 @@ class DayDetailView(LoginRequiredMixin, View):
     template_name = "agenda/day_detail.html"
 
     def get(self, request, year, month, day):
-        if not request.user.account:
-            return render(request, self.template_name, {"error": "Sem conta"})
+        user = request.user
+        is_superuser = user.is_superuser
 
         try:
             selected_date = datetime(int(year), int(month), int(day)).date()
         except ValueError:
             selected_date = timezone.now().date()
 
-        jobs = (
-            Job.objects.filter(
-                account=request.user.account,
-                start_date=selected_date,
-            )
-            .select_related("client")
-            .order_by("start_time")
-        )
+        if is_superuser:
+            jobs = Job.objects.filter(start_date=selected_date)
+        else:
+            # Mostrar trabalhos criados pelo user OU onde ele é staff
+            jobs = Job.objects.filter(
+                models.Q(created_by=user) | models.Q(job_staff__professional=user),
+                start_date=selected_date
+            ).distinct()
+
+        jobs = jobs.select_related("client").order_by("start_time")
 
         month_names = {
             1: "Janeiro",

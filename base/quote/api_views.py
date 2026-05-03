@@ -11,14 +11,12 @@ class QuotePermissions(permissions.BasePermission):
     message = "Você não tem permissão para acessar este orçamento."
 
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if not request.user.account:
-            return False
-        return True
+        return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        return obj.account == request.user.account
+        if request.user.is_superuser:
+            return True
+        return obj.created_by == request.user
 
 
 class QuoteViewSet(viewsets.ModelViewSet):
@@ -34,12 +32,12 @@ class QuoteViewSet(viewsets.ModelViewSet):
         return QuoteSerializer
 
     def get_queryset(self):
-        if not self.request.user.account:
-            return Quote.objects.none()
-        return Quote.objects.filter(account=self.request.user.account)
+        if self.request.user.is_superuser:
+            return Quote.objects.all()
+        return Quote.objects.filter(created_by=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(account=self.request.user.account, user=self.request.user)
+        serializer.save(created_by=self.request.user)
 
     @action(detail=True, methods=["post"])
     def add_expense(self, request, pk=None):

@@ -64,6 +64,28 @@
                 <p class="mt-1 text-gray-800">{{ job.location|default:"-" }}</p>
             </div>
             
+            {% if job.has_technical_visit %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                    <i class="fas fa-tools text-blue-600"></i> Visita Técnica
+                </label>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-sm text-gray-800">
+                            <i class="far fa-calendar mr-1"></i>
+                            {{ job.technical_visit_date|date:"d/m/Y" }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-800">
+                            <i class="far fa-clock mr-1"></i>
+                            {{ job.technical_visit_time|time:"H:i" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <div>
                 <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Descrição</label>
                 <p class="mt-1 text-gray-800">{{ job.description|default:"-" }}</p>
@@ -157,7 +179,7 @@
             <!-- Resumo Cachê -->
             <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 mb-6">
                 <div class="flex justify-between items-center">
-                    <span class="text-green-800 font-medium">Cachê Total (Equipe)</span>
+                    <span class="text-green-800 font-medium">Cachê Total</span>
                     <span class="text-2xl font-bold text-green-700">{{ job.cache|default:"0"|brl }}</span>
                 </div>
             </div>
@@ -391,6 +413,7 @@
             {% endif %}
         </div>
     </div>
+    </div> <!-- Fecha o grid (2 colunas) -->
     
     <!-- Equipe/Staff - Visible to Owner (Agency) and Staff Members -->
     {% if can_manage_staff or is_staff_member %}
@@ -417,7 +440,17 @@
                         </div>
                         <div>
                             <p class="font-medium text-gray-800">
+                                {% if member.status == 'confirmed' or member.status == 'paid' %}
+                                <!-- Link para perfil se confirmado/pago -->
+                                <a href="{% url 'accounts:user_profile_detail' member.professional.id %}" 
+                                   class="hover:text-primary hover:underline">
+                                    {{ member.professional.get_full_name|default:member.professional.username }}
+                                </a>
+                                {% else %}
+                                <!-- Estático se pendente -->
                                 {{ member.professional.get_full_name|default:member.professional.username }}
+                                {% endif %}
+                                
                                 {% if member.professional == request.user %}
                                 <span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">Você</span>
                                 {% elif member.professional == job.created_by %}
@@ -530,7 +563,7 @@
     // Open Add Staff Modal
     function openStaffModal() {
         document.getElementById('addStaffModal').classList.remove('hidden');
-        loadAvailableProfessionals();
+        // loadAvailableProfessionals removido (função não existe)
     }
     
     // Close Add Staff Modal
@@ -538,30 +571,92 @@
         document.getElementById('addStaffModal').classList.add('hidden');
     }
     
-    // Load available professionals for dropdown
-    function loadAvailableProfessionals() {
-        fetch('/app/trabalhos/buscar-profissionais/?q=')
-        .then(response => response.json())
-        .then(data => {
-            const select = document.getElementById('staffProfessional');
-            select.innerHTML = '<option value="">Selecione um profissional...</option>';
-            if (data.professionals) {
-                data.professionals.forEach(prof => {
-                    const option = document.createElement('option');
-                    option.value = prof.id;
-                    option.textContent = `${prof.name} (${prof.email})`;
-                    select.appendChild(option);
+    // Autocomplete for professionals search
+    let searchTimeout = null;
+
+    function debounceSearchProfessionals(query) {
+        // Clear previous timer (debounce)
+        clearTimeout(searchTimeout);
+        
+        const resultsDiv = document.getElementById('staffSearchResults');
+        const hiddenInput = document.getElementById('staffProfessionalId');
+        
+        // Clear previous selection
+        hiddenInput.value = '';
+        
+        if (query.length < 2) {
+            resultsDiv.classList.add('hidden');
+            resultsDiv.innerHTML = '';
+            return;
+        }
+        
+        // Show "Loading..."
+        resultsDiv.classList.remove('hidden');
+        resultsDiv.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">Carregando...</div>';
+        
+        // Debounce: wait 300ms before sending request
+        searchTimeout = setTimeout(() => {
+            fetch(`/app/trabalhos/buscar-profissionais/?q=${encodeURIComponent(query)}&job_id={{ job.pk }}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    
+                    const professionals = data.professionals || [];
+                    
+                    if (professionals.length === 0) {
+                        resultsDiv.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">Nenhum profissional encontrado.</div>';
+                        return;
+                    }
+                    
+                    // Show up to 3 results
+                    professionals.slice(0, 3).forEach(prof => {
+                        const div = document.createElement('div');
+                        div.className = 'px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm';
+                        div.textContent = `${prof.name} (${prof.email})`;
+                        div.onclick = () => selectProfessional(prof.id, prof.name);
+                        resultsDiv.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = '<div class="px-4 py-3 text-sm text-red-500">Erro ao buscar.</div>';
                 });
-            }
-        })
-        .catch(error => {
-            console.error('Error loading professionals:', error);
-        });
+        }, 300);
     }
+
+    function selectProfessional(id, name) {
+        const resultsDiv = document.getElementById('staffSearchResults');
+        const hiddenInput = document.getElementById('staffProfessionalId');
+        const searchInput = document.getElementById('staffSearchInput');
+        
+        // Store selected ID
+        hiddenInput.value = id;
+        
+        // Show selected name
+        searchInput.value = name;
+        
+        // Hide results
+        resultsDiv.classList.add('hidden');
+    }
+
+    // Hide results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#staffSearchInput') && !e.target.closest('#staffSearchResults')) {
+            document.getElementById('staffSearchResults').classList.add('hidden');
+        }
+    });
+
+    // Update openStaffModal to clear search
+    const originalOpenStaffModal = openStaffModal;
+    openStaffModal = function() {
+        document.getElementById('staffSearchInput').value = '';
+        document.getElementById('staffProfessionalId').value = '';
+        document.getElementById('staffSearchResults').classList.add('hidden');
+        originalOpenStaffModal();
+    };
     
     // Submit Add Staff Form
     function submitAddStaff() {
-        const professionalId = document.getElementById('staffProfessional').value;
+        const professionalId = document.getElementById('staffProfessionalId').value;
         const role = document.getElementById('staffRole').value;
         const cacheValue = document.getElementById('staffCache').value;
         const notes = document.getElementById('staffNotes').value;
@@ -572,12 +667,15 @@
             return;
         }
         
-        const formData = new FormData();
-        formData.append('professional_id', professionalId);
-        formData.append('role', role);
-        formData.append('cache_value', cacheValue);
-        formData.append('notes', notes);
-        formData.append('payment_type', paymentType);
+        // Use FormData from the form itself
+        const form = document.getElementById('staffForm');
+        const formData = new FormData(form);
+        // Override professional if needed
+        if (professionalId) {
+            formData.set('professional', professionalId);
+        }
+        // Remove professional_id if present (old name)
+        formData.delete('professional_id');
         
         fetch('/app/trabalhos/{{ job.pk }}/adicionar-staff/', {
             method: 'POST',
@@ -748,13 +846,25 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+            <form id="staffForm" onsubmit="event.preventDefault(); submitAddStaff();">
             <div class="space-y-4">
-                <div>
+                <div class="relative">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Profissional</label>
-                    <select id="staffProfessional" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                        <option value="">Carregando...</option>
-                    </select>
+                    <input type="text" 
+                           id="staffSearchInput" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                           placeholder="Digite pelo menos 2 caracteres..."
+                           oninput="debounceSearchProfessionals(this.value)">
+                    
+                    <!-- Dropdown de resultados (máximo 3) -->
+                    <div id="staffSearchResults" 
+                         class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                        <!-- Resultados serão inseridos dinamicamente -->
+                    </div>
                 </div>
+
+                <!-- Campo oculto para armazenar o ID do profissional selecionado -->
+                <input type="hidden" id="staffProfessionalId" name="professional" value="">
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Função</label>
@@ -788,80 +898,14 @@
             </div>
             
             <div class="flex gap-3 mt-6">
-                <button onclick="closeStaffModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                <button type="button" onclick="closeStaffModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancelar
                 </button>
-                <button onclick="submitAddStaff()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
+                <button type="button" onclick="submitAddStaff()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
                     Adicionar
                 </button>
             </div>
-        </div>
-    </div>
-    
-    <!-- Edit Staff Modal -->
-    <div id="editStaffModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">Editar Membro: <span id="editStaffName"></span></h3>
-                <button onclick="closeEditStaffModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form onsubmit="event.preventDefault(); submitEditStaff();">
-                <input type="hidden" id="editStaffId">
-                <input type="hidden" id="editStaffJobId" value="{{ job.pk }}">
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Função</label>
-                        <select id="editStaffRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                            {% for value, label in professional_roles %}
-                            <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cachê (R$)</label>
-                        <input type="number" id="editStaffCache" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Pagamento</label>
-                        <select id="editStaffPaymentType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                            <option value="">Selecione...</option>
-                            {% for value, label in payment_types %}
-                            <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select id="editStaffStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                            <option value="pending">Pendente</option>
-                            <option value="accepted">Aceito</option>
-                            <option value="confirmed">Confirmado</option>
-                            <option value="cancelled_by_prof">Cancelado pelo Profissional</option>
-                            <option value="paid">Pago</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Observações</label>
-                        <textarea id="editStaffNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
-                    </div>
-                </div>
-                
-                <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="closeEditStaffModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
-                        Salvar
-                    </button>
-                </div>
-            </form>
+        </form>
         </div>
     </div>
     
@@ -915,5 +959,4 @@
     {% endblock %}
     
     {% endif %}
-</div>
 {% endblock %}

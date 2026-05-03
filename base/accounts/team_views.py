@@ -1,37 +1,25 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.http import HttpResponseForbidden
 from django.utils import timezone
 from base.accounts.models import User
 from base.core.utils import get_base_url
 
 
-class TeamRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_account_admin:
-            return HttpResponseForbidden(
-                "Apenas administradores podem gerenciar equipe."
-            )
-        return super().dispatch(request, *args, **kwargs)
-
-
-class TeamListView(TeamRequiredMixin, View):
+class TeamListView(LoginRequiredMixin, View):
     template_name = "accounts/team.html"
 
     def get(self, request):
-        users = User.objects.filter(account=request.user.account).order_by(
-            "-created_at"
-        )
+        if request.user.is_superuser:
+            users = User.objects.filter(is_active=True).order_by("-created_at")
+        else:
+            users = User.objects.filter(invited_by=request.user, is_active=True).order_by("-created_at")
         return render(request, self.template_name, {"team_members": users})
 
 
-class TeamCreateView(TeamRequiredMixin, View):
+class TeamCreateView(LoginRequiredMixin, View):
     template_name = "accounts/team_form.html"
-
-    def get(self, request):
-        return render(request, self.template_name, {"action": "create"})
 
     def post(self, request):
         email = request.POST.get("email", "").strip()
@@ -43,19 +31,17 @@ class TeamCreateView(TeamRequiredMixin, View):
             messages.error(request, "Preencha todos os campos obrigatórios.")
             return render(request, self.template_name, {"action": "create"})
 
-        if User.objects.filter(email=email, account=request.user.account).exists():
-            messages.error(request, "Este email já está cadastrado na equipe.")
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Este email já está cadastrado.")
             return render(request, self.template_name, {"action": "create"})
 
         import uuid
-
         token = uuid.uuid4().hex
 
         user = User.objects.create(
             email=email,
             first_name=first_name,
             last_name=last_name,
-            account=request.user.account,
             role=role,
             is_active=True,
             invite_token=token,
@@ -65,9 +51,7 @@ class TeamCreateView(TeamRequiredMixin, View):
         from django.template.loader import render_to_string
         from django.core.mail import send_mail
 
-        invite_url = (
-            f"{get_base_url(request)}/accounts/accept-invite/{token}/"
-        )
+        invite_url = f"{get_base_url(request)}/accounts/accept-invite/{token}/"
 
         try:
             html_message = render_to_string(
@@ -75,7 +59,7 @@ class TeamCreateView(TeamRequiredMixin, View):
                 {"user": user, "invite_url": invite_url, "invited_by": request.user},
             )
             send_mail(
-                f"Você foi convidado para a equipe {request.user.account.name}",
+                f"Você foi convidado para participar do 7event",
                 "Você foi convidado para fazer parte da equipe.",
                 "noreply@7event.com.br",
                 [email],

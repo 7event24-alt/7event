@@ -8,14 +8,12 @@ class JobPermissions(permissions.BasePermission):
     message = "Você não tem permissão para acessar este trabalho."
 
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if not request.user.account:
-            return False
-        return True
+        return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        return obj.account == request.user.account
+        if request.user.is_superuser:
+            return True
+        return obj.created_by == request.user
 
 
 class JobViewSet(viewsets.ModelViewSet):
@@ -33,9 +31,9 @@ class JobViewSet(viewsets.ModelViewSet):
     ordering = ["-start_date"]
 
     def get_queryset(self):
-        if not self.request.user.account:
-            return Job.objects.none()
-        return Job.objects.filter(account=self.request.user.account)
+        if self.request.user.is_superuser:
+            return Job.objects.all()
+        return Job.objects.filter(created_by=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(account=self.request.user.account, user=self.request.user)
+        serializer.save(created_by=self.request.user)

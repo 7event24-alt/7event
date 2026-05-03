@@ -31,7 +31,7 @@
         <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Conta</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Empresa/Responsável</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Plano</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Período</th>
@@ -45,7 +45,7 @@
                 {% for sub in subscriptions %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3">
-                        <a href="{% url 'admin_panel:account_detail' sub.account.pk %}" class="text-primary hover:text-secondary font-medium">{{ sub.account.name }}</a>
+                        <a href="{% url 'admin_panel:user_detail' sub.user.pk %}" class="text-primary hover:text-secondary font-medium">{{ sub.user.legal_name|default:sub.user.username }}</a>
                     </td>
                     <td class="px-4 py-3 text-gray-600">{{ sub.plan.name }}</td>
                     <td class="px-4 py-3">

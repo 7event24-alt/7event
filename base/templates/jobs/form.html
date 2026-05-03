@@ -122,6 +122,31 @@
                     </div>
                 </div>
                 
+                <!-- Visita Técnica -->
+                <div class="mb-6 p-5 bg-blue-50 rounded-xl border border-blue-200">
+                    <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                        <i class="fas fa-tools"></i> Visita Técnica
+                    </h4>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            {{ form.has_technical_visit }}
+                            <span class="text-sm text-gray-700">O trabalho requer visita técnica?</span>
+                        </label>
+                    </div>
+                    
+                    <div id="technical_visit_fields" style="display: none;" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.technical_visit_date.label }}</label>
+                            {{ form.technical_visit_date }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.technical_visit_time.label }}</label>
+                            {{ form.technical_visit_time }}
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Local e Descrição -->
                 <div class="space-y-4 mb-6">
                     <div>
@@ -245,7 +270,7 @@
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <form id="quickClientForm" class="p-5 space-y-4">
+        <form id="quickClientForm" class="p-5 space-y-4" data-ajax-form="true">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
                 <input type="text" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="Nome do cliente" required>
@@ -424,6 +449,31 @@ document.getElementById('id_start_date').addEventListener('change', setDefaultPa
 if (document.getElementById('id_start_date').value) {
     setDefaultPaymentDates();
 }
+
+function setDefaultPaymentDates() {
+    const startDate = document.getElementById('id_start_date').value;
+    if (!startDate) return;
+    
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + 20);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // Set for full payment
+    const paymentDateFull = document.getElementById('payment_date_full');
+    if (paymentDateFull) paymentDateFull.value = dateStr;
+    
+    // Set for partial payment
+    const partialDate = document.getElementById('id_payment_partial_date');
+    if (partialDate) partialDate.value = dateStr;
+    
+    // Set for remaining payment (20 days after partial)
+    const remainingDate = document.getElementById('id_payment_remaining_date');
+    if (remainingDate) {
+        const newDate = new Date(date);
+        newDate.setDate(newDate.getDate() + 20);
+        remainingDate.value = newDate.toISOString().split('T')[0];
+    }
+}
 {% endif %}
 
 function quickCreateClient() {
@@ -437,20 +487,52 @@ function closeClientModal() {
 document.getElementById('quickClientForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    
     fetch('{% url "clients:quick_create" %}', {
         method: 'POST',
         body: formData,
-        headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error('Erro ' + r.status);
+        return r.json();
+    })
     .then(data => {
         if(data.id) {
             const select = document.getElementById('id_client');
             const option = new Option(data.name, data.id, true, true);
             select.add(option);
+            select.value = data.id;
             closeClientModal();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
         }
+        resetAjaxButton(submitBtn);
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao criar cliente. Verifique o console.');
+        resetAjaxButton(submitBtn);
     });
 });
+function onTechnicalVisitChange() {
+    const checkbox = document.getElementById('id_has_technical_visit');
+    const fieldsDiv = document.getElementById('technical_visit_fields');
+    
+    if (checkbox.checked) {
+        fieldsDiv.style.display = 'grid';
+    } else {
+        fieldsDiv.style.display = 'none';
+        document.getElementById('id_technical_visit_date').value = '';
+        document.getElementById('id_technical_visit_time').value = '';
+    }
+}
+
+document.getElementById('id_has_technical_visit').addEventListener('change', onTechnicalVisitChange);
+
+{% if object and object.has_technical_visit %}
+onTechnicalVisitChange();
+{% endif %}
 </script>
 {% endblock %}

@@ -4,11 +4,13 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Service(models.Model):
-    account = models.ForeignKey(
-        "accounts.Account",
-        on_delete=models.CASCADE,
-        related_name="services",
-        verbose_name=_("Conta"),
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="services_created",
+        verbose_name=_("Criado por"),
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=200, verbose_name=_("Nome do Serviço"))
     description = models.TextField(blank=True, verbose_name=_("Descrição"))
@@ -42,12 +44,6 @@ class Service(models.Model):
 
     def __str__(self):
         return self.name
-
-    def delete(self, *args, **kwargs):
-        from base.accounts.models import Notification
-        Notification.objects.filter(action_url="/app/servicos/", user=self.user).delete()
-        self.is_active = False
-        self.save()
 
     @property
     def estimated_total(self):

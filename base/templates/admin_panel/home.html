@@ -1,12 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Contas - 7event{% endblock %}
-{% block page_title %}Gestão de Contas{% endblock %}
+{% block title %}Usuários - 7event{% endblock %}
+{% block page_title %}Gestão de Usuários{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'admin_panel:account_create' %}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-    <i class="fas fa-plus"></i> <span class="hidden sm:inline">Nova Conta</span>
-</a>
 <a href="{% url 'admin_panel:plan_list' %}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
     <i class="fas fa-tags"></i> <span class="hidden sm:inline">Planos</span>
 </a>
@@ -46,7 +43,7 @@
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Empresa</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Slug</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Responsável</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Plano</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Período</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Assinatura</th>
@@ -57,43 +54,45 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                {% for account in companies %}
+                {% for user in companies %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 font-medium text-gray-800">{{ account.name }}</td>
-                    <td class="px-4 py-3"><code class="text-sm bg-gray-100 px-2 py-1 rounded">{{ account.slug }}</code></td>
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ user.legal_name|default:user.username }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ user.get_full_name|default:user.email }}</td>
                     <td class="px-4 py-3">
-                        {% if account.plan %}
-                        {% include 'components/badge_status.html' with status=account.plan.type type='plan' %}
+                        {% with plan=user.get_plan %}
+                        {% if plan %}
+                        {% include 'components/badge_status.html' with status=plan.type type='plan' %}
                         {% else %}
                         {% include 'components/badge_status.html' with status='free' type='plan' %}
                         {% endif %}
+                        {% endwith %}
                     </td>
                     <td class="px-4 py-3">
-                        {% if account.subscription.billing_period %}
-                        {% include 'components/badge_status.html' with status=account.subscription.billing_period type='billing' %}
+                        {% if user.subscription.billing_period %}
+                        {% include 'components/badge_status.html' with status=user.subscription.billing_period type='billing' %}
                         {% else %}
                         -
                         {% endif %}
                     </td>
                     <td class="px-4 py-3">
-                        {% if account.subscription %}
-                        {% include 'components/badge_status.html' with status=account.subscription.status type='subscription' %}
+                        {% if user.subscription %}
+                        {% include 'components/badge_status.html' with status=user.subscription.status type='subscription' %}
                         {% else %}
                         -
                         {% endif %}
                     </td>
                     <td class="px-4 py-3">
-                        {% if account.subscription %}
-                        {% include 'components/badge_status.html' with status=account.subscription.payment_status type='account_payment' %}
+                        {% if user.subscription %}
+                        {% include 'components/badge_status.html' with status=user.subscription.payment_status type='account_payment' %}
                         {% else %}
                         -
                         {% endif %}
                     </td>
-                    <td class="px-4 py-3 text-gray-600">{{ account.total_users }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ user.invited_users.count|add:1 }}</td>
                     <td class="px-4 py-3">
-                        {% if account.is_blocked %}
+                        {% if user.is_blocked %}
                         {% include 'components/badge_status.html' with status='blocked' type='account_status' %}
-                        {% elif not account.is_active %}
+                        {% elif not user.is_active %}
                         {% include 'components/badge_status.html' with status='inactive' type='account_status' %}
                         {% else %}
                         {% include 'components/badge_status.html' with status='active' type='account_status' %}
@@ -101,14 +100,11 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-1">
-                            <a href="{% url 'admin_panel:account_detail' account.pk %}" class="text-gray-600 hover:text-primary p-1.5 rounded hover:bg-gray-100" title="Ver">
+                            <a href="{% url 'admin_panel:user_detail' user.pk %}" class="text-gray-600 hover:text-primary p-1.5 rounded hover:bg-gray-100" title="Ver">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{% url 'admin_panel:account_edit' account.pk %}" class="text-gray-600 hover:text-primary p-1.5 rounded hover:bg-gray-100" title="Editar">
+                            <a href="{% url 'admin_panel:user_edit' user.pk %}" class="text-gray-600 hover:text-primary p-1.5 rounded hover:bg-gray-100" title="Editar">
                                 <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'admin_panel:account_delete' account.pk %}" class="text-gray-600 hover:text-red-500 p-1.5 rounded hover:bg-gray-100" title="Excluir">
-                                <i class="fas fa-trash"></i>
                             </a>
                         </div>
                     </td>

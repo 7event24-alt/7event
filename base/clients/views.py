@@ -10,41 +10,21 @@ from django.contrib.auth import get_user_model
 
 from .models import Client
 from .forms import ClientForm
-from base.accounts.models import Company
 
 User = get_user_model()
 
 
-class CompanyRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            from django.contrib.auth.views import redirect_to_login
-
-            return redirect_to_login(request.get_full_path())
-
-        if not request.user.account:
-            from django.http import HttpResponseRedirect
-            from django.urls import reverse
-
-            return HttpResponseRedirect(reverse("plans:list"))
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class ClientListView(CompanyRequiredMixin, View):
+class ClientListView(LoginRequiredMixin, View):
     template_name = "clients/list.html"
 
     def get(self, request):
-        company = request.user.account
         user = request.user
         is_superuser = user.is_superuser
 
         if is_superuser:
-            clients = Client.objects.filter(account=company, is_active=True).order_by("name")
+            clients = Client.objects.filter(is_active=True).order_by("name")
         else:
-            clients = Client.objects.filter(account=company, created_by=user, is_active=True).order_by(
-                "name"
-            )
+            clients = Client.objects.filter(created_by=user, is_active=True).order_by("name")
 
         query = request.GET.get("q", "")
         if query:
@@ -54,28 +34,18 @@ class ClientListView(CompanyRequiredMixin, View):
                 | Q(phone__icontains=query)
             )
 
-        user_filter = request.GET.get("user", "")
-        if user_filter:
-            clients = clients.filter(created_by_id=user_filter)
-
-        users = []
-        if is_superuser:
-            users = company.users.all()
-
         return render(
             request,
             self.template_name,
             {
                 "clients": clients,
                 "query": query,
-                "user_filter": user_filter,
-                "users": users,
                 "is_superuser": is_superuser,
             },
         )
 
 
-class ClientCreateView(CompanyRequiredMixin, View):
+class ClientCreateView(LoginRequiredMixin, View):
     template_name = "clients/form.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -94,84 +64,46 @@ class ClientCreateView(CompanyRequiredMixin, View):
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save(commit=False)
-            client.account = request.user.account
             client.created_by = request.user
             client.save()
 
-            if request.user.account.notify_on_client_created:
-                from base.accounts.models import Notification, NotificationType
+            from base.accounts.models import Notification, NotificationType
 
-                Notification.objects.create(
-                    user=request.user,
-                    title="Novo cliente criado",
-                    message=f"Cliente '{client.name}' foi adicionado",
-                    action_url=f"/app/clientes/{client.pk}/",
-                    notification_type=NotificationType.CLIENT,
-                )
-                
-                # Enviar push notification
-                try:
-                    from base.accounts.api_urls import send_push_notification
-                    send_push_notification(
-                        user=request.user,
-                        title="Novo cliente",
-                        body=f"'{client.name}' foi adicionado",
-                        action_url=f"/app/clientes/{client.pk}/"
-                    )
-                except Exception as e:
-                    pass
+            Notification.objects.create(
+                user=request.user,
+                title="Novo cliente criado",
+                message=f"Cliente '{client.name}' foi adicionado",
+                action_url=f"/app/clientes/{client.pk}/",
+                notification_type=NotificationType.CLIENT,
+            )
 
             messages.success(request, "Cliente criado com sucesso!")
             return redirect("clients:list")
         return render(request, self.template_name, {"form": form})
 
 
-class ClientQuickCreateView(CompanyRequiredMixin, View):
+class ClientQuickCreateView(LoginRequiredMixin, View):
     def post(self, request):
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save(commit=False)
-            client.account = request.user.account
             client.created_by = request.user
             client.save()
-
-            if request.user.account.notify_on_client_created:
-                from base.accounts.models import Notification, NotificationType
-
-                Notification.objects.create(
-                    user=request.user,
-                    title="Novo cliente criado",
-                    message=f"Cliente '{client.name}' foi adicionado",
-                    action_url=f"/app/clientes/{client.pk}/",
-                    notification_type=NotificationType.CLIENT,
-                )
-                
-                # Enviar push notification
-                try:
-                    from base.accounts.api_urls import send_push_notification
-                    send_push_notification(
-                        user=request.user,
-                        title="Novo cliente",
-                        body=f"'{client.name}' foi adicionado",
-                        action_url=f"/app/clientes/{client.pk}/"
-                    )
-                except Exception as e:
-                    pass
 
             return JsonResponse({"id": client.pk, "name": client.name})
         return JsonResponse({"error": "Erro ao criar cliente"}, status=400)
 
 
-class ClientUpdateView(CompanyRequiredMixin, View):
+class ClientUpdateView(LoginRequiredMixin, View):
     template_name = "clients/form.html"
 
     def get(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
+        client = get_object_or_404(Client, pk=pk, created_by=request.user, is_active=True)
         form = ClientForm(instance=client)
         return render(request, self.template_name, {"form": form, "object": client})
 
     def post(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
+        client = get_object_or_404(Client, pk=pk, created_by=request.user, is_active=True)
         form = ClientForm(request.POST, instance=client)
         if form.is_valid():
             form.save()
@@ -180,28 +112,28 @@ class ClientUpdateView(CompanyRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "object": client})
 
 
-class ClientDetailView(CompanyRequiredMixin, TemplateView):
+class ClientDetailView(LoginRequiredMixin, TemplateView):
     template_name = "clients/detail.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         client = get_object_or_404(
-            Client, pk=self.kwargs["pk"], account=self.request.user.account
+            Client, pk=self.kwargs["pk"], created_by=self.request.user
         )
         context["client"] = client
         context["jobs"] = client.jobs.all()
         return context
 
 
-class ClientDeleteView(CompanyRequiredMixin, View):
+class ClientDeleteView(LoginRequiredMixin, View):
     template_name = "clients/confirm_delete.html"
 
     def get(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
+        client = get_object_or_404(Client, pk=pk, created_by=request.user, is_active=True)
         return render(request, self.template_name, {"client": client})
 
     def post(self, request, pk):
-        client = get_object_or_404(Client, pk=pk, account=request.user.account, is_active=True)
+        client = get_object_or_404(Client, pk=pk, created_by=request.user, is_active=True)
         client.delete()
         messages.success(request, "Cliente excluído com sucesso!")
         return redirect("clients:list")

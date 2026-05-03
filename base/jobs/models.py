@@ -86,6 +86,21 @@ class Job(models.Model):
     location = models.CharField(max_length=300, blank=True, verbose_name=_("Local"))
     description = models.TextField(blank=True, verbose_name=_("Descrição"))
 
+    has_technical_visit = models.BooleanField(
+        default=False,
+        verbose_name=_("Possui Visita Técnica")
+    )
+    technical_visit_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Data da Visita Técnica")
+    )
+    technical_visit_time = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Horário da Visita Técnica")
+    )
+
     total_budget = models.DecimalField(
         max_digits=10,
         decimal_places=2,

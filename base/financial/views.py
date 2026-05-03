@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, date
 from decimal import Decimal
 
 from base.jobs.models import Job, PaymentStatusJob, JobStatus, PaymentType, JobStaff
-from base.expenses.models import Expense
+from base.expenses.models import Expense, ExpenseCategory
 
 
 class FinancialView(LoginRequiredMixin, View):
@@ -30,7 +30,14 @@ class FinancialView(LoginRequiredMixin, View):
             base_jobs = Job.objects.filter(
                 Q(created_by=user) | Q(job_staff__professional=user)
             ).distinct()
-            base_expenses = Expense.objects.filter(performed_by=user)
+            # Include expenses where:
+            # 1. performed_by=user (user created the expense)
+            # 2. expense.job where user is creator OR staff member
+            base_expenses = Expense.objects.filter(
+                Q(performed_by=user) |
+                Q(job__created_by=user) |
+                Q(job__job_staff__professional=user)
+            ).filter(is_active=True).distinct()
         
         # Calculate revenue including staff cache values
         def get_jobs_with_staff_info(user):
@@ -277,6 +284,11 @@ class FinancialView(LoginRequiredMixin, View):
             .annotate(total=Sum("value"))
             .order_by("-total")
         )
+        
+        # Add category labels
+        category_dict = dict(ExpenseCategory.choices)
+        for item in expenses_by_category:
+            item['category_label'] = category_dict.get(item['category'], item['category'])
 
         jobs_by_status = (
             base_jobs.filter(
@@ -324,6 +336,7 @@ class FinancialView(LoginRequiredMixin, View):
             "net_profit": net_profit,
             "jobs_period": jobs_period,
             "expenses_period": expenses_period,
+            "expenses_by_category": expenses_by_category,
             "period": period,
             "period_label": period_label,
             "chart_data": chart_data,

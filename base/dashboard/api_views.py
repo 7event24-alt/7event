@@ -7,59 +7,74 @@ from base.jobs.models import Job, PaymentType, PaymentStatusJob
 from base.clients.models import Client
 from base.quote.models import Quote
 from base.expenses.models import Expense
+from django.db.models import Sum
+from decimal import Decimal
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def dashboard_api(request):
-    if not request.user.account:
-        return Response({"error": "Usuário não possui conta associada"}, status=400)
+    user = request.user
+    is_superuser = user.is_superuser
 
-    account = request.user.account
+    if is_superuser:
+        clients_count = Client.objects.filter(is_active=True).count()
+        jobs_count = Job.objects.filter(is_active=True).count()
+        quotes_count = Quote.objects.filter(is_active=True).count()
 
-    clients_count = Client.objects.filter(account=account).count()
-    jobs_count = Job.objects.filter(account=account).count()
-    quotes_count = Quote.objects.filter(account=account).count()
+        revenue_full = (
+            Job.objects.filter(
+                payment_status=PaymentStatusJob.PAID,
+                payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL]
+            ).aggregate(total=Sum("cache"))["total"]
+            or Decimal("0.00")
+        )
 
-    from django.db.models import Sum, F, Value, Case, When, DecimalField
-    from decimal import Decimal
+        revenue_partial = (
+            Job.objects.filter(
+                payment_status=PaymentStatusJob.PARTIAL
+            ).aggregate(total=Sum("payment_partial_value"))["total"]
+            or Decimal("0.00")
+        )
 
-    # Receita de antecipado/total (pagamento completo)
-    revenue_full = (
-        Job.objects.filter(
-            account=account,
-            payment_status=PaymentStatusJob.PAID,
-            payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL]
-        ).aggregate(total=Sum("cache"))["total"]
-        or Decimal("0.00")
-    )
+        expenses_total = (
+            Expense.objects.filter(is_active=True).aggregate(total=Sum("value"))["total"]
+            or Decimal("0.00")
+        )
 
-    # Receita parcial (1ª parcela confirmada, 2ª ainda não)
-    revenue_partial = (
-        Job.objects.filter(
-            account=account,
-            payment_status=PaymentStatusJob.PARTIAL
-        ).aggregate(total=Sum("payment_partial_value"))["total"]
-        or Decimal("0.00")
-    )
+        pending_quotes = Quote.objects.filter(is_active=True).count()
+        pending_jobs = Job.objects.filter(status=Job.JobStatus.PENDING).count()
+    else:
+        clients_count = Client.objects.filter(created_by=user, is_active=True).count()
+        jobs_count = Job.objects.filter(created_by=user, is_active=True).count()
+        quotes_count = Quote.objects.filter(created_by=user, is_active=True).count()
 
-    # Receita total (paga + parcial confirmada)
+        revenue_full = (
+            Job.objects.filter(
+                created_by=user,
+                payment_status=PaymentStatusJob.PAID,
+                payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL]
+            ).aggregate(total=Sum("cache"))["total"]
+            or Decimal("0.00")
+        )
+
+        revenue_partial = (
+            Job.objects.filter(
+                created_by=user,
+                payment_status=PaymentStatusJob.PARTIAL
+            ).aggregate(total=Sum("payment_partial_value"))["total"]
+            or Decimal("0.00")
+        )
+
+        expenses_total = (
+            Expense.objects.filter(performed_by=user, is_active=True).aggregate(total=Sum("value"))["total"]
+            or Decimal("0.00")
+        )
+
+        pending_quotes = Quote.objects.filter(created_by=user, is_active=True).count()
+        pending_jobs = Job.objects.filter(created_by=user, status=Job.JobStatus.PENDING).count()
+
     revenue = revenue_full + revenue_partial
-
-    expenses_total = (
-        Expense.objects.filter(account=account).aggregate(total=Sum("value"))["total"]
-        or Decimal("0.00")
-    )
-
-    pending_quotes = Quote.objects.filter(
-        account=account
-    ).count()
-
-    accepted_quotes = 0
-
-    pending_jobs = Job.objects.filter(
-        account=account, status=Job.JobStatus.PENDING
-    ).count()
 
     return Response(
         {
@@ -71,7 +86,7 @@ def dashboard_api(request):
             "revenue_partial": float(revenue_partial),
             "expenses": float(expenses_total),
             "pending_quotes": pending_quotes,
-            "accepted_quotes": accepted_quotes,
+            "accepted_quotes": 0,
             "pending_jobs": pending_jobs,
         }
     )

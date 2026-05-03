@@ -14,6 +14,11 @@ from .views import (
     JobConfirmPaymentView,
     JobConfirmPartialPaymentView,
     JobConfirmRemainingPaymentView,
+    JobAddStaffView,
+    JobUpdateStaffView,
+    JobRemoveStaffView,
+    JobStaffStatusUpdateView,
+    ProfessionalSearchView,
 )
 
 app_name = "jobs"
@@ -34,5 +39,10 @@ urlpatterns = [
     path("<int:pk>/confirmar-pagamento/", JobConfirmPaymentView.as_view(), name="confirm_payment"),
     path("<int:pk>/confirmar-parcela/", JobConfirmPartialPaymentView.as_view(), name="confirm_partial"),
     path("<int:pk>/confirmar-restante/", JobConfirmRemainingPaymentView.as_view(), name="confirm_remaining"),
+    path("<int:pk>/adicionar-staff/", JobAddStaffView.as_view(), name="add_staff"),
+    path("<int:pk>/staff/<int:staff_pk>/atualizar/", JobUpdateStaffView.as_view(), name="update_staff"),
+    path("<int:pk>/staff/<int:staff_pk>/remover/", JobRemoveStaffView.as_view(), name="remove_staff"),
+    path("<int:pk>/staff/<int:staff_pk>/status/", JobStaffStatusUpdateView.as_view(), name="update_staff_status"),
+    path("buscar-profissionais/", ProfessionalSearchView.as_view(), name="search_professionals"),
     path("api/", include(router.urls)),
 ]

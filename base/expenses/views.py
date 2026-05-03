@@ -1,11 +1,7 @@
 from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
 from .models import Expense, ExpenseCategory
@@ -56,56 +52,23 @@ class ExpenseForm(forms.ModelForm):
 
         if user:
             if user.is_superuser:
-                self.fields["job"].queryset = Job.objects.filter(account=user.account)
+                self.fields["job"].queryset = Job.objects.filter(is_active=True)
             else:
-                self.fields["job"].queryset = Job.objects.filter(user=user)
-
-        for field_name, field in self.fields.items():
-            current_class = field.widget.attrs.get("class", "")
-            if self.errors.get(field_name):
-                field.widget.attrs["class"] = (
-                    f"{current_class} border-red-500 focus:ring-red-500 focus:border-red-500".strip()
-                )
+                self.fields["job"].queryset = Job.objects.filter(created_by=user, is_active=True)
 
 
-class CompanyRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            from django.contrib.auth.views import redirect_to_login
-
-            return redirect_to_login(request.get_full_path())
-
-        if not request.user.account:
-            from django.http import HttpResponseRedirect
-            from django.urls import reverse
-
-            return HttpResponseRedirect(reverse("plans:list"))
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class ExpenseListView(CompanyRequiredMixin, View):
+class ExpenseListView(LoginRequiredMixin, View):
     template_name = "expenses/list.html"
 
     def get(self, request):
-        company = request.user.account
         user = request.user
-        is_superuser = user.is_superuser
 
-        if is_superuser:
-            expenses = (
-                Expense.objects.filter(account=company, is_active=True)
-                .select_related("job", "user")
-                .order_by("-date")
-            )
-            jobs = Job.objects.filter(account=company, is_active=True)
+        if user.is_superuser:
+            expenses = Expense.objects.filter(is_active=True).select_related("job", "performed_by").order_by("-date")
+            jobs = Job.objects.filter(is_active=True)
         else:
-            expenses = (
-                Expense.objects.filter(account=company, user=user, is_active=True)
-                .select_related("job", "user")
-                .order_by("-date")
-            )
-            jobs = Job.objects.filter(user=user, is_active=True)
+            expenses = Expense.objects.filter(performed_by=user, is_active=True).select_related("job").order_by("-date")
+            jobs = Job.objects.filter(created_by=user, is_active=True)
 
         query = request.GET.get("q", "")
         if query:
@@ -119,14 +82,6 @@ class ExpenseListView(CompanyRequiredMixin, View):
         if job_filter:
             expenses = expenses.filter(job_id=job_filter)
 
-        user_filter = request.GET.get("user", "")
-        if user_filter:
-            expenses = expenses.filter(user_id=user_filter)
-
-        users = []
-        if is_superuser:
-            users = company.users.all()
-
         total_value = sum(e.value for e in expenses)
 
         return render(
@@ -137,105 +92,87 @@ class ExpenseListView(CompanyRequiredMixin, View):
                 "query": query,
                 "category_filter": category_filter,
                 "job_filter": job_filter,
-                "user_filter": user_filter,
                 "categories": ExpenseCategory.choices,
                 "jobs": jobs,
-                "users": users,
-                "is_superuser": is_superuser,
+                "is_superuser": user.is_superuser,
                 "total_value": total_value,
             },
         )
 
 
-class ExpenseCreateView(CompanyRequiredMixin, View):
+class ExpenseCreateView(LoginRequiredMixin, View):
     template_name = "expenses/form.html"
 
     def get(self, request):
         form = ExpenseForm(user=request.user)
-        if request.user.is_superuser:
-            jobs = Job.objects.filter(account=request.user.account)
-        else:
-            jobs = Job.objects.filter(user=request.user)
-        
-        # Pré-selecionar trabalho se vier parâmetro na URL
+        jobs = Job.objects.filter(is_active=True) if request.user.is_superuser else Job.objects.filter(created_by=request.user, is_active=True)
+
         preselected_job = request.GET.get("job", "")
         if preselected_job:
             form.fields["job"].initial = preselected_job
             form.fields["job"].disabled = True
-        
+            
+            # Pre-fill date with job's event date
+            try:
+                job = Job.objects.get(pk=preselected_job, is_active=True)
+                if job.start_date:
+                    form.fields["date"].initial = job.start_date
+            except Job.DoesNotExist:
+                pass
+
         return render(request, self.template_name, {"form": form, "jobs": jobs, "preselected_job": preselected_job})
 
     def post(self, request):
         form = ExpenseForm(request.POST, user=request.user)
         if form.is_valid():
             expense = form.save(commit=False)
-            expense.account = request.user.account
-            expense.user = request.user
+            expense.performed_by = request.user
             expense.save()
 
-            if request.user.account.notify_on_expense_created:
-                from base.accounts.models import Notification, NotificationType
-
-                Notification.objects.create(
-                    user=request.user,
-                    title="Nova despesa registrada",
-                    message=f"Despesa de R$ {expense.value} foi registrada",
-                    action_url=f"/app/despesas/",
-                    notification_type=NotificationType.EXPENSE,
-                )
-
-            if "save_and_add" in request.POST:
-                messages.success(request, "Despesa criada! Adicione outra.")
-                return redirect("expenses:create")
-
             messages.success(request, "Despesa criada com sucesso!")
+            
+            # Redirect to job detail if expense is associated with a job
+            if expense.job:
+                return redirect("jobs:detail", pk=expense.job.pk)
             return redirect("expenses:list")
-        if request.user.is_superuser:
-            jobs = Job.objects.filter(account=request.user.account)
-        else:
-            jobs = Job.objects.filter(user=request.user)
-        return render(request, self.template_name, {"form": form, "jobs": jobs})
+        return render(request, self.template_name, {"form": form})
 
 
-class ExpenseUpdateView(CompanyRequiredMixin, View):
+class ExpenseUpdateView(LoginRequiredMixin, View):
     template_name = "expenses/form.html"
 
     def get(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
+        expense = get_object_or_404(Expense, pk=pk, performed_by=request.user, is_active=True)
         form = ExpenseForm(instance=expense, user=request.user)
-        if request.user.is_superuser:
-            jobs = Job.objects.filter(account=request.user.account)
-        else:
-            jobs = Job.objects.filter(user=request.user)
-        return render(
-            request, self.template_name, {"form": form, "object": expense, "jobs": jobs}
-        )
+        return render(request, self.template_name, {"form": form, "object": expense})
 
     def post(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
+        expense = get_object_or_404(Expense, pk=pk, performed_by=request.user, is_active=True)
         form = ExpenseForm(request.POST, instance=expense, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Despesa atualizada com sucesso!")
             return redirect("expenses:list")
-        if request.user.is_superuser:
-            jobs = Job.objects.filter(account=request.user.account)
-        else:
-            jobs = Job.objects.filter(user=request.user)
-        return render(
-            request, self.template_name, {"form": form, "object": expense, "jobs": jobs}
-        )
+        return render(request, self.template_name, {"form": form, "object": expense})
 
 
-class ExpenseDeleteView(CompanyRequiredMixin, View):
+class ExpenseDeleteView(LoginRequiredMixin, View):
     template_name = "expenses/confirm_delete.html"
 
     def get(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
+        expense = get_object_or_404(Expense, pk=pk, performed_by=request.user, is_active=True)
         return render(request, self.template_name, {"expense": expense})
 
     def post(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk, account=request.user.account, is_active=True)
-        expense.delete()
+        expense = get_object_or_404(Expense, pk=pk, performed_by=request.user, is_active=True)
+        job = expense.job
+        expense.is_active = False
+        expense.save()
         messages.success(request, "Despesa excluída com sucesso!")
+        
+        next_url = request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
+        if job:
+            return redirect("jobs:detail", pk=job.pk)
         return redirect("expenses:list")

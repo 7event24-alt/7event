@@ -14,17 +14,11 @@ class ExpenseCategory(models.TextChoices):
 
 
 class Expense(models.Model):
-    account = models.ForeignKey(
-        "accounts.Account",
-        on_delete=models.CASCADE,
-        related_name="expenses",
-        verbose_name=_("Conta"),
-    )
-    user = models.ForeignKey(
+    performed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        related_name="expenses_created",
-        verbose_name=_("Criado por"),
+        related_name="expenses_performed",
+        verbose_name=_("Realizado por"),
         null=True,
         blank=True,
     )
@@ -62,6 +56,7 @@ class Expense(models.Model):
 
     def delete(self, *args, **kwargs):
         from base.accounts.models import Notification
-        Notification.objects.filter(action_url="/app/despesas/", user=self.user).delete()
+
+        Notification.objects.filter(action_url="/app/despesas/", user=self.performed_by).delete()
         self.is_active = False
         self.save()
