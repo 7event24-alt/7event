@@ -4,46 +4,14 @@ from django.utils.html import format_html
 from django.urls import reverse
 from .models import (
     User,
-    Account,
     Plan,
     Subscription,
     Feature,
-    AccountType,
     PlanType,
     BillingPeriod,
     SubscriptionStatus,
+    PrivacyTerm,
 )
-
-
-@admin.register(Account)
-class AccountAdmin(admin.ModelAdmin):
-    list_display = [
-        "name",
-        "slug",
-        "account_type",
-        "plan",
-        "is_active",
-        "is_blocked",
-        "user_count",
-    ]
-    list_filter = ["account_type", "is_active", "is_blocked"]
-    search_fields = ["name", "slug", "cnpj"]
-    prepopulated_fields = {"slug": ("name",)}
-
-    fieldsets = (
-        (None, {"fields": ("account_type", "name", "slug")}),
-        ("Documentos", {"fields": ("cnpj", "phone", "email")}),
-        ("Endereço", {"fields": ("address", "logo")}),
-        ("Plano", {"fields": ("plan",)}),
-        ("Status", {"fields": ("is_active", "is_blocked", "blocked_reason")}),
-    )
-
-    readonly_fields = ["user_count"]
-
-    def user_count(self, obj):
-        return obj.user_count
-
-    user_count.short_description = "Usuários"
 
 
 @admin.register(Plan)
@@ -55,9 +23,10 @@ class PlanAdmin(admin.ModelAdmin):
         "price_quarterly",
         "price_semester",
         "max_users",
+        "can_associate_professionals",
         "is_active",
     ]
-    list_filter = ["type", "is_active"]
+    list_filter = ["type", "is_active", "can_associate_professionals"]
     filter_horizontal = ["features"]
     fieldsets = (
         (None, {"fields": ("type", "name", "description", "short_description")}),
@@ -70,6 +39,8 @@ class PlanAdmin(admin.ModelAdmin):
                     "max_jobs",
                     "max_expenses",
                     "max_agenda_events",
+                    "can_associate_professionals",
+                    "job_creation_limit",
                 )
             },
         ),
@@ -81,10 +52,10 @@ class PlanAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ["account", "plan", "status", "billing_period", "price", "end_date"]
+    list_display = ["user", "plan", "status", "billing_period", "price", "end_date"]
     list_filter = ["status", "billing_period"]
     fieldsets = (
-        (None, {"fields": ("account", "plan")}),
+        (None, {"fields": ("user", "plan")}),
         (
             "Cobrança",
             {
@@ -115,10 +86,8 @@ class UserAdmin(BaseUserAdmin):
         "email",
         "first_name",
         "last_name",
-        "account",
         "plan",
         "role",
-        "is_account_admin",
         "is_active",
         "is_blocked",
         "actions_column",
@@ -126,12 +95,10 @@ class UserAdmin(BaseUserAdmin):
     list_filter = [
         "is_active",
         "is_blocked",
-        "is_account_admin",
-        "account",
         "role",
         "plan",
     ]
-    search_fields = ["username", "email", "first_name", "last_name"]
+    search_fields = ["username", "email", "first_name", "last_name", "cnpj"]
     ordering = ["-created_at"]
     readonly_fields = ("created_at", "updated_at", "last_login")
 
@@ -152,7 +119,9 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         ("Pessoal", {"fields": ("first_name", "last_name", "email", "phone", "photo")}),
-        ("Conta", {"fields": ("account", "role", "is_account_admin", "plan")}),
+        ("Empresa", {"fields": ("legal_name", "cnpj", "address", "company_logo")}),
+        ("Plano", {"fields": ("plan",)}),
+        ("Cargo", {"fields": ("role",)}),
         (
             "Status",
             {
@@ -170,5 +139,16 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {"fields": ("username", "password1", "password2")}),
         ("Pessoal", {"fields": ("first_name", "last_name", "email")}),
-        ("Conta", {"fields": ("account", "role", "is_account_admin")}),
     )
+
+
+@admin.register(PrivacyTerm)
+class PrivacyTermAdmin(admin.ModelAdmin):
+    list_display = ["version", "is_active", "created_at"]
+    list_filter = ["is_active"]
+    search_fields = ["version", "content"]
+    fieldsets = (
+        (None, {"fields": ("version", "is_active")}),
+        ("Conteúdo", {"fields": ("content",)}),
+    )
+    readonly_fields = ["created_at"]

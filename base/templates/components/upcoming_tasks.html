@@ -1,0 +1,67 @@
+{% load static %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="font-semibold text-gray-800">Tarefas Pessoais</h3>
+        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+            {% if upcoming_tasks_count > 0 %}{{ upcoming_tasks_count }} tarefas{% else %}--{% endif %}
+        </span>
+    </div>
+    <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+        {% if upcoming_tasks %}
+            {% for task in upcoming_tasks %}
+            <div class="p-4 hover:bg-gray-50 flex items-center gap-3" id="dashboard-task-{{ task.id }}">
+                <input type="checkbox" 
+                       {% if task.is_completed %}checked{% endif %} 
+                       onchange="toggleTaskComplete({{ task.id }}, this)" 
+                       class="w-4 h-4 text-primary rounded focus:ring-primary">
+                <div class="flex-1 {% if task.is_completed %}line-through text-gray-400{% else %}text-gray-800{% endif %}">
+                    <p class="font-medium text-sm">{{ task.title }}</p>
+                    <p class="text-xs text-gray-500">
+                        {{ task.date|date:"d/m/Y" }}
+                        {% if task.time %} às {{ task.time|time:"H:i" }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-500 text-center py-4">Nenhuma tarefa pendente</p>
+        {% endif %}
+    </div>
+    <div class="px-4 py-3 border-t border-gray-200">
+        <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Ver todas as tarefas</a>
+    </div>
+</div>
+
+<script>
+function toggleTaskComplete(taskId, checkbox) {
+    fetch('{% url "accounts:personal_tasks" %}', {
+        method: 'POST',
+        body: JSON.stringify({
+            action: 'toggle_complete',
+            task_id: taskId
+        }),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const taskElement = document.getElementById('dashboard-task-' + taskId);
+            if (data.is_completed) {
+                taskElement.classList.add('line-through', 'text-gray-400');
+            } else {
+                taskElement.classList.remove('line-through', 'text-gray-400');
+            }
+        } else {
+            checkbox.checked = !checkbox.checked;
+            alert('Erro ao atualizar tarefa');
+        }
+    })
+    .catch(error => {
+        checkbox.checked = !checkbox.checked;
+        alert('Erro: ' + error.message);
+    });
+}
+</script>

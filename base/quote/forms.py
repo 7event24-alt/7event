@@ -4,13 +4,16 @@ from .models import Quote, QuoteExpense
 
 class QuoteForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        account = kwargs.pop("account", None) or kwargs.pop("company", None)
+        created_by = kwargs.pop("created_by", None)
         super().__init__(*args, **kwargs)
         self.fields["client"].required = False
-        if account:
-            self.fields["client"].queryset = self.fields["client"].queryset.filter(
-                account=account
-            )
+        if created_by:
+            if created_by.is_superuser:
+                pass
+            else:
+                self.fields["client"].queryset = self.fields["client"].queryset.filter(
+                    created_by=created_by
+                )
 
         for field_name, field in self.fields.items():
             current_class = field.widget.attrs.get("class", "input")

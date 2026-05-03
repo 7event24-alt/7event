@@ -16,6 +16,7 @@ from django.conf import settings
 
 from .forms import RegisterForm
 from base.core.utils import get_base_url
+from base.jobs.models import JobStaff, JobStaffStatus
 
 
 class CustomLoginView(LoginView):
@@ -161,10 +162,18 @@ class RegisterView(View):
         if request.user.is_authenticated:
             return redirect("dashboard:home")
         form = self.form_class()
-        return render(request, self.template_name, {"form": form})
+        
+        # Buscar termo de privacidade ativo
+        from .models import PrivacyTerm
+        active_term = PrivacyTerm.objects.filter(is_active=True).first()
+        
+        return render(request, self.template_name, {
+            "form": form,
+            "privacy_term": active_term
+        })
 
     def post(self, request):
-        form = self.form_class(request.POST)
+        form = self.form_class(request.POST, request.FILES)
         if form.is_valid():
             # Gerar username automaticamente do email
             email = form.cleaned_data.get("email", "")
@@ -183,37 +192,21 @@ class RegisterView(View):
             # Definir username antes de salvar
             form.instance.username = username
 
-            # Salvar formulário (que agora cria a empresa automaticamente)
-            user = form.save()
-
-            # Garantir que tem empresa
-            if not user.account:
-                from .models import Account, Plan, AccountType
-                from django.utils.text import slugify
-                import uuid
-
-                company_name = (
-                    f"{user.first_name} {user.last_name}".strip()
-                    or user.email.split("@")[0]
-                )
-                base_slug = slugify(company_name)
-                if not base_slug:
-                    base_slug = f"company-{uuid.uuid4().hex[:8]}"
-
-                slug = base_slug
-                while Account.objects.filter(slug=slug).exists():
-                    slug = f"{base_slug}-{counter}"
-                    counter += 1
-
-                account = Account.objects.create(
-                    name=company_name,
-                    slug=slug,
-                    account_type=AccountType.COMPANY,
-                    plan=Plan.get_default(),
-                    is_active=True,
-                )
-                user.account = account
-                user.save()
+            # Salvar formulário (agora inclui novos campos como full_name, cpf, etc.)
+            user = form.save(commit=False)
+            
+            # Salvar termo aceito
+            accepted_term_id = request.POST.get("accepted_term_id")
+            if accepted_term_id:
+                from .models import PrivacyTerm
+                try:
+                    term = PrivacyTerm.objects.get(id=accepted_term_id)
+                    user.accepted_term = term
+                except PrivacyTerm.DoesNotExist:
+                    pass
+            
+            user.save()
+            form.save_m2m()  # Salva ManyToMany (se houver)
 
             # Enviar email de verificação
             import logging
@@ -385,17 +378,28 @@ class ProfileView(LoginRequiredMixin, View):
     template_name = "accounts/profile.html"
 
     def get(self, request):
-        from .forms import UserProfileForm
+        from .forms import PersonalInfoForm, ProfessionalInfoForm, PrivacyForm
 
-        form = UserProfileForm(instance=request.user)
+        personal_form = PersonalInfoForm(instance=request.user)
+        professional_form = ProfessionalInfoForm(instance=request.user)
+        privacy_form = PrivacyForm(instance=request.user)
 
-        context = {"form": form}
+        context = {
+            "personal_form": personal_form,
+            "professional_form": professional_form,
+            "privacy_form": privacy_form,
+        }
 
         if request.user.is_superuser:
-            from .models import Account, User
+            from .models import User
 
-            context["total_accounts"] = Account.objects.count()
             context["total_users"] = User.objects.count()
+
+        # Processar skills para o template (converter string para lista)
+        if request.user.skills:
+            context["skills_list"] = [s.strip() for s in request.user.skills.split(",") if s.strip()]
+        else:
+            context["skills_list"] = []
 
         return render(request, self.template_name, context)
 
@@ -404,8 +408,25 @@ class ProfileView(LoginRequiredMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request):
-        from .forms import UserProfileForm
+        from .forms import PersonalInfoForm, ProfessionalInfoForm, PrivacyForm
 
+        # Handle privacy toggle
+        if request.POST.get('action') == 'toggle_privacy' or request.content_type == 'application/json':
+            import json
+            try:
+                if request.content_type == 'application/json':
+                    data = json.loads(request.body)
+                    show_sensitive = data.get('show_sensitive_data', False)
+                else:
+                    show_sensitive = request.POST.get('show_sensitive_data') == 'true'
+                
+                request.user.show_sensitive_data = show_sensitive
+                request.user.save(update_fields=['show_sensitive_data'])
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+
+        # Handle photo upload
         if request.POST.get("photo_only"):
             photo = request.FILES.get("photo")
             if photo:
@@ -422,24 +443,46 @@ class ProfileView(LoginRequiredMixin, View):
                         pass
             return JsonResponse({"success": True})
 
-        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            old_photo = form.instance.photo
-            old_photo_path = request.user.photo.path if request.user.photo else None
+        # Determine which form is being submitted
+        form_type = request.POST.get('form_type')
 
-            form.save()
+        if form_type == 'personal':
+            form = PersonalInfoForm(request.POST, instance=request.user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Informações pessoais atualizadas com sucesso!")
+                return redirect("accounts:profile")
+            else:
+                # Re-render with errors
+                from .forms import ProfessionalInfoForm, PrivacyForm
+                professional_form = ProfessionalInfoForm(instance=request.user)
+                privacy_form = PrivacyForm(instance=request.user)
+                return render(request, self.template_name, {
+                    "personal_form": form,
+                    "professional_form": professional_form,
+                    "privacy_form": privacy_form,
+                    "skills_list": [s.strip() for s in (request.user.skills or "").split(",") if s.strip()]
+                })
 
-            new_photo = form.instance.photo
-            if old_photo and old_photo != new_photo:
-                try:
-                    if old_photo_path and hasattr(old_photo, "path"):
-                        old_photo.delete(save=False)
-                except Exception:
-                    pass
+        elif form_type == 'professional':
+            form = ProfessionalInfoForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Dados profissionais atualizados com sucesso!")
+                return redirect("accounts:profile")
+            else:
+                # Re-render with errors
+                from .forms import PersonalInfoForm, PrivacyForm
+                personal_form = PersonalInfoForm(instance=request.user)
+                privacy_form = PrivacyForm(instance=request.user)
+                return render(request, self.template_name, {
+                    "personal_form": personal_form,
+                    "professional_form": form,
+                    "privacy_form": privacy_form,
+                    "skills_list": [s.strip() for s in (request.user.skills or "").split(",") if s.strip()]
+                })
 
-            messages.success(request, "Perfil atualizado com sucesso!")
-            return redirect("accounts:profile")
-        return render(request, self.template_name, {"form": form})
+        return redirect("accounts:profile")
 
 
 profile = ProfileView.as_view()
@@ -511,17 +554,16 @@ def notifications_unread_count_api(request):
 
 @csrf_exempt
 def mark_as_read(request, notification_id):
-    from django.http import HttpResponseRedirect
-    from django.urls import reverse
+    from django.http import JsonResponse
     from .models import Notification
-
+    
     try:
         notification = Notification.objects.get(id=notification_id, user=request.user)
         notification.is_read = True
         notification.save()
-        return HttpResponseRedirect(reverse("accounts:notifications"))
+        return JsonResponse({"success": True})
     except Notification.DoesNotExist:
-        return HttpResponseRedirect(reverse("accounts:notifications"))
+        return JsonResponse({"success": False, "error": "Not found"}, status=404)
 
 
 def get_timesince(dt):
@@ -535,10 +577,171 @@ def mark_all_as_read(request):
     from django.http import HttpResponseRedirect
     from django.urls import reverse
     from .models import Notification
-
+    
     if request.method == "POST":
         Notification.objects.filter(user=request.user, is_read=False).update(
             is_read=True
         )
         return HttpResponseRedirect(reverse("accounts:notifications"))
     return HttpResponseRedirect(reverse("accounts:notifications"))
+
+
+def can_view_sensitive_data_of(viewer, target_user):
+    """
+    Verifica se o viewer pode ver dados sensíveis (CPF/RG) do target_user.
+    Regras:
+    1. Próprio usuário sempre pode ver
+    2. Target deve ter show_sensitive_data=True
+    3. Deve existir JobStaff com status CONFIRMED ou PAID entre viewer (agência) e target
+    """
+    if viewer == target_user:
+        return True
+    
+    if not target_user.show_sensitive_data:
+        return False
+    
+    from base.jobs.models import JobStaff, JobStaffStatus
+    # Verificar se existe JobStaff com status CONFIRMED ou PAID
+    has_confirmed_job = JobStaff.objects.filter(
+        job__created_by=viewer,
+        professional=target_user,
+        status__in=[JobStaffStatus.CONFIRMED, JobStaffStatus.PAID]
+    ).exists()
+    
+    return has_confirmed_job
+
+
+def user_profile_detail(request, user_id=None):
+    """
+    Perfil Profissional com lógica de acesso restrito.
+    - Agência só acessa se status no JobStaff for CONFIRMED ou PAID
+    - Dados sensíveis (CPF/RG) só aparecem se can_view_sensitive_data_of retornar True
+    """
+    from django.shortcuts import get_object_or_404
+    from .models import User
+    from base.jobs.models import JobStaff, JobStaffStatus
+    
+    profile_user = get_object_or_404(User, id=user_id) if user_id else request.user
+    
+    # Verificar se o viewer tem permissão para acessar este perfil
+    can_view_full_profile = False
+    can_view_sensitive = False
+    
+    if request.user.is_authenticated:
+        if request.user == profile_user:
+            # Próprio usuário - acesso completo
+            can_view_full_profile = True
+            can_view_sensitive = True
+        elif request.user.is_superuser:
+            # Admin - acesso completo
+            can_view_full_profile = True
+            can_view_sensitive = True
+        else:
+            # Verificar se existe JobStaff com status CONFIRMED ou PAID
+            staff_entry = JobStaff.objects.filter(
+                job__created_by=request.user,
+                professional=profile_user
+            ).first()
+            
+            if staff_entry and staff_entry.status in [JobStaffStatus.CONFIRMED, JobStaffStatus.PAID]:
+                can_view_full_profile = True
+                can_view_sensitive = can_view_sensitive_data_of(request.user, profile_user)
+            else:
+                # Redirecionar com mensagem de erro
+                from django.contrib import messages
+                messages.error(
+                    request, 
+                    "Acesso disponível apenas após o aceite do profissional"
+                )
+                from django.http import HttpResponseRedirect
+                from django.urls import reverse
+                return HttpResponseRedirect(reverse("dashboard:home"))
+    
+    # Verificar se o viewer é o próprio usuário (para mostrar toggle de privacidade)
+    is_own_profile = request.user.is_authenticated and request.user == profile_user
+    
+    context = {
+        "profile_user": profile_user,
+        "can_view_full_profile": can_view_full_profile,
+        "can_view_sensitive": can_view_sensitive,
+        "is_own_profile": is_own_profile,
+    }
+    
+    return render(request, "accounts/user_profile_detail.html", context)
+
+
+class PersonalTasksView(LoginRequiredMixin, View):
+    template_name = "accounts/personal_tasks.html"
+    
+    def get(self, request):
+        from .models import PersonalTask
+        
+        # Filtros
+        filter_status = request.GET.get("status", "pending")  # pending, completed, all
+        
+        # Base query - APENAS tarefas do usuário logado
+        tasks = PersonalTask.objects.filter(user=request.user)
+        
+        # Aplicar filtro de status
+        if filter_status == "pending":
+            tasks = tasks.filter(is_completed=False)
+        elif filter_status == "completed":
+            tasks = tasks.filter(is_completed=True)
+        
+        tasks = tasks.order_by("-date", "is_completed", "time")
+        
+        # Tarefas de hoje (para exibição rápida)
+        from django.utils import timezone
+        today = timezone.now().date()
+        today_tasks = PersonalTask.objects.filter(
+            user=request.user,
+            date=today,
+            is_completed=False
+        ).order_by("time")
+        
+        context = {
+            "tasks": tasks,
+            "today_tasks": today_tasks,
+            "today": today,
+            "filter_status": filter_status,
+            "pending_count": PersonalTask.objects.filter(user=request.user, is_completed=False).count(),
+            "completed_count": PersonalTask.objects.filter(user=request.user, is_completed=True).count(),
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        from .models import PersonalTask
+        import json
+        
+        try:
+            data = json.loads(request.body)
+            action = data.get("action")
+            task_id = data.get("task_id")
+            
+            if action == "create":
+                task = PersonalTask.objects.create(
+                    user=request.user,
+                    title=data.get("title"),
+                    date=data.get("date"),
+                    time=data.get("time") or None,
+                )
+                return JsonResponse({"success": True, "task_id": task.id})
+            
+            elif action == "toggle_complete":
+                task = PersonalTask.objects.get(id=task_id, user=request.user)
+                task.is_completed = not task.is_completed
+                task.save(update_fields=["is_completed"])
+                return JsonResponse({"success": True, "is_completed": task.is_completed})
+            
+            elif action == "delete":
+                task = PersonalTask.objects.get(id=task_id, user=request.user)
+                task.delete()
+                return JsonResponse({"success": True})
+            
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+        
+        return JsonResponse({"success": False})
+
+
+personal_tasks = PersonalTasksView.as_view()

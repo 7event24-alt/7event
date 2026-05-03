@@ -4,12 +4,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Client(models.Model):
-    account = models.ForeignKey(
-        "accounts.Account",
-        on_delete=models.CASCADE,
-        related_name="clients",
-        verbose_name=_("Conta"),
-    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -42,6 +36,7 @@ class Client(models.Model):
 
     def delete(self, *args, **kwargs):
         from base.accounts.models import Notification
+
         Notification.objects.filter(action_url__contains=f"/app/clientes/{self.pk}/").delete()
         self.is_active = False
         self.save()

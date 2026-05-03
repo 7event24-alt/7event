@@ -23,9 +23,10 @@
     </div>
     {% endif %}
     
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {% include 'components/recent_jobs.html' %}
-        {% include 'components/upcoming_events.html' %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% include 'components/upcoming_jobs.html' %}
+        {% include 'components/upcoming_visits.html' %}
+        {% include 'components/upcoming_tasks.html' %}
     </div>
 </div>
 
@@ -47,7 +48,7 @@ async function sendTestPush() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({ 
                 token: token,

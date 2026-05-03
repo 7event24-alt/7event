@@ -24,7 +24,7 @@
 
             <p class="text-gray-600 mb-6">
                 Você foi convidado por <strong>{{ invited_by.get_full_name }}</strong> 
-                para fazer parte da equipe <strong>{{ user.account.name }}</strong>.
+                para fazer parte da equipe <strong>{{ invited_by.legal_name|default:invited_by.username }}</strong>.
                 <br><br>
                 Crie sua senha para acessar o sistema.
             </p>

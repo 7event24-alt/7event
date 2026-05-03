@@ -64,6 +64,28 @@
                 <p class="mt-1 text-gray-800">{{ job.location|default:"-" }}</p>
             </div>
             
+            {% if job.has_technical_visit %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                    <i class="fas fa-tools text-blue-600"></i> Visita Técnica
+                </label>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-sm text-gray-800">
+                            <i class="far fa-calendar mr-1"></i>
+                            {{ job.technical_visit_date|date:"d/m/Y" }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-800">
+                            <i class="far fa-clock mr-1"></i>
+                            {{ job.technical_visit_time|time:"H:i" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <div>
                 <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Descrição</label>
                 <p class="mt-1 text-gray-800">{{ job.description|default:"-" }}</p>
@@ -124,7 +146,8 @@
                         <i class="fas fa-times"></i> Cancelar Evento
                     </button>
                 </form>
-                {% elif job.status == 'confirmed' and job.is_past_event %}
+                {% else %}
+{% if job.status == 'confirmed' and job.is_past_event %}
                 <form method="post" action="{% url 'jobs:complete' job.pk %}">
                     {% csrf_token %}
                     <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
@@ -141,29 +164,69 @@
             </div>
         </div>
     </div>
-    
-    <!-- Financeiro -->
+    <!-- Financeiro - Visible to Owner and Staff -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <i class="fas fa-money-bill-wave text-green-600"></i>
-                Financeiro
+                {% if is_owner %}Financeiro{% else %}Meu Cachê{% endif %}
             </h3>
-            {% include 'components/badge_status.html' with status=job.payment_status type='payment' %}
+            {% if is_owner %}{% include 'components/badge_status.html' with status=job.payment_status type='payment' %}{% endif %}
         </div>
         <div class="p-6">
+            {% if is_owner %}
+            <!-- Owner View: Full financial details -->
             <!-- Resumo Cachê -->
             <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 mb-6">
                 <div class="flex justify-between items-center">
-                    <span class="text-green-800 font-medium">Cachê</span>
+                    <span class="text-green-800 font-medium">Cachê Total</span>
                     <span class="text-2xl font-bold text-green-700">{{ job.cache|default:"0"|brl }}</span>
                 </div>
+            </div>
+            
+            <!-- Despesas -->
+            <div class="bg-gray-50 rounded-lg mt-6 p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-semibold text-gray-700">Despesas</h4>
+                    <a href="{% url 'expenses:create' %}?job={{ job.pk }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Adicionar Despesas
+                    </a>
+                </div>
+                
+                {% if expenses %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 text-left text-sm text-gray-600">
+                                <th class="px-4 py-3">Descrição</th>
+                                <th class="px-4 py-3">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for expense in expenses %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ expense.description|default:"-" }}</td>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-800">{{ expense.value|brl }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-gray-50 font-semibold">
+                                <td class="px-4 py-3">Total</td>
+                                <td class="px-4 py-3 text-green-600">{{ total_expenses|brl }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">Nenhuma despesa registrada.</p>
+                {% endif %}
             </div>
             
             <!-- Pagamentos -->
             {% if job.payment_type == 'partial' %}
             <!-- Pagamento Parcial -->
-            <div class="space-y-4">
+            <div class="space-y-4 my-6">
                 <!-- 1ª Parcela -->
                 <div class="bg-gray-50 rounded-xl p-4 {% if job.payment_status == 'paid' %}border-l-4 border-green-500{% endif %}">
                     <div class="flex items-center justify-between mb-2">
@@ -187,17 +250,19 @@
                         <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
                             <i class="fas fa-check-circle"></i> Pago
                         </span>
-                        {% elif job.payment_status == 'pending' %}
-                        <form method="post" action="{% url 'jobs:confirm_partial' job.pk %}">
-                            {% csrf_token %}
-                            <button type="submit" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-1">
-                                <i class="fas fa-check"></i> Confirmar
-                            </button>
-                        </form>
-                        {% elif job.payment_status == 'partial' %}
-                        <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
-                            <i class="fas fa-check-circle"></i> Pago ✓
-                        </span>
+                        {% else %}
+                            {% if job.payment_status == 'pending' %}
+                            <form method="post" action="{% url 'jobs:confirm_partial' job.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-1">
+                                    <i class="fas fa-check"></i> Confirmar
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
+                                <i class="fas fa-check-circle"></i> Pago ✓
+                            </span>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -207,7 +272,7 @@
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
                             <span class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm">2</span>
-                            <span class="font-medium text-gray-700">2ª Parcela</span>
+                            <span class="font-medium text-gray-700">2ª Parcela (no dia)</span>
                         </div>
                         <span class="text-lg font-semibold text-gray-800">{{ job.payment_remaining_value|brl }}</span>
                     </div>
@@ -225,17 +290,19 @@
                         <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
                             <i class="fas fa-check-circle"></i> Pago
                         </span>
-                        {% elif job.payment_status == 'partial' %}
-                        <form method="post" action="{% url 'jobs:confirm_remaining' job.pk %}">
-                            {% csrf_token %}
-                            <button type="submit" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-1">
-                                <i class="fas fa-check"></i> Confirmar
-                            </button>
-                        </form>
                         {% else %}
-                        <span class="text-yellow-600 text-sm font-medium">
-                            <i class="fas fa-clock"></i> Aguardando 1ª
-                        </span>
+                            {% if job.payment_status == 'partial' %}
+                            <form method="post" action="{% url 'jobs:confirm_remaining' job.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-1">
+                                    <i class="fas fa-check"></i> Confirmar
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-yellow-600 text-sm font-medium">
+                                <i class="fas fa-clock"></i> Aguardando 1ª
+                            </span>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -249,120 +316,647 @@
                 </div>
                 {% endif %}
             </div>
-            
-            {% elif job.payment_type == 'full' %}
-            <!-- Pagamento Total -->
-            <div class="bg-gray-50 rounded-xl p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="font-medium text-gray-700">Pagamento</span>
-                    <span class="text-lg font-semibold text-gray-800">{{ job.payment_total|brl }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-gray-500">
-                        <i class="fas fa-calendar"></i>
-                        <span class="text-sm">{{ job.payment_date|date:"d/m/Y" }}</span>
+            {% else %}
+                {% if job.payment_type == 'full' %}
+                <!-- Pagamento Total -->
+                <div class="my-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-medium text-gray-700">Pagamento</span>
+                        <span class="text-lg font-semibold text-gray-800">{{ job.payment_total|brl }}</span>
                     </div>
-                    {% if job.payment_status == 'paid' %}
-                    <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
-                        <i class="fas fa-check-circle"></i> Pago
-                    </span>
-                    {% else %}
-                    <form method="post" action="{% url 'jobs:confirm_payment' job.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-                            <i class="fas fa-check"></i> Confirmar Pagamento
-                        </button>
-                    </form>
-                    {% endif %}
-                </div>
-            </div>
-            
-            {% elif job.payment_type == 'advance' %}
-            <!-- Pagamento Antecipado -->
-            <div class="bg-gray-50 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
-                            <i class="fas fa-bolt"></i>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <i class="fas fa-calendar"></i>
+                            <span class="text-sm">{{ job.payment_date|date:"d/m/Y" }}</span>
+                        </div>
+                        {% if job.payment_status == 'paid' %}
+                        <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
+                            <i class="fas fa-check-circle"></i> Pago
                         </span>
-                        <span class="font-medium text-gray-700">Pagamento Antecipado</span>
+                        {% else %}
+                        <form method="post" action="{% url 'jobs:confirm_payment' job.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                                <i class="fas fa-check"></i> Confirmar Pagamento
+                            </button>
+                        </form>
+                        {% endif %}
                     </div>
-                    {% if job.payment_status == 'paid' %}
-                    <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
-                        <i class="fas fa-check-circle"></i> Pago
-                    </span>
-                    {% else %}
-                    <form method="post" action="{% url 'jobs:confirm_payment' job.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-                            <i class="fas fa-check"></i> Confirmar
-                        </button>
-                    </form>
-                    {% endif %}
                 </div>
-            </div>
+                {% else %}
+                <!-- Pagamento Antecipado -->
+                <div class="my-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-gray-700">Pagamento Antecipado</span>
+                        </div>
+                        <span class="text-lg font-semibold text-gray-800">{{ job.payment_advance_value|brl }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <i class="fas fa-calendar"></i>
+                            <span class="text-sm">{{ job.payment_advance_date|date:"d/m/Y" }}</span>
+                        </div>
+                        {% if job.payment_status == 'paid' %}
+                        <span class="flex items-center gap-1 text-green-600 font-medium text-sm">
+                            <i class="fas fa-check-circle"></i> Pago
+                        </span>
+                        {% else %}
+                        <form method="post" action="{% url 'jobs:confirm_payment' job.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                                <i class="fas fa-check"></i> Confirmar Pagamento
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             {% endif %}
             
-            <!-- Despesas e Lucro -->
-            <div class="mt-6 pt-6 border-t border-gray-200 space-y-3">
+            <!-- Lucro Líquido (Owner only) -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600 flex items-center gap-2">
-                        <i class="fas fa-receipt text-red-400"></i>
-                        Total Despesas
-                    </span>
-                    <span class="text-red-600 font-semibold">{{ total_expenses|brl }}</span>
-                </div>
-                <div class="flex justify-between items-center bg-gray-50 rounded-lg px-4 py-3 -mx-4">
-                    <span class="font-semibold text-gray-800 flex items-center gap-2">
-                        <i class="fas fa-chart-line text-gray-600"></i>
-                        Lucro Líquido
-                    </span>
+                    <span class="text-gray-600">Lucro Líquido</span>
                     <span class="text-xl font-bold {% if net_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
                         {{ net_profit|brl }}
                     </span>
                 </div>
             </div>
+            {% else %}
+            <!-- Professional View: Only own cache -->
+            {% if user_confirmed_cache %}
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-blue-800 font-medium">Meu Cachê Confirmado</span>
+                    <span class="text-2xl font-bold text-blue-700">{{ user_confirmed_cache|brl }}</span>
+                </div>
+                <p class="text-sm text-blue-600 mt-2">
+                    <i class="fas fa-check-circle"></i> Status confirmado
+                </p>
+            </div>
+            {% elif user_cache_value %}
+            <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-yellow-800 font-medium">Meu Cachê</span>
+                    <span class="text-2xl font-bold text-yellow-700">{{ user_cache_value|brl }}</span>
+                </div>
+                <p class="text-sm text-yellow-600 mt-2">
+                    <i class="fas fa-clock"></i> Aguardando confirmação de presença
+                </p>
+            </div>
+            {% else %}
+            <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                <p class="text-gray-500 text-center">Nenhum cachê definido ainda.</p>
+            </div>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
-</div>
-
-<!-- Despesas -->
-<div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap justify-between items-center gap-2">
-        <h3 class="text-lg font-semibold text-gray-800">Despesas ({{ expenses.count }})</h3>
-        <a href="{% url 'expenses:create' %}?job={{ job.pk }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-            <i class="fas fa-plus"></i> <span class="hidden sm:inline">Nova Despesa</span>
-        </a>
-    </div>
+    </div> <!-- Fecha o grid (2 colunas) -->
     
-    {% if expenses %}
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Categoria</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Descrição</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% for expense in expenses %}
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-600">{{ expense.date|date:"d/m/Y" }}</td>
-                    <td class="px-4 py-3">{% include 'components/badge_status.html' with status=expense.category type='expense' %}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">{{ expense.description|default:"-" }}</td>
-                    <td class="px-4 py-3 text-sm font-medium text-right">- {{ expense.value|brl }}</td>
-                </tr>
+    <!-- Equipe/Staff - Visible to Owner (Agency) and Staff Members -->
+    {% if can_manage_staff or is_staff_member %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden my-6">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap justify-between items-center gap-2">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-users text-primary"></i>
+                Equipe ({{ staff.count }})
+            </h3>
+            {% if can_manage_staff %}
+            <button onclick="openStaffModal()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i> Adicionar
+            </button>
+            {% endif %}
+        </div>
+        <div class="p-6">
+            {% if staff %}
+            <div class="space-y-3">
+                {% for member in staff %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl {% if member.professional == request.user %}border-l-4 border-primary{% endif %}" data-staff-id="{{ member.pk }}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <span class="text-primary font-bold">{{ member.professional.first_name|default:member.professional.username|slice:":1" }}</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                {% if member.status == 'confirmed' or member.status == 'paid' %}
+                                <!-- Link para perfil se confirmado/pago -->
+                                <a href="{% url 'accounts:user_profile_detail' member.professional.id %}" 
+                                   class="hover:text-primary hover:underline">
+                                    {{ member.professional.get_full_name|default:member.professional.username }}
+                                </a>
+                                {% else %}
+                                <!-- Estático se pendente -->
+                                {{ member.professional.get_full_name|default:member.professional.username }}
+                                {% endif %}
+                                
+                                {% if member.professional == request.user %}
+                                <span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">Você</span>
+                                {% elif member.professional == job.created_by %}
+                                <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Dono</span>
+                                {% endif %}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                {% include 'components/badge_status.html' with status=member.status type='staff' %}
+                                {% if member.payment_type %}
+                                <span class="payment-type hidden">{{ member.payment_type }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-green-600">{{ member.cache_value|brl }}</p>
+                        <p class="text-xs text-gray-500">Cachê</p>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-3">
+                        <!-- Owner actions (can_manage_staff) -->
+                        {% if can_manage_staff %}
+                        <button 
+                            onclick="openEditStaffModal(this)"
+                            data-staff-id="{{ member.pk }}"
+                            data-staff-name="{{ member.professional.get_full_name|default:member.professional.username|escapejs }}"
+                            data-staff-role="{{ member.role|default:'' }}"
+                            data-staff-cache="{{ member.cache_value|default:'' }}"
+                            data-staff-notes="{{ member.notes|default:''|escapejs }}"
+                            data-staff-status="{{ member.status }}"
+                            data-staff-payment-type="{{ member.payment_type|default:'' }}"
+                            class="text-gray-500 hover:text-primary p-2 rounded-lg hover:bg-gray-100" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button 
+                            onclick="openRemoveModal(this)"
+                            data-staff-id="{{ member.pk }}"
+                            data-staff-name="{{ member.professional.get_full_name|default:member.professional.username|escapejs }}"
+                            class="text-gray-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                        <!-- Staff actions (own status update) -->
+                        {% if member.professional == request.user %}
+                            {% if member.status == 'pending' %}
+                            <div class="flex gap-2">
+                                <button onclick="updateStaffStatus({{ member.pk }}, 'accepted')" 
+                                    class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium">
+                                    <i class="fas fa-check"></i> Aceitar
+                                </button>
+                                <button onclick="updateStaffStatus({{ member.pk }}, 'rejected')" 
+                                    class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">
+                                    <i class="fas fa-times"></i> Recusar
+                                </button>
+                            </div>
+                            {% elif member.status == 'accepted' %}
+                            <div class="flex gap-2">
+                                <button onclick="updateStaffStatus({{ member.pk }}, 'confirmed')" 
+                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                                    <i class="fas fa-check-double"></i> Confirmar Presença
+                                </button>
+                                <button onclick="updateStaffStatus({{ member.pk }}, 'cancelled_by_prof')" 
+                                    class="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium">
+                                    <i class="fas fa-ban"></i> Cancelar
+                                </button>
+                            </div>
+                            {% elif member.status == 'confirmed' %}
+                            <div class="flex gap-2">
+                                <button onclick="updateStaffStatus({{ member.pk }}, 'paid')" 
+                                    class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium">
+                                    <i class="fas fa-money-bill"></i> Confirmar Pagamento
+                                </button>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="p-8 text-center">
-        <i class="fas fa-receipt text-3xl text-gray-300 mb-3"></i>
-        <p class="text-gray-500">Nenhuma despesa registrada.</p>
+            </div>
+            {% else %}
+            <div class="p-8 text-center">
+                <i class="fas fa-users text-3xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500">Nenhum profissional na equipe.</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
-</div>
+    
+    {% block scripts %}
+    <script>
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    
+    // Open Add Staff Modal
+    function openStaffModal() {
+        document.getElementById('addStaffModal').classList.remove('hidden');
+        // loadAvailableProfessionals removido (função não existe)
+    }
+    
+    // Close Add Staff Modal
+    function closeStaffModal() {
+        document.getElementById('addStaffModal').classList.add('hidden');
+    }
+    
+    // Autocomplete for professionals search
+    let searchTimeout = null;
+
+    function debounceSearchProfessionals(query) {
+        // Clear previous timer (debounce)
+        clearTimeout(searchTimeout);
+        
+        const resultsDiv = document.getElementById('staffSearchResults');
+        const hiddenInput = document.getElementById('staffProfessionalId');
+        
+        // Clear previous selection
+        hiddenInput.value = '';
+        
+        if (query.length < 2) {
+            resultsDiv.classList.add('hidden');
+            resultsDiv.innerHTML = '';
+            return;
+        }
+        
+        // Show "Loading..."
+        resultsDiv.classList.remove('hidden');
+        resultsDiv.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">Carregando...</div>';
+        
+        // Debounce: wait 300ms before sending request
+        searchTimeout = setTimeout(() => {
+            fetch(`/app/trabalhos/buscar-profissionais/?q=${encodeURIComponent(query)}&job_id={{ job.pk }}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    
+                    const professionals = data.professionals || [];
+                    
+                    if (professionals.length === 0) {
+                        resultsDiv.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">Nenhum profissional encontrado.</div>';
+                        return;
+                    }
+                    
+                    // Show up to 3 results
+                    professionals.slice(0, 3).forEach(prof => {
+                        const div = document.createElement('div');
+                        div.className = 'px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm';
+                        div.textContent = `${prof.name} (${prof.email})`;
+                        div.onclick = () => selectProfessional(prof.id, prof.name);
+                        resultsDiv.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = '<div class="px-4 py-3 text-sm text-red-500">Erro ao buscar.</div>';
+                });
+        }, 300);
+    }
+
+    function selectProfessional(id, name) {
+        const resultsDiv = document.getElementById('staffSearchResults');
+        const hiddenInput = document.getElementById('staffProfessionalId');
+        const searchInput = document.getElementById('staffSearchInput');
+        
+        // Store selected ID
+        hiddenInput.value = id;
+        
+        // Show selected name
+        searchInput.value = name;
+        
+        // Hide results
+        resultsDiv.classList.add('hidden');
+    }
+
+    // Hide results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#staffSearchInput') && !e.target.closest('#staffSearchResults')) {
+            document.getElementById('staffSearchResults').classList.add('hidden');
+        }
+    });
+
+    // Update openStaffModal to clear search
+    const originalOpenStaffModal = openStaffModal;
+    openStaffModal = function() {
+        document.getElementById('staffSearchInput').value = '';
+        document.getElementById('staffProfessionalId').value = '';
+        document.getElementById('staffSearchResults').classList.add('hidden');
+        originalOpenStaffModal();
+    };
+    
+    // Submit Add Staff Form
+    function submitAddStaff() {
+        const professionalId = document.getElementById('staffProfessionalId').value;
+        const role = document.getElementById('staffRole').value;
+        const cacheValue = document.getElementById('staffCache').value;
+        const notes = document.getElementById('staffNotes').value;
+        const paymentType = document.getElementById('staffPaymentType').value;
+        
+        if (!professionalId) {
+            alert('Selecione um profissional');
+            return;
+        }
+        
+        // Use FormData from the form itself
+        const form = document.getElementById('staffForm');
+        const formData = new FormData(form);
+        // Override professional if needed
+        if (professionalId) {
+            formData.set('professional', professionalId);
+        }
+        // Remove professional_id if present (old name)
+        formData.delete('professional_id');
+        
+        fetch('/app/trabalhos/{{ job.pk }}/adicionar-staff/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Erro ao adicionar profissional');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao adicionar profissional');
+        });
+    }
+    
+    // Open Edit Staff Modal
+    function openEditStaffModal(button) {
+        const staffId = button.getAttribute('data-staff-id');
+        const staffName = button.getAttribute('data-staff-name');
+        const staffRole = button.getAttribute('data-staff-role');
+        const staffCache = button.getAttribute('data-staff-cache');
+        const staffNotes = button.getAttribute('data-staff-notes');
+        const staffStatus = button.getAttribute('data-staff-status');
+        const staffPaymentType = button.getAttribute('data-staff-payment-type');
+        
+        document.getElementById('editStaffId').value = staffId;
+        document.getElementById('editStaffName').textContent = staffName;
+        document.getElementById('editStaffRole').value = staffRole;
+        document.getElementById('editStaffCache').value = staffCache;
+        document.getElementById('editStaffNotes').value = staffNotes;
+        document.getElementById('editStaffStatus').value = staffStatus;
+        document.getElementById('editStaffPaymentType').value = staffPaymentType;
+        
+        document.getElementById('editStaffModal').classList.remove('hidden');
+    }
+    
+    // Close Edit Staff Modal
+    function closeEditStaffModal() {
+        document.getElementById('editStaffModal').classList.add('hidden');
+    }
+    
+    // Submit Edit Staff Form
+    function submitEditStaff() {
+        const staffId = document.getElementById('editStaffId').value;
+        const jobId = document.getElementById('editStaffJobId').value;
+        const role = document.getElementById('editStaffRole').value;
+        const cacheValue = document.getElementById('editStaffCache').value;
+        const notes = document.getElementById('editStaffNotes').value;
+        const status = document.getElementById('editStaffStatus').value;
+        const paymentType = document.getElementById('editStaffPaymentType').value;
+        
+        const formData = new FormData();
+        formData.append('role', role);
+        formData.append('cache_value', cacheValue);
+        formData.append('notes', notes);
+        formData.append('status', status);
+        formData.append('payment_type', paymentType);
+        
+        fetch(`/app/trabalhos/${jobId}/staff/${staffId}/atualizar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Erro ao atualizar membro');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao atualizar membro');
+        });
+    }
+    
+    // Open Remove Staff Modal
+    function openRemoveModal(button) {
+        const staffId = button.getAttribute('data-staff-id');
+        const staffName = button.getAttribute('data-staff-name');
+        
+        document.getElementById('removeStaffId').value = staffId;
+        document.getElementById('removeStaffName').textContent = staffName;
+        
+        document.getElementById('removeStaffModal').classList.remove('hidden');
+    }
+    
+    // Close Remove Staff Modal
+    function closeRemoveModal() {
+        document.getElementById('removeStaffModal').classList.add('hidden');
+    }
+    
+    // Confirm Remove Staff
+    function confirmRemoveStaff() {
+        const staffId = document.getElementById('removeStaffId').value;
+        const jobId = document.getElementById('removeStaffJobId').value;
+        
+        const formData = new FormData();
+        
+        fetch(`/app/trabalhos/${jobId}/staff/${staffId}/remover/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Erro ao remover membro');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao remover membro');
+        });
+    }
+    
+    // Update Staff Status (for professional's own status)
+    function updateStaffStatus(staffId, newStatus) {
+        const jobId = document.getElementById('editStaffJobId')?.value || {{ job.pk }};
+        
+        if (newStatus === 'rejected') {
+            if (!confirm('Tem certeza que deseja recusar este convite? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+        }
+        
+        const formData = new FormData();
+        formData.append('status', newStatus);
+        
+        fetch(`/app/trabalhos/${jobId}/staff/${staffId}/status/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.redirect) {
+                    window.location.href = '/app/trabalhos/';
+                } else {
+                    location.reload();
+                }
+            } else {
+                alert(data.error || 'Erro ao atualizar status');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao atualizar status');
+        });
+    }
+    </script>
+    
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Adicionar Profissional à Equipe</h3>
+                <button onclick="closeStaffModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="staffForm" onsubmit="event.preventDefault(); submitAddStaff();">
+            <div class="space-y-4">
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Profissional</label>
+                    <input type="text" 
+                           id="staffSearchInput" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                           placeholder="Digite pelo menos 2 caracteres..."
+                           oninput="debounceSearchProfessionals(this.value)">
+                    
+                    <!-- Dropdown de resultados (máximo 3) -->
+                    <div id="staffSearchResults" 
+                         class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                        <!-- Resultados serão inseridos dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- Campo oculto para armazenar o ID do profissional selecionado -->
+                <input type="hidden" id="staffProfessionalId" name="professional" value="">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Função</label>
+                    <select id="staffRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Selecione...</option>
+                        {% for value, label in professional_roles %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cachê (R$)</label>
+                    <input type="number" id="staffCache" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="0.00">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Pagamento</label>
+                    <select id="staffPaymentType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Selecione...</option>
+                        {% for value, label in payment_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                    <textarea id="staffNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="closeStaffModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="button" onclick="submitAddStaff()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
+                    Adicionar
+                </button>
+            </div>
+        </form>
+        </div>
+    </div>
+    
+    <!-- Remove Staff Modal -->
+    <div id="removeStaffModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-red-600">Remover Membro</h3>
+                <button onclick="closeRemoveModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 mb-6">
+                Tem certeza que deseja remover <strong id="removeStaffName"></strong> da equipe?
+            </p>
+            <input type="hidden" id="removeStaffId">
+            <input type="hidden" id="removeStaffJobId" value="{{ job.pk }}">
+            
+            <div class="flex gap-3">
+                <button onclick="closeRemoveModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button onclick="confirmRemoveStaff()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Remover
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Confirm Modal (for professional) -->
+    <div id="statusConfirmModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6">
+            <h3 class="text-lg font-bold mb-4" id="statusModalTitle">Confirmar Ação</h3>
+            <p class="text-gray-600 mb-6" id="statusModalMessage"></p>
+            <div class="flex gap-3">
+                <button onclick="closeStatusModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button id="statusModalConfirm" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    function closeStatusModal() {
+        document.getElementById('statusConfirmModal').classList.add('hidden');
+    }
+    </script>
+    {% endblock %}
+    
+    {% endif %}
 {% endblock %}

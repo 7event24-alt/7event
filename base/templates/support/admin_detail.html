@@ -34,7 +34,7 @@
                 <p class="font-medium text-gray-800">
                     {% if message.user %}
                     {{ message.user.get_full_name|default:message.user.email }}
-                    <span class="text-gray-400">({{ message.user.account.name }})</span>
+                    <span class="text-gray-400">({{ message.user.legal_name|default:message.user.username }})</span>
                     {% else %}
                     Visitante não logado
                     {% endif %}

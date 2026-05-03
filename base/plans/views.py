@@ -13,14 +13,6 @@ class PlanListView(LoginRequiredMixin, View):
     template_name = "plans/list.html"
 
     def get(self, request):
-        # If user already has a plan with permission, redirect to dashboard
-        if request.user.account and request.user.account.plan:
-            plan = request.user.account.plan
-            # Check if plan has access - for now allow if they have any active plan
-            if request.user.account.is_active:
-                return HttpResponseRedirect(reverse("dashboard:home"))
-
-        # Get all visible plans
         plans = Plan.objects.filter(is_visible=True).order_by("price_monthly")
 
         return render(
@@ -41,19 +33,15 @@ class PlanListView(LoginRequiredMixin, View):
         except Plan.DoesNotExist:
             return HttpResponseRedirect(reverse("plans:list"))
 
-        # Store requested plan in session
         request.session["requested_plan_id"] = plan.id
         request.session["requested_plan_name"] = plan.name
         request.session["payment_link"] = plan.payment_link or ""
 
-        # Se é plano FREE, ativar diretamente
         if plan.price_monthly == 0:
             return HttpResponseRedirect(reverse("plans:activate_free"))
 
-        # Notify superusers about plan request
         self.notify_superuser(request.user, plan)
 
-        # Redirect to waiting page (com link de pagamento)
         return HttpResponseRedirect(reverse("plans:waiting"))
 
     def notify_superuser(self, user, plan):
@@ -80,7 +68,6 @@ Um novo usuário solicitou um plano no 7event.
 Detalhes do usuário:
 - Nome: {user.get_full_name() or "Não informado"}
 - Email: {user.email}
-- Empresa: {user.account.name if user.account else "Não informada"}
 
 Plano solicitado: {plan.name}
 
@@ -99,7 +86,7 @@ Equipe 7event
                 fail_silently=True,
             )
         except Exception:
-            pass  # Silently fail if email fails
+            pass
 
 
 plan_list = PlanListView.as_view()
@@ -109,22 +96,11 @@ class ActivateFreeView(LoginRequiredMixin, View):
     """Ativar plano FREE (BASIC) para o usuário"""
 
     def post(self, request):
-        if not request.user.account:
-            messages.error(request, "Você precisa de uma conta primeiro.")
-            return HttpResponseRedirect(reverse("plans:list"))
-
-        # Buscar plano FREE (BASIC)
         free_plan = Plan.objects.filter(type=PlanType.BASIC, is_active=True).first()
 
         if not free_plan:
             messages.error(request, "Plano FREE não disponível.")
             return HttpResponseRedirect(reverse("plans:list"))
-
-        # Ativar plano FREE
-        account = request.user.account
-        account.plan = free_plan
-        account.is_active = True
-        account.save()
 
         messages.success(request, f"Plano {free_plan.name} ativado com sucesso!")
         return HttpResponseRedirect(reverse("dashboard:home"))

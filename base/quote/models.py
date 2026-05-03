@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
 
@@ -13,11 +14,13 @@ class QuoteStatus(models.TextChoices):
 
 
 class Quote(models.Model):
-    account = models.ForeignKey(
-        "accounts.Account",
-        on_delete=models.CASCADE,
-        related_name="quotes",
-        verbose_name=_("Conta"),
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="quotes_created",
+        verbose_name=_("Criado por"),
+        null=True,
+        blank=True,
     )
     client = models.ForeignKey(
         "clients.Client",
@@ -75,6 +78,7 @@ class Quote(models.Model):
 
     def delete(self, *args, **kwargs):
         from base.accounts.models import Notification
+
         Notification.objects.filter(action_url__contains=f"/app/orcamentos/{self.pk}/").delete()
         self.is_active = False
         self.save()

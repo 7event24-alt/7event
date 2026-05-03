@@ -3,8 +3,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
-from django.http import HttpResponseRedirect
-from django.urls import reverse
 from datetime import timedelta
 from decimal import Decimal
 
@@ -19,77 +17,66 @@ class DashboardView(LoginRequiredMixin, View):
     template_name = "dashboard/home.html"
 
     def get(self, request):
-        company = request.user.account
-        if not company:
-            return HttpResponseRedirect(reverse("plans:list"))
+        user = request.user
+        is_superuser = user.is_superuser
 
         now = timezone.now()
         month_start = now.replace(day=1)
         last_month_start = (month_start - timedelta(days=1)).replace(day=1)
         last_month_end = month_start - timedelta(days=1)
 
-        # Jobs counts by status
-        jobs_total = Job.objects.filter(account=company).count()
-        jobs_pending = Job.objects.filter(
-            account=company, status=JobStatus.PENDING
-        ).count()
-        jobs_confirmed = Job.objects.filter(
-            account=company, status=JobStatus.CONFIRMED
-        ).count()
-        jobs_completed = Job.objects.filter(
-            account=company, status=JobStatus.COMPLETED
-        ).count()
-        jobs_cancelled = Job.objects.filter(
-            account=company, status=JobStatus.CANCELLED
+        if is_superuser:
+            base_jobs = Job.objects.all()
+            base_expenses = Expense.objects.all()
+            base_clients = Client.objects.all()
+        else:
+            base_jobs = Job.objects.filter(created_by=user)
+            base_expenses = Expense.objects.filter(performed_by=user)
+            base_clients = Client.objects.filter(created_by=user)
+
+        jobs_total = base_jobs.count()
+        jobs_pending = base_jobs.filter(status=JobStatus.PENDING).count()
+        jobs_confirmed = base_jobs.filter(status=JobStatus.CONFIRMED).count()
+        jobs_completed = base_jobs.filter(status=JobStatus.COMPLETED).count()
+        jobs_cancelled = base_jobs.filter(status=JobStatus.CANCELLED).count()
+
+        jobs_this_month = base_jobs.filter(
+            start_date__gte=month_start, start_date__lte=now.date()
         ).count()
 
-        # Jobs this month
-        jobs_this_month = Job.objects.filter(
-            account=company, start_date__gte=month_start, start_date__lte=now.date()
-        ).count()
-
-        # Revenue metrics
-        total_revenue = Job.objects.filter(
-            account=company, cache__isnull=False
+        total_revenue = base_jobs.filter(
+            cache__isnull=False
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
 
-        revenue_this_month = Job.objects.filter(
-            account=company, start_date__gte=month_start, cache__isnull=False
+        revenue_this_month = base_jobs.filter(
+            start_date__gte=month_start, cache__isnull=False
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
 
-        revenue_received = Job.objects.filter(
-            account=company, payment_status=PaymentStatusJob.PAID
+        revenue_received = base_jobs.filter(
+            payment_status=PaymentStatusJob.PAID
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
 
-        # Receita de parcelas parciais confirmadas
-        revenue_from_partial = Job.objects.filter(
-            account=company, payment_status=PaymentStatusJob.PARTIAL
+        revenue_from_partial = base_jobs.filter(
+            payment_status=PaymentStatusJob.PARTIAL
         ).aggregate(total=Sum("payment_partial_value"))["total"] or Decimal("0")
         
         revenue_received = revenue_received + revenue_from_partial
 
-        # Receita pendente de antecipado/total (cache completo)
-        pending_full = Job.objects.filter(
-            account=company,
+        pending_full = base_jobs.filter(
             payment_status=PaymentStatusJob.PENDING,
             payment_type__in=[PaymentType.ADVANCE, PaymentType.FULL]
         ).aggregate(total=Sum("cache"))["total"] or Decimal("0")
 
-        # Receita pendente de parcial (2ª parcela)
-        pending_partial = Job.objects.filter(
-            account=company,
+        pending_partial = base_jobs.filter(
             payment_status=PaymentStatusJob.PARTIAL
         ).aggregate(total=Sum("payment_remaining_value"))["total"] or Decimal("0")
 
         revenue_pending = pending_full + pending_partial
 
-        # Expenses
-        total_expenses = Expense.objects.filter(account=company).aggregate(
-            total=Sum("value")
-        )["total"] or Decimal("0")
+        total_expenses = base_expenses.aggregate(total=Sum("value"))["total"] or Decimal("0")
 
-        monthly_expenses = Expense.objects.filter(
-            account=company, date__gte=month_start
+        monthly_expenses = base_expenses.filter(
+            date__gte=month_start
         ).aggregate(total=Sum("value"))["total"] or Decimal("0")
 
         net_profit = total_revenue - total_expenses
@@ -100,44 +87,64 @@ class DashboardView(LoginRequiredMixin, View):
         else:
             profit_margin = 0
 
-        # Recent jobs
         recent_jobs = (
-            Job.objects.filter(account=company)
-            .select_related("client")
-            .order_by("-created_at")[:5]
+            base_jobs.select_related("client").order_by("-created_at")[:5]
         )
 
-        # Upcoming events (today to next 3 months)
         from datetime import date
 
         today = date.today()
         three_months_later = today + timedelta(days=90)
 
         upcoming_events = (
-            Job.objects.filter(
-                account=company,
+            base_jobs.filter(
                 start_date__gte=today,
                 start_date__lte=three_months_later,
             )
             .select_related("client")
             .order_by("start_date")
         )
-
+        
         upcoming_events_count = upcoming_events.count()
-
-        # If no future events, show recent past events
+        
         if upcoming_events_count == 0:
             upcoming_events = (
-                Job.objects.filter(account=company)
-                .select_related("client")
-                .order_by("-start_date")[:10]
+                base_jobs.select_related("client").order_by("-start_date")[:10]
             )
-            upcoming_events_count = Job.objects.filter(account=company).count()
+            upcoming_events_count = base_jobs.count()
+        
+        # NOVO: Jobs normais (sem visita técnica)
+        upcoming_jobs = upcoming_events.filter(
+            has_technical_visit=False
+        ).order_by("start_date")[:10]
+        
+        upcoming_jobs_count = upcoming_events.filter(has_technical_visit=False).count()
+        
+        # NOVO: Visitas Técnicas
+        upcoming_visits = upcoming_events.filter(
+            has_technical_visit=True
+        ).order_by("start_date")[:10]
+        
+        upcoming_visits_count = upcoming_events.filter(has_technical_visit=True).count()
+        
+        # NOVO: Tarefas pessoais pendentes (próximos 90 dias)
+        from base.accounts.models import PersonalTask
+        today_date = timezone.now().date()
+        upcoming_tasks = PersonalTask.objects.filter(
+            user=user,
+            date__gte=today_date,
+            date__lte=today_date + timedelta(days=90),
+            is_completed=False
+        ).order_by("date", "time")[:10]
+        
+        upcoming_tasks_count = PersonalTask.objects.filter(
+            user=user,
+            is_completed=False
+        ).count()
 
-        # Clients
-        clients_total = Client.objects.filter(account=company).count()
-        clients_this_month = Client.objects.filter(
-            account=company, created_at__gte=month_start
+        clients_total = base_clients.count()
+        clients_this_month = base_clients.filter(
+            created_at__gte=month_start
         ).count()
 
         context = {
@@ -161,7 +168,14 @@ class DashboardView(LoginRequiredMixin, View):
             "revenue_pending": revenue_pending,
             "clients_total": clients_total,
             "clients_this_month": clients_this_month,
-            "company": company,
+            "company": user,
+            # Novos cards
+            "upcoming_jobs": upcoming_jobs,
+            "upcoming_jobs_count": upcoming_jobs_count,
+            "upcoming_visits": upcoming_visits,
+            "upcoming_visits_count": upcoming_visits_count,
+            "upcoming_tasks": upcoming_tasks,
+            "upcoming_tasks_count": upcoming_tasks_count,
         }
 
         return render(request, self.template_name, context)
@@ -174,26 +188,33 @@ def search(request):
     from django.contrib.auth.decorators import login_required
     from functools import wraps
 
-    # Login required decorator equivalent for function view
     if not request.user.is_authenticated:
         from django.shortcuts import redirect
 
         return redirect("accounts:login")
 
     query = request.GET.get("q", "").strip()
-    account = request.user.account
-
-    if not account:
-        return render(
-            request, "search.html", {"query": query, "error": "Conta não encontrada"}
-        )
+    user = request.user
+    is_superuser = user.is_superuser
 
     context = {"query": query, "has_searched": bool(query)}
 
     if query:
-        # Buscar em Jobs
+        if is_superuser:
+            jobs_base = Job.objects.all()
+            clients_base = Client.objects.all()
+            services_base = Service.objects.all()
+            quotes_base = Quote.objects.all()
+            expenses_base = Expense.objects.all()
+        else:
+            jobs_base = Job.objects.filter(created_by=user)
+            clients_base = Client.objects.filter(created_by=user)
+            services_base = Service.objects.filter(created_by=user)
+            quotes_base = Quote.objects.filter(created_by=user)
+            expenses_base = Expense.objects.filter(performed_by=user)
+
         jobs = (
-            Job.objects.filter(account=account)
+            jobs_base
             .filter(
                 Q(title__icontains=query)
                 | Q(location__icontains=query)
@@ -205,8 +226,7 @@ def search(request):
         context["jobs"] = jobs
         context["jobs_count"] = jobs.count()
 
-        # Buscar em Clients
-        clients = Client.objects.filter(account=account).filter(
+        clients = clients_base.filter(
             Q(name__icontains=query)
             | Q(email__icontains=query)
             | Q(phone__icontains=query)
@@ -215,32 +235,28 @@ def search(request):
         context["clients"] = clients
         context["clients_count"] = clients.count()
 
-        # Buscar em Services
-        services = Service.objects.filter(account=account).filter(
+        services = services_base.filter(
             Q(name__icontains=query) | Q(description__icontains=query)
         )[:10]
         context["services"] = services
         context["services_count"] = services.count()
 
-        # Buscar em Quotes
         quotes = (
-            Quote.objects.filter(account=account)
+            quotes_base
             .filter(Q(title__icontains=query) | Q(description__icontains=query))
             .select_related("client")[:10]
         )
         context["quotes"] = quotes
         context["quotes_count"] = quotes.count()
 
-        # Buscar em Expenses
         expenses = (
-            Expense.objects.filter(account=account)
+            expenses_base
             .filter(Q(description__icontains=query) | Q(category__icontains=query))
             .select_related("job")[:10]
         )
         context["expenses"] = expenses
         context["expenses_count"] = expenses.count()
 
-        # Total de resultados
         context["total_results"] = (
             context["jobs_count"]
             + context["clients_count"]

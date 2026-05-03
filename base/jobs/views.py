@@ -5,40 +5,26 @@ from django.views import View
 from django.contrib import messages
 from django.utils import timezone
 
-from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob
+from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob, JobStaff, JobStaffStatus
+from base.accounts.models import ProfessionalRole
 from base.clients.models import Client
 
 
-class CompanyRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            from django.contrib.auth.views import redirect_to_login
-
-            return redirect_to_login(request.get_full_path())
-
-        if not request.user.account:
-            from django.http import HttpResponseRedirect
-            from django.urls import reverse
-
-            return HttpResponseRedirect(reverse("plans:list"))
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class JobListView(CompanyRequiredMixin, View):
+class JobListView(LoginRequiredMixin, View):
     template_name = "jobs/list.html"
 
     def get(self, request):
-        company = request.user.account
         user = request.user
 
-        # Admin vê todos
-        if user.is_account_admin:
-            jobs = Job.objects.filter(account=company, is_active=True)
+        if user.is_superuser:
+            jobs = Job.objects.filter(is_active=True)
         else:
-            jobs = Job.objects.filter(account=company, user=user, is_active=True)
+            jobs = Job.objects.filter(
+                Q(created_by=user) | Q(job_staff__professional=user),
+                is_active=True
+            ).distinct()
 
-        jobs = jobs.select_related("client", "user").order_by("-start_date")
+        jobs = jobs.select_related("client", "created_by").prefetch_related("job_staff").order_by("-start_date")
 
         query = request.GET.get("q", "")
         if query:
@@ -56,73 +42,39 @@ class JobListView(CompanyRequiredMixin, View):
         if payment_filter:
             jobs = jobs.filter(payment_status=payment_filter)
 
-        user_filter = request.GET.get("user", "")
-        if user_filter:
-            jobs = jobs.filter(user_id=user_filter)
-
-        # Get all users of the company for filter (superuser only)
-        users = []
-        is_superuser = request.user.is_superuser
-        if is_superuser:
-            users = company.users.all()
+        # For staff members, calculate individual cache value
+        jobs_with_cache = []
+        for job in jobs:
+            is_owner = job.created_by == user
+            is_staff = job.job_staff.filter(professional=user).exists()
+            
+            if is_staff and not is_owner:
+                # Show individual cache value for staff
+                staff_record = job.job_staff.filter(professional=user).first()
+                job.display_cache = staff_record.cache_value if staff_record else 0
+            else:
+                # Show total cache for owners
+                job.display_cache = job.cache
+            jobs_with_cache.append(job)
 
         return render(
             request,
             self.template_name,
             {
-                "jobs": jobs,
+                "jobs": jobs_with_cache,
                 "query": query,
                 "status_filter": status_filter,
                 "payment_filter": payment_filter,
-                "user_filter": user_filter,
-                "event_types": EventType.choices,
                 "job_statuses": JobStatus.choices,
                 "payment_statuses": PaymentStatusJob.choices,
-                "users": users,
-                "is_superuser": is_superuser,
             },
         )
 
 
-class JobCreateView(CompanyRequiredMixin, View):
+class JobCreateView(LoginRequiredMixin, View):
     template_name = "jobs/form.html"
 
-    def _check_plan_limit(self, request):
-        """Check if user can create a new job based on their plan"""
-        if not request.user.account:
-            return False, "Conta"
-
-        if not request.user.account.is_active:
-            return False, "Plano ativo"
-
-        # Get user's effective plan (personal or company)
-        plan = request.user.get_plan()
-        if not plan:
-            return False, "Plano"
-
-        limit = plan.max_jobs
-        if limit == 0:
-            return True, None  # Unlimited
-
-        from .models import Job
-
-        current = Job.objects.filter(account=request.user.account).count()
-        if current >= limit:
-            return False, f"Limite de {limit} trabalhos"
-
-        return True, None
-
     def get(self, request):
-        can_create, reason = self._check_plan_limit(request)
-        if not can_create:
-            from django.contrib import messages
-
-            messages.warning(
-                request, f"Você atingiu o {reason}. Escolha um plano para continuar."
-            )
-            from django.shortcuts import redirect
-
-            return redirect("plans:list")
         from .forms import JobForm
         from datetime import datetime
 
@@ -150,43 +102,18 @@ class JobCreateView(CompanyRequiredMixin, View):
         form = JobForm(request.POST, user=request.user)
         if form.is_valid():
             job = form.save(commit=False)
-            job.account = request.user.account
-            job.user = request.user
+            job.created_by = request.user
             job.save()
 
-            # Criar notificação
-            if request.user.account.notify_on_job_created:
-                from base.accounts.models import Notification, NotificationType
+            from base.accounts.models import Notification, NotificationType
 
-                Notification.objects.create(
-                    user=request.user,
-                    title="Novo trabalho criado",
-                    message=f"Trabalho '{job.title}' foi criado com sucesso",
-                    action_url=f"/app/trabalhos/{job.pk}/",
-                    notification_type=NotificationType.JOB,
-                )
-                
-                # Enviar push notification
-                try:
-                    from base.accounts.api_urls import send_push_notification
-                    send_push_notification(
-                        user=request.user,
-                        title="Novo trabalho",
-                        body=f"'{job.title}' foi criado com sucesso",
-                        action_url=f"/app/trabalhos/{job.pk}/"
-                    )
-                except Exception as e:
-                    pass
-
-                # Enviar email de notificação (opcional)
-                try:
-                    from base.core.emails import send_new_job_notification
-                    from base.core.utils import get_base_url
-
-                    job_url = f"{get_base_url(request)}/app/trabalhos/{job.pk}/"
-                    send_new_job_notification(request.user, job, job_url)
-                except Exception as e:
-                    print(f"Erro ao enviar email: {e}")
+            Notification.objects.create(
+                user=request.user,
+                title="Novo trabalho criado",
+                message=f"Trabalho '{job.title}' foi criado com sucesso",
+                action_url=f"/app/trabalhos/{job.pk}/",
+                notification_type=NotificationType.JOB,
+            )
 
             messages.success(request, "Trabalho criado com sucesso!")
             return redirect("jobs:detail", pk=job.pk)
@@ -200,13 +127,13 @@ class JobCreateView(CompanyRequiredMixin, View):
         )
 
 
-class JobUpdateView(CompanyRequiredMixin, View):
+class JobUpdateView(LoginRequiredMixin, View):
     template_name = "jobs/form.html"
 
     def get(self, request, pk):
         from .forms import JobForm
 
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         form = JobForm(instance=job, user=request.user)
 
         return render(
@@ -221,34 +148,66 @@ class JobUpdateView(CompanyRequiredMixin, View):
     def post(self, request, pk):
         from .forms import JobForm
 
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         form = JobForm(request.POST, instance=job, user=request.user)
         if form.is_valid():
             form.save()
 
             messages.success(request, "Trabalho atualizado com sucesso!")
             return redirect("jobs:detail", pk=job.pk)
-        clients = Client.objects.filter(account=request.user.account)
         return render(
             request,
             self.template_name,
             {
                 "form": form,
                 "object": job,
-                "clients": clients,
             },
         )
 
 
-class JobDetailView(CompanyRequiredMixin, View):
+class JobDetailView(LoginRequiredMixin, View):
     template_name = "jobs/detail.html"
 
     def get(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
-        expenses = job.expenses.all()
+        job = get_object_or_404(Job, pk=pk, is_active=True)
+        
+        # Security check: only owner or staff can access
+        is_owner = job.created_by == request.user
+        is_staff_member = job.job_staff.filter(professional=request.user).exists()
+        
+        if not (is_owner or is_staff_member or request.user.is_superuser):
+            return redirect('jobs:list')
+        
+        expenses = job.expenses.filter(is_active=True)
         total_expenses = sum(e.value for e in expenses)
         net_profit = (job.cache or 0) - total_expenses
-
+        staff = job.job_staff.all()
+        
+        # Agency (Business plan) can manage staff; Professionals (Pro/Free) cannot
+        can_manage_staff = (is_owner and request.user.can_associate_professionals()) or request.user.is_superuser
+        
+        user_cache_value = None
+        user_confirmed_cache = None
+        show_invite_modal = False
+        user_staff_record = None
+        
+        if is_staff_member:
+            user_staff_record = staff.filter(professional=request.user).first()
+            user_cache_value = user_staff_record.cache_value
+            # Only show confirmed cache
+            if user_staff_record.status == JobStaffStatus.CONFIRMED:
+                user_confirmed_cache = user_staff_record.cache_value
+            # Show invite modal if pending
+            if user_staff_record.status == JobStaffStatus.PENDING:
+                show_invite_modal = True
+        
+        available_professionals = []
+        if can_manage_staff:
+            current_staff_ids = staff.values_list("professional_id", flat=True)
+            available_professionals = User.objects.filter(
+                is_active=True, is_staff=False
+            ).exclude(pk=job.created_by.pk).exclude(pk__in=current_staff_ids)
+        
         return render(
             request,
             self.template_name,
@@ -257,19 +216,29 @@ class JobDetailView(CompanyRequiredMixin, View):
                 "expenses": expenses,
                 "total_expenses": total_expenses,
                 "net_profit": net_profit,
+                "staff": staff,
+                "is_owner": is_owner,
+                "is_staff_member": is_staff_member,
+                "can_manage_staff": can_manage_staff,
+                "user_cache_value": user_cache_value,
+                "user_confirmed_cache": user_confirmed_cache,
+                "show_invite_modal": show_invite_modal,
+                "user_staff_record": user_staff_record,
+                "available_professionals": available_professionals,
+                "professional_roles": ProfessionalRole.choices,
+                "payment_types": PaymentType.choices,
             },
         )
 
 
-class JobConfirmView(CompanyRequiredMixin, View):
+class JobConfirmView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
 
         if job.status == JobStatus.PENDING:
             job.status = JobStatus.CONFIRMED
             job.save()
 
-            # Pagamento antecipado é automático ao confirmar
             if job.payment_type == PaymentType.ADVANCE and job.payment_status != PaymentStatusJob.PAID:
                 job.payment_status = PaymentStatusJob.PAID
                 job.save()
@@ -277,38 +246,30 @@ class JobConfirmView(CompanyRequiredMixin, View):
             else:
                 messages.success(request, "Trabalho confirmado com sucesso!")
 
-            if job.account.notify_on_job_confirmed:
-                from base.core.emails import send_job_confirmation_to_client
-
-                send_job_confirmation_to_client(job)
-
         return redirect("jobs:detail", pk=job.pk)
 
 
-class JobCompleteView(CompanyRequiredMixin, View):
+class JobCompleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         job.status = JobStatus.COMPLETED
         job.save()
         messages.success(request, "Trabalho marcado como concluído!")
         return redirect("jobs:detail", pk=job.pk)
 
 
-class JobCancelView(CompanyRequiredMixin, View):
+class JobCancelView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         job.status = JobStatus.CANCELLED
         job.save()
         messages.success(request, "Trabalho cancelado!")
-        return redirect("jobs:detail", pk=job.pk)
+        return redirect("jobs:list")
 
 
-class JobApproveView(CompanyRequiredMixin, View):
+class JobApproveView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
-        if not request.user.is_account_admin:
-            messages.error(request, "Apenas administradores podem aprovar trabalhos.")
-            return redirect("jobs:detail", pk=job.pk)
+        job = get_object_or_404(Job, pk=pk, is_active=True)
         job.approved_by = request.user
         job.approved_at = timezone.now()
         job.save()
@@ -316,10 +277,9 @@ class JobApproveView(CompanyRequiredMixin, View):
         return redirect("jobs:detail", pk=job.pk)
 
 
-class JobConfirmPaymentView(CompanyRequiredMixin, View):
-    """Confirma pagamento total ou antecipado"""
+class JobConfirmPaymentView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, is_active=True)
         if job.payment_status == PaymentStatusJob.PAID:
             messages.info(request, "Pagamento já está confirmado.")
         else:
@@ -330,10 +290,9 @@ class JobConfirmPaymentView(CompanyRequiredMixin, View):
         return redirect("jobs:detail", pk=job.pk)
 
 
-class JobConfirmPartialPaymentView(CompanyRequiredMixin, View):
-    """Confirma 1ª parcela do pagamento parcial"""
+class JobConfirmPartialPaymentView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, is_active=True)
         if job.payment_type == PaymentType.PARTIAL and job.payment_status == PaymentStatusJob.PENDING:
             job.payment_status = PaymentStatusJob.PARTIAL
             job.payment_partial_confirmed_at = timezone.now()
@@ -344,10 +303,9 @@ class JobConfirmPartialPaymentView(CompanyRequiredMixin, View):
         return redirect("jobs:detail", pk=job.pk)
 
 
-class JobConfirmRemainingPaymentView(CompanyRequiredMixin, View):
-    """Confirma 2ª parcela do pagamento parcial"""
+class JobConfirmRemainingPaymentView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, is_active=True)
         if job.payment_type == PaymentType.PARTIAL and job.payment_status in [PaymentStatusJob.PENDING, PaymentStatusJob.PARTIAL]:
             job.payment_status = PaymentStatusJob.PAID
             job.payment_remaining_confirmed_at = timezone.now()
@@ -358,21 +316,21 @@ class JobConfirmRemainingPaymentView(CompanyRequiredMixin, View):
         return redirect("jobs:detail", pk=job.pk)
 
 
-class JobDeleteView(CompanyRequiredMixin, View):
+class JobDeleteView(LoginRequiredMixin, View):
     template_name = "jobs/confirm_delete.html"
 
     def get(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         return render(request, self.template_name, {"job": job})
 
     def post(self, request, pk):
-        job = get_object_or_404(Job, pk=pk, account=request.user.account, is_active=True)
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         job.delete()
         messages.success(request, "Trabalho excluído com sucesso!")
         return redirect("jobs:list")
 
 
-class ClientQuickCreateView(CompanyRequiredMixin, View):
+class ClientQuickCreateView(LoginRequiredMixin, View):
     template_name = "clients/quick_form.html"
 
     def post(self, request):
@@ -381,9 +339,206 @@ class ClientQuickCreateView(CompanyRequiredMixin, View):
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save(commit=False)
-            client.account = request.user.account
+            client.created_by = request.user
             client.save()
             return render(
                 request, self.template_name, {"success": True, "client": client}
             )
+
+
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class JobAddStaffView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
+        
+        if not request.user.can_associate_professionals() and not request.user.is_superuser:
+            return JsonResponse({"success": False, "error": "Você não tem permissão para adicionar profissionais."}, status=403)
+        
+        professional_ids = request.POST.getlist("professionals")
+        role = request.POST.get("role")
+        cache_value = request.POST.get("cache_value")
+        
+        if not professional_ids:
+            return JsonResponse({"success": False, "error": "Selecione pelo menos um profissional."}, status=400)
+        
+        for pro_id in professional_ids:
+            try:
+                professional = User.objects.get(pk=pro_id, is_active=True, is_staff=False)
+                defaults = {
+                    "status": JobStaffStatus.PENDING,
+                }
+                # Only set cache_value if provided, otherwise leave it NULL
+                if cache_value:
+                    defaults["cache_value"] = float(cache_value)
+                if role and role in ProfessionalRole.values:
+                    defaults["role"] = role
+                JobStaff.objects.update_or_create(
+                    job=job,
+                    professional=professional,
+                    defaults=defaults
+                )
+            except (User.DoesNotExist, ValueError):
+                pass
+        
+        return JsonResponse({"success": True})
         return render(request, self.template_name, {"form": form, "error": True})
+
+
+class ProfessionalSearchView(LoginRequiredMixin, View):
+    def get(self, request):
+        from django.db.models import Q
+        
+        query = request.GET.get("q", "").strip()
+        
+        if len(query) < 2:
+            return JsonResponse({"professionals": []}, safe=False)
+        
+        job_id = request.GET.get("job_id")
+        current_staff_ids = []
+        if job_id:
+            current_staff_ids = list(JobStaff.objects.filter(job_id=job_id).values_list("professional_id", flat=True))
+        
+        professionals = User.objects.filter(
+            is_active=True, 
+            is_staff=False
+        ).exclude(pk__in=current_staff_ids).filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(username__icontains=query) |
+            Q(phone__icontains=query) |
+            Q(email__icontains=query)
+        )[:20]
+        
+        data = [{
+            "id": pro.id,
+            "name": pro.get_full_name() or pro.username,
+            "phone": pro.phone or "",
+            "email": pro.email or ""
+        } for pro in professionals]
+        
+        return JsonResponse({"professionals": data}, safe=False)
+
+
+class JobUpdateStaffView(LoginRequiredMixin, View):
+    """Update an individual JobStaff record (role, cache_value, notes, status)"""
+    def post(self, request, pk, staff_pk):
+        try:
+            job_staff = JobStaff.objects.get(job_id=pk, pk=staff_pk)
+        except JobStaff.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Registro não encontrado"}, status=404)
+        
+        job = job_staff.job
+        
+        # Allow if: (1) job owner, (2) has professional association permission, (3) superuser
+        is_owner = job.created_by == request.user
+        has_permission = request.user.can_associate_professionals()
+        if not (is_owner or has_permission or request.user.is_superuser):
+            return JsonResponse({"success": False, "error": "Sem permissão"}, status=403)
+        
+        try:
+            role = request.POST.get("role")
+            cache_value = request.POST.get("cache_value")
+            notes = request.POST.get("notes")
+            status = request.POST.get("status")
+            payment_type = request.POST.get("payment_type")
+            
+            # Update role if provided
+            if role is not None:
+                if role == '':
+                    job_staff.role = None
+                elif role in ProfessionalRole.values:
+                    job_staff.role = role
+            
+            if cache_value is not None and cache_value != '':
+                try:
+                    job_staff.cache_value = float(cache_value)
+                except (ValueError, TypeError):
+                    return JsonResponse({"success": False, "error": "Valor de cache inválido"}, status=400)
+            
+            # Notes is optional - only update if provided (including empty string to clear it)
+            if notes is not None:
+                job_staff.notes = notes
+            
+            if status and status in JobStaffStatus.values:
+                job_staff.status = status
+            
+            # Update payment_type if provided
+            if payment_type is not None:
+                if payment_type == '':
+                    job_staff.payment_type = None
+                elif payment_type in PaymentType.values:
+                    job_staff.payment_type = payment_type
+            
+            job_staff.save()
+            return JsonResponse({"success": True})
+        except Exception as e:
+            import traceback
+            print(f"Error in JobUpdateStaffView: {e}")
+            print(traceback.format_exc())
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+class JobRemoveStaffView(LoginRequiredMixin, View):
+    """Remove a professional from the job staff"""
+    def post(self, request, pk, staff_pk):
+        try:
+            job_staff = JobStaff.objects.get(job_id=pk, pk=staff_pk)
+        except JobStaff.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Registro não encontrado"}, status=404)
+        
+        job = job_staff.job
+        
+        # Allow if: (1) job owner, (2) has professional association permission, (3) superuser
+        is_owner = job.created_by == request.user
+        has_permission = request.user.can_associate_professionals()
+        if not (is_owner or has_permission or request.user.is_superuser):
+            return JsonResponse({"success": False, "error": "Sem permissão"}, status=403)
+        
+        job_staff.delete()
+        return JsonResponse({"success": True})
+
+
+class JobStaffStatusUpdateView(LoginRequiredMixin, View):
+    """Allow staff members to update their own status (accept/confirm/cancel/paid)"""
+    def post(self, request, pk, staff_pk):
+        try:
+            job_staff = JobStaff.objects.get(
+                job_id=pk, 
+                pk=staff_pk, 
+                professional=request.user
+            )
+        except JobStaff.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Registro não encontrado"}, status=404)
+        
+        current_status = job_staff.status
+        new_status = request.POST.get("status")
+        
+        if not new_status or new_status not in JobStaffStatus.values:
+            return JsonResponse({"success": False, "error": "Status inválido"}, status=400)
+        
+        # Handle rejection/cancellation - delete record (professional no longer participates)
+        if new_status in [JobStaffStatus.REJECTED, JobStaffStatus.CANCELLED_BY_PROF]:
+            job_staff.delete()
+            return JsonResponse({"success": True, "redirect": True})
+        
+        # Validate status transitions
+        if new_status == JobStaffStatus.ACCEPTED and current_status != JobStaffStatus.PENDING:
+            return JsonResponse({"success": False, "error": "Só pode aceitar convites pendentes"}, status=400)
+        
+        if new_status == JobStaffStatus.CONFIRMED and current_status not in [JobStaffStatus.PENDING, JobStaffStatus.ACCEPTED]:
+            return JsonResponse({"success": False, "error": "Só pode confirmar presença de convites aceitos ou pendentes"}, status=400)
+        
+        if new_status == JobStaffStatus.CANCELLED_BY_PROF and current_status not in [JobStaffStatus.PENDING, JobStaffStatus.ACCEPTED, JobStaffStatus.CONFIRMED]:
+            return JsonResponse({"success": False, "error": "Só pode cancelar se estiver pendente, aceito ou confirmado"}, status=400)
+        
+        if new_status == JobStaffStatus.PAID and current_status != JobStaffStatus.CONFIRMED:
+            return JsonResponse({"success": False, "error": "Só pode marcar como pago após confirmação de presença"}, status=400)
+        
+        job_staff.status = new_status
+        job_staff.save()
+        return JsonResponse({"success": True})

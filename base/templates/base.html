@@ -315,7 +315,11 @@
                             var notifId = this.getAttribute('data-id');
                             var url = this.getAttribute('data-url');
                             console.log('Click NO item detectado!', notifId, url);
-                            handleNotificationClick(e, notifId, url);
+                            if (notifId && url) {
+                                handleNotificationClick(e, notifId, url);
+                            } else {
+                                console.error('Notification missing data-id or data-url', notifId, url);
+                            }
                         });
                     });
                     
@@ -373,17 +377,8 @@ function getCookie(name) {
         
         console.log('handleNotificationClick chamado', notificationId, url);
         
-        // Get CSRF from cookie - try both formats
-        var csrfToken = null;
-        var cookies = document.cookie.split(';');
-        
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            if (cookie.indexOf('csrftoken') !== -1) {
-                csrfToken = cookie.split('=')[1];
-                break;
-            }
-        }
+        // Get CSRF token from cookie using the existing function
+        var csrfToken = getCookie('csrftoken');
         
         console.log('CSRF Token result:', csrfToken);
         
@@ -392,6 +387,7 @@ function getCookie(name) {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
             },
             credentials: 'same-origin'
         }).then(response => {
@@ -458,6 +454,12 @@ function getCookie(name) {
     document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('notificationsDropdown');
         const menu = document.getElementById('notificationsMenu');
+        
+        // Don't close if clicking on a notification item (it will redirect)
+        if (e.target.closest('.notification-item')) {
+            return;
+        }
+        
         if (!dropdown.contains(e.target)) {
             menu.classList.add('hidden');
         }
@@ -477,6 +479,7 @@ function getCookie(name) {
         </div>
         {% endfor %}
     </div>
+    {% endif %}
     <style>
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -496,6 +499,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('{% static "firebase-messaging-sw.js" %}').catch(() => {});
 }
 </script>
-{% endif %}
+<script src="{% static 'js/form_handler.js' %}"></script>
 </body>
 </html>

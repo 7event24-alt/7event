@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Meu Perfil - 7event{% endblock %}
@@ -14,11 +14,11 @@
         <div class="flex flex-col sm:flex-row items-center gap-6">
             <label for="photoInput" class="cursor-pointer relative group">
                 {% if user.photo %}
-                <img src="{{ user.photo.url }}" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-primary transition">
+                    <img src="{{ user.photo.url }}" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-primary transition">
                 {% else %}
-                <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-gray-200 group-hover:border-primary transition">
-                    {{ user.first_name|default:user.username|slice:":1"|upper }}
-                </div>
+                    <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-gray-200 group-hover:border-primary transition">
+                        {{ user.first_name|default:user.username|slice:":1"|upper }}
+                    </div>
                 {% endif %}
                 <div class="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition">
                     <i class="fas fa-camera text-sm"></i>
@@ -29,37 +29,37 @@
                 <p class="text-gray-500">{{ user.email }}</p>
                 <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
                     {% if user.is_superuser %}
-                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
-                        <i class="fas fa-shield-alt mr-1"></i>Super Administrador
-                    </span>
+                        <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-shield-alt mr-1"></i>Super Administrador
+                        </span>
                     {% endif %}
                     
                     {% if user.is_account_admin %}
-                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm">
-                        <i class="fas fa-crown mr-1"></i>Administrador
-                    </span>
+                        <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-crown mr-1"></i>Administrador
+                        </span>
                     {% endif %}
                     
-                    {% if user.account %}
-                        {% if user.account.account_type == 'autonomous' %}
-                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                            <i class="fas fa-user-tie mr-1"></i>Autônomo
-                        </span>
+                    {% if user.cnpj %}
+                        {% if user.account_type == 'autonomous' %}
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                                <i class="fas fa-user-tie mr-1"></i>Autônomo
+                            </span>
                         {% else %}
-                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                            <i class="fas fa-users mr-1"></i>Equipe
-                        </span>
-                        {% endif %}
-                        
-                        {% if user.plan %}
-                        <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm">
-                            <i class="fas fa-star mr-1"></i>Plano Próprio
-                        </span>
+                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                                <i class="fas fa-users mr-1"></i>Equipe
+                            </span>
                         {% endif %}
                     {% else %}
-                    <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
-                        <i class="fas fa-user mr-1"></i>Sem empresa
-                    </span>
+                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-user mr-1"></i>Sem empresa
+                        </span>
+                    {% endif %}
+                    
+                    {% if user.show_sensitive_data %}
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                            <i class="fas fa-shield-alt mr-1"></i>Dados sensíveis liberados
+                        </span>
                     {% endif %}
                 </div>
                 <p class="text-xs text-gray-400 mt-2">Clique na foto para alterar</p>
@@ -68,111 +68,232 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left Column - Forms -->
+        <!-- Left Column -->
         <div class="lg:col-span-2 space-y-6">
-            <!-- Personal Info -->
+            
+            <!-- 1. Informações Pessoais -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="font-semibold text-gray-800 flex items-center gap-2">
                         <i class="fas fa-user text-primary"></i>
                         Informações Pessoais
                     </h2>
-                    <button type="button" id="editInfoBtn" onclick="toggleEditMode()" class="text-primary hover:text-secondary text-sm font-medium flex items-center gap-1">
+                    <button type="button" id="editInfoBtn" onclick="toggleSection('displayMode', 'editForm', 'editInfoBtn')" class="text-primary hover:text-secondary text-sm font-medium flex items-center gap-1">
                         <i class="fas fa-edit"></i> Editar
                     </button>
                 </div>
-                <div class="p-4 lg:p-6">
-                    <!-- Display Mode -->
-                    <div id="displayMode" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm text-gray-500 mb-1">Nome</label>
-                                <p class="font-medium text-gray-800">{{ user.first_name|default:"-" }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-500 mb-1">Sobrenome</label>
-                                <p class="font-medium text-gray-800">{{ user.last_name|default:"-" }}</p>
-                            </div>
+                
+                <!-- Display Mode -->
+                <div id="displayMode" class="p-4 lg:p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-500 mb-1">Nome Completo</label>
+                            <p class="font-medium text-gray-800">{{ user.full_name|default:"-" }}</p>
                         </div>
                         <div>
                             <label class="block text-sm text-gray-500 mb-1">Email</label>
                             <p class="font-medium text-gray-800">{{ user.email }}</p>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm text-gray-500 mb-1">Telefone</label>
-                                <p class="font-medium text-gray-800">{{ user.phone|default:"-" }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-500 mb-1">Profissão/Cargo</label>
-                                <p class="font-medium text-gray-800">{{ user.role|default:"-" }}</p>
-                            </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-500 mb-1">Telefone</label>
+                            <p class="font-medium text-gray-800">{{ user.phone|default:"-" }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-500 mb-1">CPF</label>
+                            <p class="font-medium text-gray-800">{{ user.cpf|default:"-" }}</p>
                         </div>
                     </div>
-
-                    <!-- Edit Mode -->
-                    <form method="post" id="editForm" class="space-y-5 hidden">
-                        {% csrf_token %}
-                        
-                        {% if form.errors %}
-                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                            <p>Por favor, corrija os erros abaixo.</p>
-                        </div>
-                        {% endif %}
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.first_name.label }}</label>
-                                {{ form.first_name }}
-                                {% if form.first_name.errors %}
-                                <span class="text-red-500 text-sm">{{ form.first_name.errors.0 }}</span>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.last_name.label }}</label>
-                                {{ form.last_name }}
-                                {% if form.last_name.errors %}
-                                <span class="text-red-500 text-sm">{{ form.last_name.errors.0 }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-
+                    <div>
+                        <label class="block text-sm text-gray-500 mb-1">RG</label>
+                        <p class="font-medium text-gray-800">{{ user.rg|default:"-" }}</p>
+                    </div>
+                </div>
+                
+                <!-- Edit Mode -->
+                <form method="post" id="editForm" class="p-4 lg:p-6 space-y-5 hidden">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="personal">
+                    
+                    {% if personal_form.errors %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <p>Por favor, corrija os erros abaixo.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.email.label }}</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                            <span class="text-red-500 text-sm">{{ form.email.errors.0 }}</span>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ personal_form.first_name.label }}</label>
+                            {{ personal_form.first_name }}
+                            {% if personal_form.first_name.errors %}
+                            <span class="text-red-500 text-sm">{{ personal_form.first_name.errors.0 }}</span>
                             {% endif %}
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.phone.label }}</label>
-                                {{ form.phone }}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.role.label }}</label>
-                                {{ form.role }}
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ personal_form.last_name.label }}</label>
+                            {{ personal_form.last_name }}
+                            {% if personal_form.last_name.errors %}
+                            <span class="text-red-500 text-sm">{{ personal_form.last_name.errors.0 }}</span>
+                            {% endif %}
                         </div>
-
-                        <div class="flex gap-3 pt-2">
-                            <button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-secondary transition flex items-center gap-2">
-                                <i class="fas fa-save"></i> Salvar
-                            </button>
-                            <button type="button" onclick="toggleEditMode()" class="bg-gray-500 text-white px-5 py-2.5 rounded-lg hover:bg-gray-600 transition flex items-center gap-2">
-                                <i class="fas fa-times"></i> Cancelar
-                            </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ personal_form.email.label }}</label>
+                            {{ personal_form.email }}
+                            {% if personal_form.email.errors %}
+                            <span class="text-red-500 text-sm">{{ personal_form.email.errors.0 }}</span>
+                            {% endif %}
                         </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ personal_form.phone.label }}</label>
+                            {{ personal_form.phone }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ personal_form.cpf.label }}</label>
+                            {{ personal_form.cpf }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ personal_form.rg.label }}</label>
+                        {{ personal_form.rg }}
+                    </div>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-secondary transition flex items-center gap-2">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                    </div>
+                </form>
             </div>
+            
+            <!-- 2. Dados Profissionais -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-briefcase text-primary"></i>
+                        Dados Profissionais
+                    </h2>
+                    <button type="button" id="editProBtn" onclick="toggleSection('displayPro', 'editProForm', 'editProBtn')" class="text-primary hover:text-secondary text-sm font-medium flex items-center gap-1">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </div>
+                
+                <!-- Display Mode -->
+                <div id="displayPro" class="p-4 lg:p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-500 mb-1">Bio / Currículo</label>
+                        <p class="font-medium text-gray-800">{{ user.bio|default:"Não informado" }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-500 mb-1">Skills</label>
+                        {% if skills_list %}
+                            <div class="flex flex-wrap gap-2">
+                                {% for skill in skills_list %}
+                                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-gray-400">Nenhuma skill cadastrada</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-500 mb-1">Portfólio</label>
+                        {% if user.portfolio_url %}
+                            <a href="{{ user.portfolio_url }}" target="_blank" class="text-primary hover:underline">{{ user.portfolio_url }}</a>
+                        {% else %}
+                            <p class="text-gray-400">Não informado</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Edit Mode -->
+                <form method="post" id="editProForm" class="p-4 lg:p-6 space-y-5 hidden" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="professional">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ professional_form.bio.label }}</label>
+                        {{ professional_form.bio }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ professional_form.skills.label }}</label>
+                        {{ professional_form.skills }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ professional_form.portfolio_url.label }}</label>
+                        {{ professional_form.portfolio_url }}
+                    </div>
 
-            <!-- Security -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ professional_form.role.label }}</label>
+                        {{ professional_form.role }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ professional_form.photo.label }}</label>
+                        {{ professional_form.photo }}
+                    </div>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-secondary transition flex items-center gap-2">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 3. Privacidade e LGPD -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
                     <h2 class="font-semibold text-gray-800 flex items-center gap-2">
                         <i class="fas fa-shield-alt text-primary"></i>
+                        Privacidade e LGPD
+                    </h2>
+                </div>
+                <div class="p-4 lg:p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-gray-800">Liberar dados sensíveis (CPF/RG)</p>
+                            <p class="text-sm text-gray-500">Permite que agências vejam seus dados após aceite do trabalho</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="privacyToggle" class="sr-only peer" {% if user.show_sensitive_data %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Seus dados sensíveis (CPF/RG) só ficam visíveis para agências após você aceitar um trabalho e habilitar esta opção.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal de Confirmação LGPD -->
+            <div id="privacyModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold mb-4" id="modalTitle">Confirmar alteração</h3>
+                    <p class="text-gray-600 mb-6" id="modalMessage"></p>
+                    <div class="flex gap-3 justify-end">
+                        <button onclick="closePrivacyModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+                        <button onclick="confirmPrivacyToggle()" id="modalConfirmBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4. Segurança -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-key text-primary"></i>
                         Segurança
                     </h2>
                 </div>
@@ -184,109 +305,9 @@
                 </div>
             </div>
         </div>
-
-        <!-- Right Column - Info -->
+        
+        <!-- Right Column -->
         <div class="space-y-6">
-            <!-- Company Info -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                    <h2 class="font-semibold text-gray-800 flex items-center gap-2">
-                        <i class="fas fa-building text-primary"></i>
-                        {% if user.is_superuser %}Sistema{% else %}Empresa{% endif %}
-                    </h2>
-                </div>
-                <div class="p-4 lg:p-6 space-y-4">
-                    {% if user.is_superuser %}
-                    <div>
-                        <label class="block text-sm text-gray-500">Acesso</label>
-                        <p class="font-medium text-purple-700">Super Administrador do Sistema</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-purple-50 p-3 rounded-lg text-center">
-                            <p class="text-2xl font-bold text-purple-700">{{ total_accounts }}</p>
-                            <p class="text-xs text-gray-600">Empresas</p>
-                        </div>
-                        <div class="bg-purple-50 p-3 rounded-lg text-center">
-                            <p class="text-2xl font-bold text-purple-700">{{ total_users }}</p>
-                            <p class="text-xs text-gray-600">Usuários</p>
-                        </div>
-                    </div>
-                    {% elif user.account %}
-                    <div>
-                        <label class="block text-sm text-gray-500">Nome</label>
-                        <p class="font-medium text-gray-800">{{ user.account.name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-500">Tipo de Conta</label>
-                        <p class="font-medium text-gray-800">
-                            {% if user.account.account_type == 'autonomous' %}
-                            <i class="fas fa-user-tie text-green-600 mr-1"></i>Autônomo
-                            {% else %}
-                            <i class="fas fa-building text-blue-600 mr-1"></i>Empresa
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-500">
-                            {% if user.plan %}Meu Plano{% else %}Plano da Empresa{% endif %}
-                        </label>
-                        <p class="font-medium text-gray-800">
-                            {% if user.plan %}
-                            <span class="text-indigo-700">{{ user.plan.name }}</span>
-                            {% elif user.account.plan %}
-                            <span class="text-primary">{{ user.account.plan.name }}</span>
-                            {% else %}
-                            <span class="text-gray-400">Nenhum</span>
-                            {% endif %}
-                        </p>
-                    </div>
-                    
-                    {% if user.account.plan %}
-                    <div>
-                        <label class="block text-sm text-gray-500 mb-2">Limites do Plano</label>
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600"><i class="fas fa-users mr-1"></i>Clientes</span>
-                                <span class="text-sm font-medium">
-                                    {% if user.get_max_clients == 0 %}
-                                    <span class="text-green-600">Ilimitado</span>
-                                    {% else %}{{ user.account.client_count }} / {{ user.get_max_clients }}{% endif %}
-                                </span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600"><i class="fas fa-briefcase mr-1"></i>Trabalhos</span>
-                                <span class="text-sm font-medium">
-                                    {% if user.get_max_jobs == 0 %}
-                                    <span class="text-green-600">Ilimitado</span>
-                                    {% else %}{{ user.account.job_count }} / {{ user.get_max_jobs }}{% endif %}
-                                </span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600"><i class="fas fa-receipt mr-1"></i>Despesas</span>
-                                <span class="text-sm font-medium">
-                                    {% if user.get_max_expenses == 0 %}
-                                    <span class="text-green-600">Ilimitado</span>
-                                    {% else %}{{ user.account.expense_count }} / {{ user.get_max_expenses }}{% endif %}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <div>
-                        <label class="block text-sm text-gray-500">Membros da Equipe</label>
-                        <p class="font-medium text-gray-800">{{ user.account.user_count }} / {{ user.account.max_users|default:"∞" }}</p>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-exclamation-circle text-gray-400 text-3xl mb-2"></i>
-                        <p class="text-gray-500">Você não está associado a uma empresa</p>
-                        <p class="text-sm text-gray-400">Entre em contato com o administrador</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
             <!-- Quick Links -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
@@ -304,10 +325,6 @@
                         <a href="{% url 'jobs:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
                             <i class="fas fa-briefcase text-lg mb-1"></i>
                             <span class="text-xs font-medium">Jobs</span>
-                        </a>
-                        <a href="{% url 'quote:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
-                            <i class="fas fa-file-invoice-dollar text-lg mb-1"></i>
-                            <span class="text-xs font-medium">Orçamentos</span>
                         </a>
                         <a href="{% url 'expenses:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
                             <i class="fas fa-receipt text-lg mb-1"></i>
@@ -380,10 +397,10 @@ document.getElementById('photoInput').addEventListener('change', function() {
     }
 });
 
-function toggleEditMode() {
-    const displayMode = document.getElementById('displayMode');
-    const editForm = document.getElementById('editForm');
-    const editBtn = document.getElementById('editInfoBtn');
+function toggleSection(displayId, editId, btnId) {
+    const displayMode = document.getElementById(displayId);
+    const editForm = document.getElementById(editId);
+    const editBtn = document.getElementById(btnId);
     
     if (displayMode.classList.contains('hidden')) {
         displayMode.classList.remove('hidden');
@@ -400,6 +417,75 @@ function toggleEditMode() {
             Inputmask({ mask: '(99) 9999-9999' }).mask(document.querySelectorAll('#editForm [data-mask="phone-fixed"]'));
         }
     }
+}
+
+let pendingPrivacyState = null;
+
+document.getElementById('privacyToggle').addEventListener('change', function(e) {
+    e.preventDefault();
+    pendingPrivacyState = this.checked;
+    this.checked = !pendingPrivacyState; // Reverter visualmente até confirmação
+    
+    const modal = document.getElementById('privacyModal');
+    const title = document.getElementById('modalTitle');
+    const message = document.getElementById('modalMessage');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    
+    if (pendingPrivacyState) {
+        title.textContent = 'Liberar dados sensíveis';
+        message.textContent = 'Tem certeza que deseja expor os seguintes dados para os contratantes? CPF e RG ficarão visíveis para agências após aceite do trabalho.';
+        confirmBtn.textContent = 'Liberar';
+        confirmBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        confirmBtn.classList.add('bg-primary', 'hover:bg-secondary');
+    } else {
+        title.textContent = 'Desativar visualização';
+        message.textContent = 'Tem certeza que deseja desativar a visualização dos dados para o contratante?';
+        confirmBtn.textContent = 'Desativar';
+        confirmBtn.classList.remove('bg-primary', 'hover:bg-secondary');
+        confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+    }
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+});
+
+function closePrivacyModal() {
+    document.getElementById('privacyModal').classList.add('hidden');
+    document.getElementById('privacyModal').classList.remove('flex');
+    pendingPrivacyState = null;
+}
+
+function confirmPrivacyToggle() {
+    const toggle = document.getElementById('privacyToggle');
+    toggle.checked = pendingPrivacyState;
+    
+    fetch('{% url "accounts:profile" %}', {
+        method: 'POST',
+        body: JSON.stringify({
+            'action': 'toggle_privacy',
+            'show_sensitive_data': pendingPrivacyState
+        }),
+        credentials: 'same-origin',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closePrivacyModal();
+        } else {
+            toggle.checked = !pendingPrivacyState;
+            alert('Erro ao alterar privacidade: ' + (data.error || 'Erro desconhecido'));
+            closePrivacyModal();
+        }
+    })
+    .catch(error => {
+        toggle.checked = !pendingPrivacyState;
+        alert('Erro: ' + error.message);
+        closePrivacyModal();
+    });
 }
 </script>
 {% endblock %}

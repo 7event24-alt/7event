@@ -15,37 +15,24 @@ from .models import Quote, QuoteExpense, QuoteStatus
 from .forms import QuoteForm, QuoteExpenseForm
 
 
-class CompanyRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            from django.contrib.auth.views import redirect_to_login
-
-            return redirect_to_login(request.get_full_path())
-
-        if not request.user.account:
-            from django.http import HttpResponseRedirect
-            from django.urls import reverse
-
-            return HttpResponseRedirect(reverse("plans:list"))
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class QuoteListView(CompanyRequiredMixin, View):
+class QuoteListView(LoginRequiredMixin, View):
     template_name = "quote/list.html"
 
     def get(self, request):
-        company = request.user.account
-        quotes = Quote.objects.filter(account=company, is_active=True).order_by("-created_at")
+        user = request.user
+        if user.is_superuser:
+            quotes = Quote.objects.filter(is_active=True).order_by("-created_at")
+        else:
+            quotes = Quote.objects.filter(created_by=user, is_active=True).order_by("-created_at")
         return render(request, self.template_name, {"quotes": quotes})
 
 
-class QuoteCreateView(CompanyRequiredMixin, View):
+class QuoteCreateView(LoginRequiredMixin, View):
     template_name = "quote/form.html"
 
     def get(self, request):
-        company = request.user.account
-        form = QuoteForm(account=company)
+        user = request.user
+        form = QuoteForm(created_by=user)
         return render(
             request,
             self.template_name,
@@ -53,35 +40,31 @@ class QuoteCreateView(CompanyRequiredMixin, View):
         )
 
     def post(self, request):
-        company = request.user.account
-        form = QuoteForm(request.POST, account=company)
+        user = request.user
+        form = QuoteForm(request.POST, created_by=user)
 
         if form.is_valid():
             quote = form.save(commit=False)
-            quote.account = company
+            quote.created_by = user
             quote.expenses_cost = Decimal("0")
             quote.labor_cost = quote.hourly_rate * quote.work_hours
             quote.save()
 
-            if company.notify_on_quote_created:
-                Notification.objects.create(
-                    user=request.user,
-                    title="Novo Orçamento",
-                    message=f"Orçamento #{quote.pk} criado para {quote.client.name if quote.client else 'sem cliente'}.",
-                    action_url=f"/app/orcamentos/{quote.pk}/",
-                    notification_type=NotificationType.QUOTE,
-                )
             messages.success(request, "Orçamento criado com sucesso!")
             return redirect("quote:detail", pk=quote.pk)
 
         return render(request, self.template_name, {"form": form})
 
 
-class QuoteDetailView(CompanyRequiredMixin, View):
+class QuoteDetailView(LoginRequiredMixin, View):
     template_name = "quote/detail.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         expenses = quote.expenses.all()
         return render(
             request,
@@ -90,12 +73,16 @@ class QuoteDetailView(CompanyRequiredMixin, View):
         )
 
 
-class QuoteUpdateView(CompanyRequiredMixin, View):
+class QuoteUpdateView(LoginRequiredMixin, View):
     template_name = "quote/form.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
-        form = QuoteForm(instance=quote, account=request.user.account)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
+        form = QuoteForm(instance=quote, created_by=user)
         return render(
             request,
             self.template_name,
@@ -103,8 +90,12 @@ class QuoteUpdateView(CompanyRequiredMixin, View):
         )
 
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
-        form = QuoteForm(request.POST, instance=quote, account=request.user.account)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
+        form = QuoteForm(request.POST, instance=quote, created_by=user)
 
         if form.is_valid():
             quote = form.save(commit=False)
@@ -117,30 +108,46 @@ class QuoteUpdateView(CompanyRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "object": quote})
 
 
-class QuoteDeleteView(CompanyRequiredMixin, View):
+class QuoteDeleteView(LoginRequiredMixin, View):
     template_name = "quote/confirm_delete.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         return render(request, self.template_name, {"quote": quote})
 
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         quote.delete()
         messages.success(request, "Orçamento excluído com sucesso!")
         return redirect("quote:list")
 
 
-class QuoteAddExpenseView(CompanyRequiredMixin, View):
+class QuoteAddExpenseView(LoginRequiredMixin, View):
     template_name = "quote/expense_form.html"
 
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         form = QuoteExpenseForm()
         return render(request, self.template_name, {"form": form, "quote": quote})
 
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         form = QuoteExpenseForm(request.POST)
 
         if form.is_valid():
@@ -154,9 +161,13 @@ class QuoteAddExpenseView(CompanyRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "quote": quote})
 
 
-class QuoteDeleteExpenseView(CompanyRequiredMixin, View):
+class QuoteDeleteExpenseView(LoginRequiredMixin, View):
     def post(self, request, pk, expense_pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         expense = get_object_or_404(QuoteExpense, pk=expense_pk, quote=quote)
         expense.delete()
         quote.save()
@@ -164,9 +175,13 @@ class QuoteDeleteExpenseView(CompanyRequiredMixin, View):
         return redirect("quote:detail", pk=pk)
 
 
-class QuotePDFView(CompanyRequiredMixin, View):
+class QuotePDFView(LoginRequiredMixin, View):
     def get(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
         expenses = quote.expenses.all()
 
         from datetime import datetime
@@ -183,7 +198,7 @@ class QuotePDFView(CompanyRequiredMixin, View):
             {
                 "quote": quote,
                 "expenses": expenses,
-                "company": request.user.account,
+                "created_by": user,
                 "logo_url": logo_url,
             },
         )
@@ -197,9 +212,13 @@ class QuotePDFView(CompanyRequiredMixin, View):
         return response
 
 
-class QuoteSendView(CompanyRequiredMixin, View):
+class QuoteSendView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        quote = get_object_or_404(Quote, pk=pk, account=request.user.account, is_active=True)
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
 
         if not quote.client or not quote.client.email:
             messages.error(request, "Orçamento sem cliente ou email.")

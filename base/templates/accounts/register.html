@@ -62,7 +62,7 @@
                 </div>
                 {% endif %}
                 
-                <form method="post">
+                <form method="post" data-no-block="true">
                     {% csrf_token %}
                     
                     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -111,12 +111,12 @@
                     </div>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.company_name.label }}</label>
-                        <input type="text" name="company_name" value="{{ form_data.company_name|default:form.company_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.company_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Nome da sua empresa ou organização">
-                        {% if form.company_name.errors %}
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.legal_name.label }}</label>
+                        <input type="text" name="legal_name" value="{{ form_data.legal_name|default:form.legal_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.legal_name.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="Nome da sua empresa ou organização">
+                        {% if form.legal_name.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
-                            {{ form.company_name.errors.0 }}
+                            {{ form.legal_name.errors.0 }}
                         </p>
                         {% endif %}
                     </div>
@@ -161,10 +161,61 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition font-medium flex items-center justify-center gap-2">
+                    <!-- Termo de Privacidade com Trava de Scroll -->
+                    {% if privacy_term %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ privacy_term.version }} - Termo de Privacidade</label>
+                        <div id="privacyTermDiv" 
+                             class="h-40 overflow-y-auto border border-gray-300 rounded-lg p-4 text-sm text-gray-600 bg-gray-50"
+                             onscroll="checkScrollEnd()">
+                            {{ privacy_term.content|linebreaksbr }}
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <input type="checkbox" id="acceptTerms" disabled 
+                                   class="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                   onchange="toggleSubmitButton()">
+                            <label for="acceptTerms" class="text-sm text-gray-600">
+                                Li e aceito o Termo de Privacidade
+                            </label>
+                        </div>
+                    </div>
+                    <input type="hidden" name="accepted_term_id" value="{{ privacy_term.id }}">
+                    {% endif %}
+                    
+                    <button type="submit" id="submitBtn" disabled
+                            class="w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 cursor-not-allowed">
                         <i class="fas fa-user-plus"></i> Criar Conta
                     </button>
                 </form>
+                
+                <script>
+                    // Verificar se o usuário rolou até o final do termo
+                    function checkScrollEnd() {
+                        const div = document.getElementById('privacyTermDiv');
+                        const checkbox = document.getElementById('acceptTerms');
+                        
+                        // Se chegou ao final (altura de rolagem + altura visível >= altura total - 10px de tolerância)
+                        if (div.scrollTop + div.clientHeight >= div.scrollHeight - 10) {
+                            checkbox.disabled = false;
+                        }
+                    }
+                    
+                    // Habilitar/desabilitar botão de submit baseado no checkbox
+                    function toggleSubmitButton() {
+                        const checkbox = document.getElementById('acceptTerms');
+                        const btn = document.getElementById('submitBtn');
+                        
+                        if (checkbox.checked) {
+                            btn.disabled = false;
+                            btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                            btn.classList.add('bg-primary', 'text-white', 'hover:bg-secondary');
+                        } else {
+                            btn.disabled = true;
+                            btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                            btn.classList.remove('bg-primary', 'text-white', 'hover:bg-secondary');
+                        }
+                    }
+                </script>
                 
                 <!-- Modal de Confirmação de Email -->
                 <div id="emailConfirmModal" class="hidden fixed inset-0 z-50">

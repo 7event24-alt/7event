@@ -7,7 +7,6 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
-    can_access = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
@@ -23,13 +22,11 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "is_blocked",
             "blocked_reason",
-            "is_account_admin",
             "notes",
             "is_active",
             "is_verified",
             "created_at",
             "updated_at",
-            "can_access",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
@@ -88,7 +85,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
             "is_blocked",
             "blocked_reason",
             "blocked_at",
-            "is_account_admin",
             "notes",
             "is_active",
             "created_at",

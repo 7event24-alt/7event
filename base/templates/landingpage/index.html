@@ -306,9 +306,9 @@
                     </div>
                     
 <!-- Main dashboard image -->
-                    <div class="w-full lg:w-full max-w-md mx-auto relative flex flex-col items-center">
-                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-[85%] lg:w-full h-auto animate-float">
-                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="w-[85%] lg:w-full h-auto mt-[-80%] lg:mt-[-60%] animate-float-reverse" style="opacity: 0.9;">
+                    <div class="w-[85%] lg:w-[400px] mx-auto flex justify-center relative">
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float relative z-10">
+                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="w-full h-auto absolute top-0 left-0 animate-float-reverse z-0" style="opacity: 0.9;">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
@@ -461,12 +461,8 @@
                         {% if plan.price_monthly > 0 %}
                         <span class="text-3xl sm:text-4xl font-bold text-gray-900">R$ {{ plan.price_monthly|floatformat:2 }}</span>
                         <span class="text-gray-500 text-sm">/mês</span>
-                        {% if plan.price_semester > 0 %}
-                        <p class="text-xs text-gray-400 mt-1">ou R$ {{ plan.price_semester|floatformat:2 }}/semestre</p>
-                        {% endif %}
                         {% else %}
                         <span class="text-3xl sm:text-4xl font-bold text-gray-900">Grátis</span>
-                        <span class="text-gray-500 text-sm">/para sempre</span>
                         {% endif %}
                     </div>
                     

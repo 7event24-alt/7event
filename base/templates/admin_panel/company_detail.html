@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ account.name }} - 7event{% endblock %}
-{% block page_title %}{{ account.name }}{% endblock %}
+{% block title %}{{ user.legal_name|default:user.username }} - 7event{% endblock %}
+{% block page_title %}{{ user.legal_name|default:user.username }}{% endblock %}
 
 {% block header_pre_actions %}
 <a href="{% url 'admin_panel:home' %}" class="text-gray-600 hover:text-primary p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Voltar">
@@ -20,27 +20,29 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome</label>
-                    <p class="mt-1 text-gray-800 font-medium">{{ account.name }}</p>
+                    <p class="mt-1 text-gray-800 font-medium">{{ user.legal_name|default:user.username }}</p>
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Slug</label>
-                    <p class="mt-1 text-gray-800"><code class="text-sm bg-gray-100 px-2 py-1 rounded">{{ account.slug }}</code></p>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Responsável</label>
+                    <p class="mt-1 text-gray-800">{{ user.get_full_name|default:user.email }}</p>
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">CNPJ</label>
-                    <p class="mt-1 text-gray-800">{{ account.cnpj|default:"-" }}</p>
+                    <p class="mt-1 text-gray-800">{{ user.cnpj|default:"-" }}</p>
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefone</label>
-                    <p class="mt-1 text-gray-800">{{ account.phone|default:"-" }}</p>
+                    <p class="mt-1 text-gray-800">{{ user.phone|default:"-" }}</p>
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">E-mail</label>
-                    <p class="mt-1 text-gray-800">{{ account.email|default:"-" }}</p>
+                    <p class="mt-1 text-gray-800">{{ user.email|default:"-" }}</p>
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Plano</label>
-                    <p class="mt-1 text-gray-800">{{ account.get_plan_display }}</p>
+                    {% with plan=user.get_plan %}
+                    <p class="mt-1 text-gray-800">{{ plan.name|default:"Free" }}</p>
+                    {% endwith %}
                 </div>
             </div>
             
@@ -48,15 +50,15 @@
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status de Pagamento</label>
                     <div class="mt-1">
-                        {% include 'components/badge_status.html' with status=account.payment_status type='account_payment' %}
+                        {% include 'components/badge_status.html' with status=user.subscription.payment_status type='account_payment' %}
                     </div>
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</label>
                     <div class="mt-1">
-                        {% if account.is_blocked %}
+                        {% if user.is_blocked %}
                         {% include 'components/badge_status.html' with status='blocked' type='account_status' %}
-                        {% elif not account.is_active %}
+                        {% elif not user.is_active %}
                         {% include 'components/badge_status.html' with status='inactive' type='account_status' %}
                         {% else %}
                         {% include 'components/badge_status.html' with status='active' type='account_status' %}
@@ -67,13 +69,13 @@
             
             <div class="sm:col-span-2">
                 <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Endereço</label>
-                <p class="mt-1 text-gray-800">{{ account.address|default:"-" }}</p>
+                <p class="mt-1 text-gray-800">{{ user.address|default:"-" }}</p>
             </div>
             
             <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                <form method="post" action="{% url 'admin_panel:account_toggle_active' account.pk %}">
+                <form method="post" action="{% url 'admin_panel:user_toggle_active' user.pk %}">
                     {% csrf_token %}
-                    {% if account.is_active %}
+                    {% if user.is_active %}
                     <button type="submit" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                         <i class="fas fa-ban"></i> Desativar
                     </button>
@@ -83,9 +85,9 @@
                     </button>
                     {% endif %}
                 </form>
-                <form method="post" action="{% url 'admin_panel:account_toggle_blocked' account.pk %}">
+                <form method="post" action="{% url 'admin_panel:user_toggle_blocked' user.pk %}">
                     {% csrf_token %}
-                    {% if account.is_blocked %}
+                    {% if user.is_blocked %}
                     <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                         <i class="fas fa-unlock"></i> Desbloquear
                     </button>
@@ -107,23 +109,23 @@
         <div class="p-6 space-y-3">
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-600">Máx. Usuários</span>
-                <span class="font-medium text-gray-800">{{ account.max_users }}</span>
+                <span class="font-medium text-gray-800">{{ user.max_users }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-600">Máx. Clientes</span>
-                <span class="font-medium text-gray-800">{{ account.max_clients }}</span>
+                <span class="font-medium text-gray-800">{{ user.max_clients }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-600">Máx. Trabalhos</span>
-                <span class="font-medium text-gray-800">{{ account.max_jobs }}</span>
+                <span class="font-medium text-gray-800">{{ user.max_jobs }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-600">Máx. Despesas</span>
-                <span class="font-medium text-gray-800">{{ account.max_expenses }}</span>
+                <span class="font-medium text-gray-800">{{ user.max_expenses }}</span>
             </div>
             <div class="flex justify-between items-center py-2">
                 <span class="text-gray-600">Máx. Eventos Agenda</span>
-                <span class="font-medium text-gray-800">{{ account.max_agenda_events }}</span>
+                <span class="font-medium text-gray-800">{{ user.max_agenda_events }}</span>
             </div>
         </div>
     </div>
@@ -135,46 +137,46 @@
         <h3 class="text-lg font-semibold text-gray-800">Preferências de Notificação</h3>
     </div>
     <div class="p-6">
-        <form method="post" action="{% url 'admin_panel:company_update_notifications' account.pk %}" class="space-y-4">
+        <form method="post" action="{% url 'admin_panel:user_update_notifications' user.pk %}" class="space-y-4">
             {% csrf_token %}
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" name="notify_on_job_created" {% if account.notify_on_job_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <input type="checkbox" name="notify_on_job_created" {% if user.notify_on_job_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Trabalho criado</span>
                         <p class="text-xs text-gray-500">Notificar ao criar novo trabalho</p>
                     </div>
                 </label>
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" name="notify_on_job_confirmed" {% if account.notify_on_job_confirmed %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <input type="checkbox" name="notify_on_job_confirmed" {% if user.notify_on_job_confirmed %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Trabalho confirmado</span>
                         <p class="text-xs text-gray-500">Notificar cliente ao confirmar trabalho</p>
                     </div>
                 </label>
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" name="notify_on_client_created" {% if account.notify_on_client_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <input type="checkbox" name="notify_on_client_created" {% if user.notify_on_client_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Cliente criado</span>
                         <p class="text-xs text-gray-500">Notificar ao criar novo cliente</p>
                     </div>
                 </label>
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" name="notify_on_service_created" {% if account.notify_on_service_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <input type="checkbox" name="notify_on_service_created" {% if user.notify_on_service_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Serviço criado</span>
                         <p class="text-xs text-gray-500">Notificar ao criar novo serviço</p>
                     </div>
                 </label>
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" name="notify_on_expense_created" {% if account.notify_on_expense_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <input type="checkbox" name="notify_on_expense_created" {% if user.notify_on_expense_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Despesa criada</span>
                         <p class="text-xs text-gray-500">Notificar ao registrar nova despesa</p>
                     </div>
                 </label>
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                    <input type="checkbox" name="notify_on_quote_created" {% if account.notify_on_quote_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
+                    <input type="checkbox" name="notify_on_quote_created" {% if user.notify_on_quote_created %}checked{% endif %} class="w-5 h-5 text-primary rounded focus:ring-primary">
                     <div>
                         <span class="text-gray-800 font-medium">Orçamento criado</span>
                         <p class="text-xs text-gray-500">Notificar ao criar novo orçamento</p>
@@ -190,12 +192,12 @@
     </div>
 </div>
 
-<!-- Usuários -->
+<!-- Equipe -->
 <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <h3 class="text-lg font-semibold text-gray-800">Usuários ({{ users.count }})</h3>
+        <h3 class="text-lg font-semibold text-gray-800">Equipe ({{ user.invited_users.count|add:1 }})</h3>
     </div>
-    {% if users %}
+    {% if user.invited_users %}
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
@@ -209,14 +211,13 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                {% for user in users %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 text-gray-800">{{ user.get_full_name }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ user.username }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ user.email }}</td>
                     <td class="px-4 py-3 text-gray-600 hidden md:table-cell">{{ user.phone|default:"-" }}</td>
                     <td class="px-4 py-3">
-                        {% if user.is_admin %}
+                        {% if user.is_account_admin %}
                         {% include 'components/badge_status.html' with status='active' type='account_status' %}
                         {% else %}
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-300">Não</span>
@@ -230,6 +231,27 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% for member in user.invited_users.all %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-800">{{ member.get_full_name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ member.username }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ member.email }}</td>
+                    <td class="px-4 py-3 text-gray-600 hidden md:table-cell">{{ member.phone|default:"-" }}</td>
+                    <td class="px-4 py-3">
+                        {% if member.is_account_admin %}
+                        {% include 'components/badge_status.html' with status='active' type='account_status' %}
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-300">Não</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if member.is_active %}
+                        {% include 'components/badge_status.html' with status='active' type='account_status' %}
+                        {% else %}
+                        {% include 'components/badge_status.html' with status='inactive' type='account_status' %}
+                        {% endif %}
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -237,7 +259,7 @@
     {% else %}
     <div class="p-8 text-center">
         <i class="fas fa-users text-3xl text-gray-300 mb-3"></i>
-        <p class="text-gray-500">Nenhum usuário.</p>
+        <p class="text-gray-500">Nenhum membro na equipe.</p>
     </div>
     {% endif %}
 </div>

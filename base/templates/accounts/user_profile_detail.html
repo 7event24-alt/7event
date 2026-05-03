@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile_user.get_full_name|default:profile_user.username }} - Perfil Profissional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a5f',
+                        secondary: '#2d5a8a',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto p-4 py-8">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div class="bg-primary p-6 text-white relative">
+                <div class="flex items-center gap-6">
+                    <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold">
+                        {% if profile_user.photo %}
+                            <img src="{{ profile_user.photo.url }}" alt="{{ profile_user.username }}" class="w-full h-full rounded-full object-cover">
+                        {% else %}
+                            {{ profile_user.first_name|first|default:profile_user.username|first|upper }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                        <p class="text-white/80">{{ profile_user.get_role_display|default:"Profissional" }}</p>
+                        {% if profile_user.show_sensitive_data %}
+                            <span class="inline-block mt-2 px-3 py-1 bg-green-500/20 text-sm rounded-full">
+                                <i class="fas fa-shield-alt mr-1"></i> Dados sensíveis liberados
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if is_own_profile %}
+                <a href="{% url 'accounts:my_profile' %}" class="absolute top-4 right-4 text-white/80 hover:text-white">
+                    <i class="fas fa-edit text-xl"></i>
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="p-6">
+                <!-- Informações Básicas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="flex items-center gap-3 text-gray-600">
+                        <i class="fas fa-envelope text-primary w-5"></i>
+                        <span>{{ profile_user.email }}</span>
+                    </div>
+                    {% if profile_user.phone %}
+                    <div class="flex items-center gap-3 text-gray-600">
+                        <i class="fas fa-phone text-primary w-5"></i>
+                        <span>{{ profile_user.phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if profile_user.address %}
+                    <div class="flex items-center gap-3 text-gray-600">
+                        <i class="fas fa-map-marker-alt text-primary w-5"></i>
+                        <span>{{ profile_user.address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Dados Sensíveis (CPF/RG) - Apenas se can_view_sensitive -->
+                {% if can_view_sensitive %}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <h3 class="text-sm font-semibold text-yellow-800 mb-2">
+                        <i class="fas fa-lock mr-1"></i> Dados Pessoais (LGPD)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        {% if profile_user.full_name %}
+                        <div>
+                            <span class="text-gray-500">Nome Completo:</span>
+                            <span class="font-medium text-gray-800">{{ profile_user.full_name }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.cpf %}
+                        <div>
+                            <span class="text-gray-500">CPF:</span>
+                            <span class="font-medium text-gray-800">{{ profile_user.cpf }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile_user.rg %}
+                        <div>
+                            <span class="text-gray-500">RG:</span>
+                            <span class="font-medium text-gray-800">{{ profile_user.rg }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Biografia -->
+                {% if profile_user.bio and can_view_full_profile %}
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-user-edit text-primary"></i> Biografia
+                    </h2>
+                    <div class="bg-gray-50 rounded-lg p-4 text-gray-700">
+                        {{ profile_user.bio|linebreaksbr }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Habilidades -->
+                {% if profile_user.skills and can_view_full_profile %}
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-tools text-primary"></i> Habilidades
+                    </h2>
+                    <div class="flex flex-wrap gap-2">
+                        {% for skill in profile_user.skills.split(",") %}
+                            <span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">{{ skill|trim }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Portfólio -->
+                {% if profile_user.portfolio_url and can_view_full_profile %}
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-link text-primary"></i> Portfólio
+                    </h2>
+                    <a href="{{ profile_user.portfolio_url }}" target="_blank" 
+                       class="inline-flex items-center gap-2 text-primary hover:underline">
+                        {{ profile_user.portfolio_url }} <i class="fas fa-external-link-alt text-xs"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Mensagem de Acesso Restrito (se não pode ver perfil completo) -->
+        {% if not can_view_full_profile and not is_own_profile %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+            <i class="fas fa-exclamation-circle text-yellow-600 text-2xl mb-2"></i>
+            <p class="text-yellow-800">
+                Este profissional ainda não aceitou o convite para o trabalho. 
+                Acesso completo disponível apenas após a confirmação.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

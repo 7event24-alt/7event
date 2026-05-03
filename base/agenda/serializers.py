@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -12,7 +12,6 @@ from base.jobs.models import Job
 
 class AgendaEventSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True)
-    status_color = serializers.SerializerMethodField()
     textColor = serializers.SerializerMethodField()
     start = serializers.SerializerMethodField()
     end = serializers.SerializerMethodField()
@@ -31,63 +30,102 @@ class AgendaEventSerializer(serializers.ModelSerializer):
             "end_time",
             "location",
             "status",
-            "status_color",
             "textColor",
-            "event_type",
         ]
-
-    def get_status_color(self, obj):
-        colors = {
-            "pending": "#f59e0b",
-            "confirmed": "#10b981",
-            "completed": "#6366f1",
-            "cancelled": "#ef4444",
-        }
-        return colors.get(obj.status, "#1e3a5f")
-
-    def get_textColor(self, obj):
-        return "#ffffff"
 
     def get_start(self, obj):
         if obj.start_date:
-            date_str = str(obj.start_date)
-            if obj.start_time:
-                time_str = str(obj.start_time)
-                if len(time_str) == 5:
-                    return f"{date_str}T{time_str}:00"
-                return f"{date_str}T{time_str}"
-            return date_str
+            return str(obj.start_date)
         return None
-
+    
     def get_end(self, obj):
         if obj.end_date:
-            date_str = str(obj.end_date)
-            if obj.end_time:
-                time_str = str(obj.end_time)
-                if len(time_str) == 5:
-                    return f"{date_str}T{time_str}:00"
-                return f"{date_str}T{time_str}"
-            return date_str
+            return str(obj.end_date)
         return None
+
+    def get_textColor(self, obj):
+        return "#ffffff"
 
 
 class AgendaEventsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        company = request.user.account
         user = request.user
         is_superuser = user.is_superuser
 
-        jobs = Job.objects.filter(account=company).select_related("client")
-
-        user_filter = request.GET.get("user", "")
-        if is_superuser and user_filter:
-            jobs = jobs.filter(user_id=user_filter)
+        # Jobs
+        if is_superuser:
+            jobs = Job.objects.filter(is_active=True).select_related("client")
+        else:
+            jobs = Job.objects.filter(created_by=user, is_active=True).select_related("client")
 
         jobs = jobs.order_by("start_date")
-        serializer = AgendaEventSerializer(jobs, many=True)
-        return Response(serializer.data)
+
+        all_events = []
+
+        # Gerar eventos para cada job
+        for job in jobs:
+            # Evento do Job normal
+            job_serializer = AgendaEventSerializer(job)
+            job_event = job_serializer.data
+            job_event["backgroundColor"] = "#1e3a5f"  # blue-900
+            job_event["borderColor"] = "#1e3a5f"
+            all_events.append(job_event)
+
+            # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
+            if job.has_technical_visit and job.technical_visit_date:
+                visit_date = str(job.technical_visit_date)
+
+                all_events.append({
+                    "id": f"visit_{job.id}",
+                    "title": f"VT: {job.title}",
+                    "start": visit_date,
+                    "end": visit_date,
+                    "backgroundColor": "#fbbf24",  # yellow-400 (amarelinho)
+                    "borderColor": "#f59e0b",      # yellow-500
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "technical_visit",
+                        "job_id": job.id
+                    }
+                })
+
+        # PersonalTasks do usuário
+        try:
+            from base.accounts.models import PersonalTask
+
+            year = int(request.query_params.get("year", timezone.now().year))
+            month = int(request.query_params.get("month", timezone.now().month))
+            first_day = datetime(year, month, 1)
+            last_day = datetime(year, month, monthrange(year, month)[1])
+
+            tasks = PersonalTask.objects.filter(
+                user=user,
+                date__gte=first_day.date(),
+                date__lte=last_day.date()
+            ).order_by("time")
+
+            for task in tasks:
+                start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
+                all_events.append({
+                    "id": f"task_{task.id}",
+                    "title": task.title,
+                    "start": start_dt,
+                    "end": start_dt,
+                    "backgroundColor": "#60a5fa",  # blue-400 (baby blue)
+                    "borderColor": "#3b82f6",     # blue-500
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "task",
+                        "is_completed": task.is_completed
+                    }
+                })
+
+        except Exception as e:
+            pass
+
+        return Response(all_events)
 
 
 class AgendaViewSet(viewsets.ViewSet):
@@ -104,31 +142,73 @@ class AgendaViewSet(viewsets.ViewSet):
 
         if is_superuser:
             jobs = Job.objects.filter(
-                account=user.account,
+                is_active=True,
                 start_date__gte=first_day.date(),
                 start_date__lte=last_day.date()
             ).select_related("client")
         else:
             jobs = Job.objects.filter(
-                account=user.account,
+                created_by=user,
+                is_active=True,
                 start_date__gte=first_day.date(),
                 start_date__lte=last_day.date()
             ).select_related("client")
 
-        serializer = AgendaEventSerializer(jobs, many=True)
-        return Response(serializer.data)
+        all_events = []
 
+        for job in jobs:
+            # Evento do Job normal
+            job_serializer = AgendaEventSerializer(job)
+            job_event = job_serializer.data
+            job_event["backgroundColor"] = "#1e3a5f"  # blue-900
+            job_event["borderColor"] = "#1e3a5f"
+            all_events.append(job_event)
 
-class AdminMetricsSerializer(serializers.Serializer):
-    total_users = serializers.IntegerField()
-    active_users = serializers.IntegerField()
-    blocked_users = serializers.IntegerField()
-    trial_users = serializers.IntegerField()
-    monthly_users = serializers.IntegerField()
-    annual_users = serializers.IntegerField()
-    pending_payments = serializers.IntegerField()
-    inadimplente_users = serializers.IntegerField()
-    total_clients = serializers.IntegerField()
-    total_jobs = serializers.IntegerField()
-    total_expenses = serializers.IntegerField()
-    total_revenue = serializers.DecimalField(max_digits=14, decimal_places=2)
+            # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
+            if job.has_technical_visit and job.technical_visit_date:
+                visit_date = str(job.technical_visit_date)
+
+                all_events.append({
+                    "id": f"visit_{job.id}",
+                    "title": f"VT: {job.title}",
+                    "start": visit_date,
+                    "end": visit_date,
+                    "backgroundColor": "#fbbf24",  # yellow-400 (amarelinho)
+                    "borderColor": "#f59e0b",      # yellow-500
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "technical_visit",
+                        "job_id": job.id
+                    }
+                })
+
+        # PersonalTasks do usuário
+        try:
+            from base.accounts.models import PersonalTask
+
+            tasks = PersonalTask.objects.filter(
+                user=user,
+                date__gte=first_day.date(),
+                date__lte=last_day.date()
+            ).order_by("time")
+
+            for task in tasks:
+                start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
+                all_events.append({
+                    "id": f"task_{task.id}",
+                    "title": task.title,
+                    "start": start_dt,
+                    "end": start_dt,
+                    "backgroundColor": "#60a5fa",  # blue-400 (baby blue)
+                    "borderColor": "#3b82f6",     # blue-500
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "task",
+                        "is_completed": task.is_completed
+                    }
+                })
+
+        except Exception as e:
+            pass
+
+        return Response(all_events)
