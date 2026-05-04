@@ -206,6 +206,8 @@
                         const checkbox = document.getElementById('acceptTerms');
                         const btn = document.getElementById('submitBtn');
                         
+                        if (!checkbox || !btn) return;
+                        
                         if (checkbox.checked) {
                             btn.disabled = false;
                             btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
@@ -222,6 +224,8 @@
                         const checkbox = document.getElementById('acceptTerms');
                         const btn = document.getElementById('submitBtn');
                         const termsDiv = document.getElementById('privacyTermDiv');
+                        
+                        if (!checkbox || !btn) return;
                         
                         // Se o checkbox já veio marcado (erro de formulário anterior)
                         if (checkbox.checked) {
