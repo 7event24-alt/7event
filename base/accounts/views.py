@@ -438,20 +438,25 @@ class ProfileView(LoginRequiredMixin, View):
 
         # Handle photo upload
         if request.POST.get("photo_only"):
-            photo = request.FILES.get("photo")
-            if photo:
-                old_photo = request.user.photo
-
-                request.user.photo = photo
-                request.user.updated_at = timezone.now()
-                request.user.save()
-
-                if old_photo:
-                    try:
-                        old_photo.delete(save=False)
-                    except Exception:
-                        pass
-            return JsonResponse({"success": True})
+            try:
+                photo = request.FILES.get("photo")
+                if photo:
+                    old_photo = request.user.photo
+                    
+                    request.user.photo = photo
+                    request.user.updated_at = timezone.now()
+                    request.user.save()
+                    
+                    if old_photo:
+                        try:
+                            old_photo.delete(save=False)
+                        except Exception:
+                            pass
+                    return JsonResponse({"success": True})
+                else:
+                    return JsonResponse({"success": False, "error": "Nenhuma foto enviada"})
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)})
 
         # Determine which form is being submitted
         form_type = request.POST.get('form_type')
