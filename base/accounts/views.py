@@ -162,11 +162,17 @@ class RegisterView(View):
         if request.user.is_authenticated:
             return redirect("dashboard:home")
         form = self.form_class()
-        
-        # Buscar termo de privacidade ativo
+
+        # Buscar ou criar termo de privacidade ativo
         from .models import PrivacyTerm
         active_term = PrivacyTerm.objects.filter(is_active=True).first()
-        
+        if not active_term:
+            active_term = PrivacyTerm.objects.create(
+                version='1.0',
+                content='Termo de Privacidade e Uso de Dados do 7event. Ao utilizar nossa plataforma, você concorda com a coleta e uso de suas informações conforme descrito neste termo. Para mais detalhes, entre em contato conosco.',
+                is_active=True
+            )
+
         return render(request, self.template_name, {
             "form": form,
             "privacy_term": active_term,
