@@ -171,15 +171,16 @@
                             {{ privacy_term.content|linebreaksbr }}
                         </div>
                         <div class="mt-2 flex items-start gap-2">
-                            <input type="checkbox" id="acceptTerms" disabled 
+                            <input type="checkbox" id="acceptTerms" name="accept_privacy" disabled 
                                    class="w-4 h-4 mt-0.5 text-primary focus:ring-primary border-gray-300 rounded"
-                                   onchange="toggleSubmitButton()">
+                                   onchange="toggleSubmitButton()"
+                                   {% if terms_accepted %}checked{% endif %}>
                             <label for="acceptTerms" class="text-sm text-gray-600">
                                 Li e aceito o Termo de Privacidade
                             </label>
                         </div>
                     </div>
-                    <input type="hidden" name="accepted_term_id" value="{{ privacy_term.id }}">
+                    <input type="hidden" name="accepted_term_id" value="{{ request.POST.accepted_term_id|default:privacy_term.id }}">
                     {% endif %}
                     
                     <button type="submit" id="submitBtn" disabled
@@ -215,6 +216,27 @@
                             btn.classList.remove('bg-primary', 'text-white', 'hover:bg-secondary');
                         }
                     }
+                    
+                    // Restaurar estado quando a página recarrega com erros
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const checkbox = document.getElementById('acceptTerms');
+                        const btn = document.getElementById('submitBtn');
+                        const termsDiv = document.getElementById('privacyTermDiv');
+                        
+                        // Se o checkbox já veio marcado (erro de formulário anterior)
+                        if (checkbox.checked) {
+                            // Habilitar o checkbox e o botão
+                            checkbox.disabled = false;
+                            btn.disabled = false;
+                            btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                            btn.classList.add('bg-primary', 'text-white', 'hover:bg-secondary');
+                            
+                            // Rolar o termo até o final para manter consistência visual
+                            if (termsDiv) {
+                                termsDiv.scrollTop = termsDiv.scrollHeight;
+                            }
+                        }
+                    });
                 </script>
                 
                 <!-- Modal de Confirmação de Email -->

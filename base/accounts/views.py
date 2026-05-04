@@ -169,7 +169,8 @@ class RegisterView(View):
         
         return render(request, self.template_name, {
             "form": form,
-            "privacy_term": active_term
+            "privacy_term": active_term,
+            "terms_accepted": False
         })
 
     def post(self, request):
@@ -253,8 +254,11 @@ class RegisterView(View):
                 request, "accounts/registration_success.html", {"email": user.email}
             )
 
+        from .models import PrivacyTerm
+        active_term = PrivacyTerm.objects.filter(is_active=True).first()
+        terms_accepted = request.POST.get("accept_privacy") == "on"
         return render(
-            request, self.template_name, {"form": form, "form_data": request.POST}
+            request, self.template_name, {"form": form, "form_data": request.POST, "privacy_term": active_term, "terms_accepted": terms_accepted}
         )
 
 
