@@ -326,12 +326,12 @@
                     </div>
                     
 <!-- Main dashboard image -->
-                    <div class="w-[85%] lg:w-[400px] mx-auto relative" style="aspect-ratio: 9/16;">
-                        <!-- Bubbles image (back) - fills container exactly -->
-                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="absolute inset-0 w-full h-full object-contain animate-float-reverse z-0" style="opacity: 0.9;">
+                    <div class="w-[85%] lg:w-[400px] mx-auto relative">
+                        <!-- Phone hero image (front) -->
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float relative z-10">
                         
-                        <!-- Phone hero image (front) - exactly same size, centered on top -->
-                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="absolute inset-0 w-full h-full object-contain z-10 animate-float">
+                        <!-- Bubbles image (back) - exactly behind and centered on phone hero -->
+                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-auto animate-float-reverse z-0" style="opacity: 0.9;">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
