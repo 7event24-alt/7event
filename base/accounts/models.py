@@ -340,7 +340,25 @@ class User(AbstractUser):
     def get_plan(self):
         if self.plan:
             return self.plan
-        return Plan.get_default()
+        default_plan = Plan.get_default()
+        if default_plan:
+            return default_plan
+        # Fallback: cria um plano BASIC padrão se não existir nenhum
+        default_plan, created = Plan.objects.get_or_create(
+            type=PlanType.BASIC,
+            defaults={
+                'name': 'Básico',
+                'is_active': True,
+                'max_users': 1,
+                'max_clients': 10,
+                'max_jobs': 10,
+                'max_expenses': 10,
+                'max_agenda_events': 10,
+                'can_associate_professionals': False,
+                'job_creation_limit': -1,
+            }
+        )
+        return default_plan
 
     def get_max_users(self):
         return self.get_plan().max_users

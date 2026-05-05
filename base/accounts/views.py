@@ -212,6 +212,13 @@ class RegisterView(View):
                 except PrivacyTerm.DoesNotExist:
                     pass
             
+            # Associar plano padrão automaticamente se não houver
+            if not user.plan:
+                from .models import Plan
+                default_plan = Plan.get_default()
+                if default_plan:
+                    user.plan = default_plan
+            
             user.save()
             form.save_m2m()  # Salva ManyToMany (se houver)
 
@@ -413,8 +420,11 @@ class ProfileView(LoginRequiredMixin, View):
 
         return render(request, self.template_name, context)
 
-    @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
+        # Handle photo upload even if user is not authenticated (return JSON, not redirect)
+        if request.method == 'POST' and request.POST.get("photo_only"):
+            if not request.user.is_authenticated:
+                return JsonResponse({"success": False, "error": "Usuário não autenticado"}, status=401)
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request):
