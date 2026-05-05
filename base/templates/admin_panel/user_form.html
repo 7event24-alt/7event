@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar Usuário{% else %}Novo Usuário{% endif %} - 7event{% endblock %}
+{% block page_title %}{% if object %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'admin_panel:user_list' %}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+    <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Voltar</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white shadow-lg">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold">{% if object %}Editar Usuário{% else %}Novo Usuário{% endif %}</h2>
+                <p class="text-white/80 text-sm mt-1">Gerencie dados básicos e plano de forma rápida.</p>
+            </div>
+            <div class="hidden sm:flex w-12 h-12 rounded-xl bg-white/20 items-center justify-center">
+                <i class="fas fa-user-cog text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-id-card text-primary"></i>
+                Informações do Usuário
+            </h3>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {% for field in form %}
+                {% if field.name != 'is_active' and field.name != 'is_blocked' %}
+                <div class="{% if field.name == 'plan' %}md:col-span-2{% endif %}">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="pt-2">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Status</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% for field in form %}
+                    {% if field.name == 'is_active' or field.name == 'is_blocked' %}
+                    <label class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                        {{ field }}
+                        <span class="text-sm text-gray-700">{{ field.label }}</span>
+                    </label>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+                <a href="{% url 'admin_panel:user_list' %}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">Cancelar</a>
+                <button type="submit" class="bg-primary hover:bg-secondary text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
