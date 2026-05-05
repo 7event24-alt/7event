@@ -205,9 +205,41 @@ class RegisterView(View):
             # Associar plano padrão automaticamente se não houver
             if not user.plan:
                 from .models import Plan
+                import logging
+                logger = logging.getLogger(__name__)
+                
+                logger.info(f"Usuário sem plano, tentando associar plano padrão...")
                 default_plan = Plan.get_default()
+                logger.info(f"Plan.get_default() retornou: {default_plan}")
+                
                 if default_plan:
                     user.plan = default_plan
+                    logger.info(f"Plano associado: {default_plan.name} (tipo: {default_plan.type})")
+                else:
+                    # Tenta buscar qualquer plano ativo se o BASIC não existir
+                    any_plan = Plan.objects.filter(is_active=True).first()
+                    logger.info(f"Tentando qualquer plano ativo: {any_plan}")
+                    if any_plan:
+                        user.plan = any_plan
+                        logger.info(f"Plano ativo associado: {any_plan.name}")
+                    else:
+                        # Lista todos os planos para debug
+                        all_plans = Plan.objects.all()
+                        logger.error(f"Nenhum plano ativo encontrado. Planos no banco: {[(p.id, p.name, p.type, p.is_active) for p in all_plans]}")
+                        # Cria um plano básico se não houver nenhum
+                        user.plan = Plan.objects.create(
+                            type='basic',
+                            name='Básico',
+                            is_active=True,
+                            max_users=1,
+                            max_clients=10,
+                            max_jobs=10,
+                            max_expenses=10,
+                            max_agenda_events=10,
+                            can_associate_professionals=False,
+                            job_creation_limit=-1
+                        )
+                        logger.info(f"Plano básico criado automaticamente")
             
             # Salvar termo aceito
             accepted_term_id = request.POST.get("accepted_term_id")

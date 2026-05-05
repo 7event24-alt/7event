@@ -174,7 +174,19 @@ class Plan(models.Model):
 
     @classmethod
     def get_default(cls):
-        return cls.objects.filter(type=PlanType.BASIC, is_active=True).first()
+        # Tenta primeiro pelo tipo BASIC
+        plan = cls.objects.filter(type=PlanType.BASIC, is_active=True).first()
+        if plan:
+            return plan
+        # Tenta encontrar plano com nome contendo 'Free' ou 'Grátis'
+        plan = cls.objects.filter(name__icontains='Free', is_active=True).first()
+        if plan:
+            return plan
+        plan = cls.objects.filter(name__icontains='Grátis', is_active=True).first()
+        if plan:
+            return plan
+        # Fallback: qualquer plano ativo
+        return cls.objects.filter(is_active=True).first()
 
     @classmethod
     def get_tester(cls):
