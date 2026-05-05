@@ -325,13 +325,18 @@
                         </h2>
                     </div>
                     
-<!-- Main dashboard image -->
-                    <div class="w-[85%] lg:w-[400px] mx-auto relative">
-                        <!-- Phone hero image (front on mobile, back on desktop) -->
-                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float relative z-0 lg:z-0 left-[30%] lg:left-auto">
+                    <div class="w-[85%] lg:w-[400px] mx-auto relative flex items-center justify-center">
+                        <!-- Phone Hero: No mobile tem left-[30%], no desktop volta ao normal -->
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" 
+                            class="relative w-full h-auto animate-float z-0 
+                                    left-[30%] lg:left-0">
                         
-                        <!-- Bubbles image (back on mobile, front on desktop) - exactly behind and centered -->
-                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="absolute top-[-30%] left-[-30%] w-full h-auto animate-float-reverse z-10 lg:z-10 lg:inset-0 lg:top-0 lg:left-0" style="opacity: 0.9;">
+                        <!-- Bubbles: No mobile é relative com deslocamento, no desktop é absolute e centralizado -->
+                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" 
+                            class="animate-float-reverse z-10 w-full h-auto
+                                    relative top-[-30%] left-[-30%] 
+                                    lg:absolute lg:inset-0 lg:top-0 lg:left-0" 
+                            style="opacity: 0.9;">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
