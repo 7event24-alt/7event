@@ -196,6 +196,33 @@ class Plan(models.Model):
     def is_agency_plan(self):
         return self.can_associate_professionals
 
+    def get_upgrade_link(self):
+        """Retorna o link de pagamento para upgrade ou link para planos"""
+        if self.payment_link:
+            return self.payment_link
+        return '/app/plans/'
+    
+    def get_next_plan_type(self):
+        """Retorna o tipo do próximo plano para upgrade"""
+        if self.type == PlanType.TESTER:
+            return PlanType.BASIC
+        elif self.type == PlanType.BASIC:
+            return 'pro'
+        elif self.type == 'pro':
+            return PlanType.BUSINESS
+        return None
+    
+    def get_upgrade_text(self):
+        """Retorna o texto do botão de upgrade baseado no plano atual"""
+        next_type = self.get_next_plan_type()
+        if next_type == PlanType.BASIC:
+            return 'Escolher Basic'
+        elif next_type == 'pro':
+            return 'Upgrade para Pro'
+        elif next_type == PlanType.BUSINESS:
+            return 'Upgrade para Business'
+        return 'Ver Planos'
+
 
 class Subscription(models.Model):
     user = models.OneToOneField(

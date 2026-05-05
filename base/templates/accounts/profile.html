@@ -61,6 +61,12 @@
                             <i class="fas fa-shield-alt mr-1"></i>Dados sensíveis liberados
                         </span>
                     {% endif %}
+                    
+                    {% if user.get_plan.type == 'basic' or user.get_plan.type == 'tester' or user.get_plan.type == 'pro' %}
+                        <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-900 px-3 py-1 rounded-full text-sm font-medium transition-all btn-shine">
+                            <i class="fas fa-arrow-up mr-1"></i>{{ user.get_plan.get_upgrade_text }}
+                        </a>
+                    {% endif %}
                 </div>
                 <p class="text-xs text-gray-400 mt-2">Clique na foto para alterar</p>
             </div>

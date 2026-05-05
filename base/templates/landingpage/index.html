@@ -228,13 +228,28 @@
                 
                 <!-- CTA Button -->
                 <div class="flex items-center gap-4">
-                    <a href="/app/accounts/login/" class="text-gray-600 hover:text-primary font-medium transition-colors">
-                        Entrar
-                    </a>
-                    <span class="text-gray-300">|</span>
-                    <a href="/app/accounts/register/" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
-                        Criar conta grátis
-                    </a>
+                    {% if user.is_authenticated %}
+                        {% if user.get_plan.type == 'basic' or user.get_plan.type == 'tester' %}
+                            <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-900 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                                <i class="fas fa-arrow-up mr-2"></i>{{ user.get_plan.get_upgrade_text }}
+                            </a>
+                        {% elif user.get_plan.type == 'pro' %}
+                            <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-900 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                                <i class="fas fa-arrow-up mr-2"></i>{{ user.get_plan.get_upgrade_text }}
+                            </a>
+                        {% endif %}
+                        <a href="/app/dashboard/" class="text-gray-600 hover:text-primary font-medium transition-colors">
+                            Meu Dashboard
+                        </a>
+                    {% else %}
+                        <a href="/app/accounts/login/" class="text-gray-600 hover:text-primary font-medium transition-colors">
+                            Entrar
+                        </a>
+                        <span class="text-gray-300">|</span>
+                        <a href="/app/accounts/register/" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                            Criar conta grátis
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -475,7 +490,7 @@
                         {% elif plan.max_clients > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Até {{ plan.max_clients }} clientes</span>
+                            <span>Até {{ plan.max_clients }} cliente{{ plan.max_clients|pluralize:",s" }}</span>
                         </li>
                         {% endif %}
                         
@@ -487,7 +502,7 @@
                         {% elif plan.max_jobs > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Até {{ plan.max_jobs }} trabalhos</span>
+                            <span>Até {{ plan.max_jobs }} trabalho{{ plan.max_jobs|pluralize:",s" }}</span>
                         </li>
                         {% endif %}
                         
@@ -499,14 +514,14 @@
                         {% elif plan.max_expenses > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>{{ plan.max_expenses }} despesas</span>
+                            <span>{{ plan.max_expenses }} despesa{{ plan.max_expenses|pluralize:",s" }}</span>
                         </li>
                         {% endif %}
                         
                         {% if plan.max_users > 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>
-                            <span>Até {{ plan.max_users }} usuários</span>
+                            <span>Até {{ plan.max_users }} usuário{{ plan.max_users|pluralize:",s" }}</span>
                         </li>
                         {% endif %}
                         
@@ -518,13 +533,23 @@
                         {% endif %}
                     </ul>
                     
-                    <a href="/app/accounts/register/" class="block text-center mt-auto {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-3 rounded-xl font-semibold transition-all">
-                        {% if plan.price_monthly == 0 %}
-                        Começar Grátis
-                        {% else %}
-                        Escolher {{ plan.name }}
-                        {% endif %}
-                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{{ plan.payment_link|default:'#' }}" class="block text-center mt-auto {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-3 rounded-xl font-semibold transition-all">
+                            {% if plan.price_monthly == 0 %}
+                            Começar Grátis
+                            {% else %}
+                            Assinar {{ plan.name }}
+                            {% endif %}
+                        </a>
+                    {% else %}
+                        <a href="/app/accounts/register/?plan={{ plan.type }}" class="block text-center mt-auto {% if plan.highlight %}bg-primary hover:bg-secondary text-white btn-shine{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %} py-3 rounded-xl font-semibold transition-all">
+                            {% if plan.price_monthly == 0 %}
+                            Começar Grátis
+                            {% else %}
+                            Escolher {{ plan.name }}
+                            {% endif %}
+                        </a>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

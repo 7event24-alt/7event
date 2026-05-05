@@ -255,8 +255,6 @@ class RegisterView(View):
             form.save_m2m()  # Salva ManyToMany (se houver)
 
             # Enviar email de verificação
-            import logging
-
             logger = logging.getLogger(__name__)
 
             try:
