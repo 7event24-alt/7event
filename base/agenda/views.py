@@ -169,11 +169,12 @@ class DayDetailView(LoginRequiredMixin, View):
 
         # Jobs normais (na data do evento)
         if is_superuser:
-            jobs = Job.objects.filter(start_date=selected_date)
+            jobs = Job.objects.filter(start_date=selected_date, is_active=True)
         else:
             jobs = Job.objects.filter(
                 models.Q(created_by=user) | models.Q(job_staff__professional=user),
-                start_date=selected_date
+                start_date=selected_date,
+                is_active=True,
             ).distinct()
 
         jobs = jobs.select_related("client").order_by("start_time")
@@ -181,13 +182,14 @@ class DayDetailView(LoginRequiredMixin, View):
         # Visitas Técnicas (na data da visita técnica)
         if is_superuser:
             visits = Job.objects.filter(
+                is_active=True,
                 has_technical_visit=True,
                 technical_visit_date=selected_date
             ).select_related("client")
         else:
             visits = Job.objects.filter(
                 (models.Q(created_by=user) | models.Q(job_staff__professional=user)) &
-                models.Q(has_technical_visit=True, technical_visit_date=selected_date)
+                models.Q(is_active=True, has_technical_visit=True, technical_visit_date=selected_date)
             ).select_related("client").distinct()
 
         # Tarefas Pessoais

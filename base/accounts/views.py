@@ -545,7 +545,7 @@ profile = ProfileView.as_view()
 
 class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = "accounts/password_change.html"
-    success_url = "/accounts/profile/"
+    success_url = "/app/accounts/profile/"
 
     def form_valid(self, form):
         messages.success(self.request, "Senha alterada com sucesso!")

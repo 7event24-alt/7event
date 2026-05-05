@@ -4,6 +4,7 @@ from django.views import View
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from calendar import monthrange
 from decimal import Decimal
 
 from base.clients.models import Client
@@ -26,11 +27,14 @@ class DashboardView(LoginRequiredMixin, View):
         last_month_end = month_start - timedelta(days=1)
 
         if is_superuser:
-            base_jobs = Job.objects.all()
+            base_jobs = Job.objects.filter(is_active=True)
             base_expenses = Expense.objects.all()
             base_clients = Client.objects.all()
         else:
-            base_jobs = Job.objects.filter(created_by=user)
+            base_jobs = Job.objects.filter(
+                Q(created_by=user) | Q(job_staff__professional=user),
+                is_active=True,
+            ).distinct()
             base_expenses = Expense.objects.filter(performed_by=user)
             base_clients = Client.objects.filter(created_by=user)
 
@@ -91,36 +95,23 @@ class DashboardView(LoginRequiredMixin, View):
             base_jobs.select_related("client").order_by("-created_at")[:5]
         )
 
-        from datetime import date
-        
-        today = date.today()
-        three_months_later = today + timedelta(days=90)
-        
-        # QuerySet base sem fatiamento
+        today = timezone.now().date()
+        month_end = today.replace(day=monthrange(today.year, today.month)[1])
+
         upcoming_events = base_jobs.filter(
             start_date__gte=today,
-            start_date__lte=three_months_later,
+            start_date__lte=month_end,
         ).select_related("client").order_by("start_date")
-        
+
         upcoming_events_count = upcoming_events.count()
-        
-        if upcoming_events_count == 0:
-            # Usar base_jobs (sem fatiamento) para contar e listar
-            upcoming_events = base_jobs.select_related("client").order_by("-start_date")
-            upcoming_events_count = base_jobs.count()
-        
-        # NOVO: Jobs normais (sem visita técnica) - filtrar antes de fatiar
-        upcoming_jobs = upcoming_events.filter(
-            has_technical_visit=False
-        ).order_by("start_date")[:10]
-        
-        upcoming_jobs_count = upcoming_events.filter(has_technical_visit=False).count()
-        
-        # NOVO: Visitas Técnicas - filtrar antes de fatiar
+
+        upcoming_jobs = upcoming_events.order_by("start_date")[:10]
+        upcoming_jobs_count = upcoming_events.count()
+
         upcoming_visits = upcoming_events.filter(
             has_technical_visit=True
         ).order_by("start_date")[:10]
-        
+
         upcoming_visits_count = upcoming_events.filter(has_technical_visit=True).count()
         
         # NOVO: Tarefas pessoais pendentes (próximos 90 dias)
