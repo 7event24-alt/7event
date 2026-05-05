@@ -18,7 +18,7 @@ def reverse_migrate_legacy_plan_types(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0019_alter_plan_job_creation_limit"),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
