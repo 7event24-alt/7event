@@ -93,10 +93,10 @@ plan_list = PlanListView.as_view()
 
 
 class ActivateFreeView(LoginRequiredMixin, View):
-    """Ativar plano FREE (BASIC) para o usuário"""
+    """Ativar plano FREE para o usuário"""
 
     def post(self, request):
-        free_plan = Plan.objects.filter(type=PlanType.BASIC, is_active=True).first()
+        free_plan = Plan.objects.filter(type=PlanType.FREE, is_active=True).first()
 
         if not free_plan:
             messages.error(request, "Plano FREE não disponível.")

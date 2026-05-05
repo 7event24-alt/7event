@@ -25,10 +25,10 @@ def user_plan_context(request):
             return {"user_plan": None, "user_plan_badge": "FREE"}
 
         plan_badge = "FREE"
-        if plan.type == "professional":
+        if plan.type == "pro":
             plan_badge = "PRO"
         elif plan.type == "business":
-            plan_badge = "BSC"
+            plan_badge = "BUSINESS"
 
         return {
             "user_plan": plan,

@@ -36,10 +36,10 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium text-gray-800">{{ plan.name }}</td>
                     <td class="px-4 py-3">
-                        {% if plan.type == 'tester' %}
-                        {% include 'components/badge_status.html' with status='trial' type='plan' %}
-                        {% elif plan.type == 'basic' %}
-                        {% include 'components/badge_status.html' with status='basic' type='plan' %}
+                        {% if plan.type == 'free' %}
+                        {% include 'components/badge_status.html' with status='free' type='plan' %}
+                        {% elif plan.type == 'pro' %}
+                        {% include 'components/badge_status.html' with status='pro' type='plan' %}
                         {% else %}
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-yellow-100 text-yellow-800 border-yellow-300">Business</span>
                         {% endif %}

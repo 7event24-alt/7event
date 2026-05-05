@@ -38,8 +38,8 @@ class AdminPanelViewSet(viewsets.ViewSet):
         active_users = User.objects.filter(is_active=True).count()
         blocked_users = User.objects.filter(is_blocked=True).count()
 
-        trial_users = User.objects.filter(plan__type=PlanType.TESTER).count()
-        monthly_users = User.objects.filter(plan__type=PlanType.BASIC).count()
+        trial_users = User.objects.filter(plan__type=PlanType.FREE).count()
+        monthly_users = User.objects.filter(plan__type=PlanType.PROFESSIONAL).count()
         annual_users = User.objects.filter(plan__type=PlanType.BUSINESS).count()
 
         pending_payments = User.objects.filter(

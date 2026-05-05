@@ -216,7 +216,7 @@ class RegisterView(View):
                     user.plan = default_plan
                     logger.info(f"Plano associado: {default_plan.name} (tipo: {default_plan.type})")
                 else:
-                    # Tenta buscar qualquer plano ativo se o BASIC não existir
+                    # Tenta buscar qualquer plano ativo se o FREE não existir
                     any_plan = Plan.objects.filter(is_active=True).first()
                     logger.info(f"Tentando qualquer plano ativo: {any_plan}")
                     if any_plan:
@@ -226,10 +226,10 @@ class RegisterView(View):
                         # Lista todos os planos para debug
                         all_plans = Plan.objects.all()
                         logger.error(f"Nenhum plano ativo encontrado. Planos no banco: {[(p.id, p.name, p.type, p.is_active) for p in all_plans]}")
-                        # Cria um plano básico se não houver nenhum
+                        # Cria um plano FREE se não houver nenhum
                         user.plan = Plan.objects.create(
-                            type='basic',
-                            name='Básico',
+                            type='free',
+                            name='Grátis',
                             is_active=True,
                             max_users=1,
                             max_clients=10,
@@ -239,7 +239,7 @@ class RegisterView(View):
                             can_associate_professionals=False,
                             job_creation_limit=-1
                         )
-                        logger.info(f"Plano básico criado automaticamente")
+                        logger.info(f"Plano FREE criado automaticamente")
             
             # Salvar termo aceito
             accepted_term_id = request.POST.get("accepted_term_id")

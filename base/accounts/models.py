@@ -75,8 +75,8 @@ class UserManager(DjangoUserManager):
 
 
 class PlanType(models.TextChoices):
-    TESTER = "tester", _("Teste")
-    BASIC = "basic", _("Básico")
+    FREE = "free", _("Grátis")
+    PROFESSIONAL = "pro", _("Profissional")
     BUSINESS = "business", _("Business")
 
 
@@ -174,15 +174,8 @@ class Plan(models.Model):
 
     @classmethod
     def get_default(cls):
-        # Tenta primeiro pelo tipo BASIC
-        plan = cls.objects.filter(type=PlanType.BASIC, is_active=True).first()
-        if plan:
-            return plan
-        # Tenta encontrar plano com nome contendo 'Free' ou 'Grátis'
-        plan = cls.objects.filter(name__icontains='Free', is_active=True).first()
-        if plan:
-            return plan
-        plan = cls.objects.filter(name__icontains='Grátis', is_active=True).first()
+        # Tenta primeiro pelo tipo FREE
+        plan = cls.objects.filter(type=PlanType.FREE, is_active=True).first()
         if plan:
             return plan
         # Fallback: qualquer plano ativo
@@ -190,37 +183,39 @@ class Plan(models.Model):
 
     @classmethod
     def get_tester(cls):
-        return cls.objects.filter(type=PlanType.TESTER, is_active=True).first()
+        # Mantido por compatibilidade com código legado
+        return cls.objects.filter(type=PlanType.FREE, is_active=True).first()
 
     @property
     def is_agency_plan(self):
         return self.can_associate_professionals
 
     def get_upgrade_link(self):
-        """Retorna o link de pagamento para upgrade ou link para planos"""
-        if self.payment_link:
-            return self.payment_link
-        return '/app/plans/'
+        """Retorna o link de pagamento do próximo plano para upgrade."""
+        next_type = self.get_next_plan_type()
+        if not next_type:
+            return "/app/planos/"
+
+        next_plan = Plan.objects.filter(type=next_type, is_active=True).first()
+        if next_plan and next_plan.payment_link:
+            return next_plan.payment_link
+        return '/app/planos/'
     
     def get_next_plan_type(self):
         """Retorna o tipo do próximo plano para upgrade"""
-        if self.type == PlanType.TESTER:
-            return PlanType.BASIC
-        elif self.type == PlanType.BASIC:
-            return 'pro'
-        elif self.type == 'pro':
+        if self.type == PlanType.FREE:
+            return PlanType.PROFESSIONAL
+        elif self.type == PlanType.PROFESSIONAL:
             return PlanType.BUSINESS
         return None
     
     def get_upgrade_text(self):
         """Retorna o texto do botão de upgrade baseado no plano atual"""
         next_type = self.get_next_plan_type()
-        if next_type == PlanType.BASIC:
-            return 'Escolher Basic'
-        elif next_type == 'pro':
-            return 'Upgrade para Pro'
+        if next_type == PlanType.PROFESSIONAL:
+            return 'Seja Pro'
         elif next_type == PlanType.BUSINESS:
-            return 'Upgrade para Business'
+            return 'Seja Business'
         return 'Ver Planos'
 
 
@@ -382,11 +377,11 @@ class User(AbstractUser):
         default_plan = Plan.get_default()
         if default_plan:
             return default_plan
-        # Fallback: cria um plano BASIC padrão se não existir nenhum
+        # Fallback: cria um plano FREE padrão se não existir nenhum
         default_plan, created = Plan.objects.get_or_create(
-            type=PlanType.BASIC,
+            type=PlanType.FREE,
             defaults={
-                'name': 'Básico',
+                'name': 'Grátis',
                 'is_active': True,
                 'max_users': 1,
                 'max_clients': 10,
