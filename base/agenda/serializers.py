@@ -71,6 +71,11 @@ class AgendaEventsView(APIView):
             job_event = job_serializer.data
             job_event["backgroundColor"] = "#1e3a5f"  # blue-900
             job_event["borderColor"] = "#1e3a5f"
+            job_event["extendedProps"] = {
+                "type": "job",
+                "filter_status": job.status,
+                "status": job.status,
+            }
             all_events.append(job_event)
 
             # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
@@ -87,7 +92,9 @@ class AgendaEventsView(APIView):
                     "textColor": "#ffffff",
                     "extendedProps": {
                         "type": "technical_visit",
-                        "job_id": job.id
+                        "job_id": job.id,
+                        "filter_status": job.status,
+                        "status": job.status,
                     }
                 })
 
@@ -118,7 +125,8 @@ class AgendaEventsView(APIView):
                     "textColor": "#ffffff",
                     "extendedProps": {
                         "type": "task",
-                        "is_completed": task.is_completed
+                        "is_completed": task.is_completed,
+                        "filter_status": "completed" if task.is_completed else "pending",
                     }
                 })
 
@@ -162,6 +170,11 @@ class AgendaViewSet(viewsets.ViewSet):
             job_event = job_serializer.data
             job_event["backgroundColor"] = "#1e3a5f"  # blue-900
             job_event["borderColor"] = "#1e3a5f"
+            job_event["extendedProps"] = {
+                "type": "job",
+                "filter_status": job.status,
+                "status": job.status,
+            }
             all_events.append(job_event)
 
             # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
@@ -178,7 +191,9 @@ class AgendaViewSet(viewsets.ViewSet):
                     "textColor": "#ffffff",
                     "extendedProps": {
                         "type": "technical_visit",
-                        "job_id": job.id
+                        "job_id": job.id,
+                        "filter_status": job.status,
+                        "status": job.status,
                     }
                 })
 
@@ -204,7 +219,8 @@ class AgendaViewSet(viewsets.ViewSet):
                     "textColor": "#ffffff",
                     "extendedProps": {
                         "type": "task",
-                        "is_completed": task.is_completed
+                        "is_completed": task.is_completed,
+                        "filter_status": "completed" if task.is_completed else "pending",
                     }
                 })
 

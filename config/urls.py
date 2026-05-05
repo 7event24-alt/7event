@@ -47,7 +47,7 @@ urlpatterns = [
     path("api/v1/", include("base.quote.api_urls")),
     path("api/v1/", include("base.services.api_urls")),
     path("api/v1/", include("base.dashboard.api_urls")),
-    path("auth/", include("django.contrib.auth.urls")),
+    path("auth/", include("base.core.auth_urls")),
     path("", include("base.landingpage.urls")),  # LP na raiz
     path("app/", include("base.dashboard.urls")),
     path("app/accounts/", include("base.accounts.urls")),

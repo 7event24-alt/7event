@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.utils import timezone
 
 from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob, JobStaff, JobStaffStatus
-from base.accounts.models import ProfessionalRole
+from base.accounts.models import ProfessionalRole, PlanType
 from base.clients.models import Client
 
 
@@ -205,7 +205,9 @@ class JobDetailView(LoginRequiredMixin, View):
         if can_manage_staff:
             current_staff_ids = staff.values_list("professional_id", flat=True)
             available_professionals = User.objects.filter(
-                is_active=True, is_staff=False
+                is_active=True,
+                is_staff=False,
+                plan__type=PlanType.PROFESSIONAL,
             ).exclude(pk=job.created_by.pk).exclude(pk__in=current_staff_ids)
         
         return render(
@@ -404,8 +406,9 @@ class ProfessionalSearchView(LoginRequiredMixin, View):
             current_staff_ids = list(JobStaff.objects.filter(job_id=job_id).values_list("professional_id", flat=True))
         
         professionals = User.objects.filter(
-            is_active=True, 
-            is_staff=False
+            is_active=True,
+            is_staff=False,
+            plan__type=PlanType.PROFESSIONAL,
         ).exclude(pk__in=current_staff_ids).filter(
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
