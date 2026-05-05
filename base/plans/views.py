@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.contrib import messages
 
 from base.accounts.models import Plan, PlanType, User
+from base.support.models import SupportMessage, SupportSubject
 
 
 class PlanListView(LoginRequiredMixin, View):
@@ -41,8 +42,40 @@ class PlanListView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse("plans:activate_free"))
 
         self.notify_superuser(request.user, plan)
+        self.create_upgrade_support_message(request.user, plan)
 
         return HttpResponseRedirect(reverse("plans:waiting"))
+
+    def create_upgrade_support_message(self, user, plan):
+        """Create support message notifying superusers about upgrade request."""
+        user_name = user.get_full_name() or user.username or "Nao informado"
+        current_plan = user.get_plan()
+        current_plan_name = current_plan.name if current_plan else "Nao informado"
+        phone = user.phone or "Nao informado"
+
+        message = (
+            "Solicitacao de upgrade de plano.\n\n"
+            f"Cliente: {user_name}\n"
+            f"Email: {user.email or 'Nao informado'}\n"
+            f"Telefone: {phone}\n"
+            f"Plano atual: {current_plan_name}\n"
+            f"Plano solicitado: {plan.name}\n"
+            f"ID do usuario: {user.id}\n"
+        )
+
+        SupportMessage.objects.create(
+            name=user_name,
+            email=user.email or "noreply@7event.com.br",
+            phone=user.phone or "",
+            subject=SupportSubject.PLANOS,
+            message=message,
+            user=user,
+            is_read=False,
+        )
+
+        from base.core.context_processors import clear_support_cache
+
+        clear_support_cache()
 
     def notify_superuser(self, user, plan):
         """Send email to superusers notifying about plan request"""
