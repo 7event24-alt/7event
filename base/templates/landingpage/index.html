@@ -327,11 +327,11 @@
                     
 <!-- Main dashboard image -->
                     <div class="w-[85%] lg:w-[400px] mx-auto relative">
-                        <!-- Phone hero image (front) -->
-                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float relative z-10">
+                        <!-- Phone hero image (front on mobile, back on desktop) -->
+                        <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float relative z-0 lg:z-0 left-[30%] lg:left-auto">
                         
-                        <!-- Bubbles image (back) - exactly behind and centered on phone hero -->
-                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-auto animate-float-reverse z-0" style="opacity: 0.9;">
+                        <!-- Bubbles image (back on mobile, front on desktop) - exactly behind and centered -->
+                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="absolute top-[-30%] left-[-30%] w-full h-auto animate-float-reverse z-10 lg:z-10 lg:inset-0 lg:top-0 lg:left-0" style="opacity: 0.9;">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
