@@ -18,7 +18,7 @@ def reverse_migrate_legacy_plan_types(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0021_add_personal_task_model"),
+        ("accounts", "0020_add_privacy_terms_and_professional_fields"),
     ]
 
     operations = [
