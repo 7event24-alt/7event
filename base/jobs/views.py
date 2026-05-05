@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
@@ -330,6 +331,65 @@ class JobDeleteView(LoginRequiredMixin, View):
         job.delete()
         messages.success(request, "Trabalho excluído com sucesso!")
         return redirect("jobs:list")
+
+
+class JobDuplicateView(LoginRequiredMixin, View):
+    def _duplicate(self, request, pk):
+        job = get_object_or_404(Job, pk=pk, is_active=True)
+
+        is_owner = job.created_by == request.user
+        if not (is_owner or request.user.is_superuser):
+            messages.error(request, "Você não tem permissão para duplicar este trabalho.")
+            return redirect("jobs:list")
+
+        with transaction.atomic():
+            original_pk = job.pk
+            job.pk = None
+            job.status = JobStatus.PENDING
+            job.payment_status = PaymentStatusJob.PENDING
+            job.approved_by = None
+            job.approved_at = None
+            job.payment_confirmed_at = None
+            job.payment_partial_confirmed_at = None
+            job.payment_remaining_confirmed_at = None
+            job.created_by = request.user
+            job.save()
+            new_job = job
+
+            original_staff = JobStaff.objects.filter(job_id=original_pk)
+            for staff in original_staff:
+                JobStaff.objects.create(
+                    job=new_job,
+                    professional=staff.professional,
+                    cache_value=staff.cache_value,
+                    role=staff.role,
+                    payment_type=staff.payment_type,
+                    status=JobStaffStatus.PENDING,
+                    notes=staff.notes,
+                )
+
+            from base.expenses.models import Expense
+
+            original_expenses = Expense.objects.filter(job_id=original_pk, is_active=True)
+            for expense in original_expenses:
+                Expense.objects.create(
+                    performed_by=request.user,
+                    job=new_job,
+                    category=expense.category,
+                    value=expense.value,
+                    date=expense.date,
+                    description=expense.description,
+                    is_active=True,
+                )
+
+        messages.success(request, "Trabalho duplicado com sucesso! Revise os dados antes de confirmar.")
+        return redirect("jobs:update", pk=new_job.pk)
+
+    def post(self, request, pk):
+        return self._duplicate(request, pk)
+
+    def get(self, request, pk):
+        return self._duplicate(request, pk)
 
 
 class ClientQuickCreateView(LoginRequiredMixin, View):

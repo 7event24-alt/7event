@@ -86,6 +86,9 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-2">
+                            <a href="/app/trabalhos/{{ job.pk }}/duplicar/" class="text-gray-600 hover:text-green-600 p-1" title="Duplicar">
+                                <i class="fas fa-copy"></i>
+                            </a>
                             <a href="{% url 'jobs:update' job.pk %}" class="text-gray-600 hover:text-primary p-1" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>

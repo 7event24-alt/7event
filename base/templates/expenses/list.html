@@ -76,7 +76,7 @@
                     </td>
                     <td class="px-4 py-3 font-medium">- {{ expense.value|brl }}</td>
                     <td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{{ expense.description|default:"-"|truncatechars:50 }}</td>
-                    {% if is_superuser %}<td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{{ expense.user.first_name|default:expense.user.username|default:"-" }}</td>{% endif %}
+                    {% if is_superuser %}<td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{{ expense.performed_by.first_name|default:expense.performed_by.username|default:"-" }}</td>{% endif %}
                     <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-2">
                             <a href="{% url 'expenses:update' expense.pk %}" class="text-gray-600 hover:text-primary p-1" title="Editar">
