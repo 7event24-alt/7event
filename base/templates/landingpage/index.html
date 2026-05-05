@@ -148,8 +148,13 @@
                 align-items: center;
             }
             
-            .phone-hero-mobile img {
+            .phone-hero-mobile .relative img {
                 max-width: 240px;
+            }
+            
+            .phone-hero-mobile .relative {
+                display: flex;
+                justify-content: center;
             }
             
             .hero-section .grid {
@@ -321,9 +326,12 @@
                     </div>
                     
 <!-- Main dashboard image -->
-                    <div class="w-[85%] lg:w-[400px] mx-auto flex justify-center relative">
+                    <div class="w-[85%] lg:w-[400px] mx-auto relative">
+                        <!-- Phone hero image (front) -->
                         <img src="{% static 'img/phonehero.png' %}" alt="7Event App" class="w-full h-auto animate-float relative z-10">
-                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="w-full h-auto absolute top-0 left-0 animate-float-reverse z-0" style="opacity: 0.9;">
+                        
+                        <!-- Bubbles image (back) - positioned exactly behind phone hero -->
+                        <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" class="absolute inset-0 w-full h-auto animate-float-reverse z-0" style="opacity: 0.9;">
                     </div>
                     
                     <!-- Mobile: Descrição + CTAs -->
