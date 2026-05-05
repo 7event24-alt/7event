@@ -202,6 +202,13 @@ class RegisterView(View):
             # Salvar formulário (agora inclui novos campos como full_name, cpf, etc.)
             user = form.save(commit=False)
             
+            # Associar plano padrão automaticamente se não houver
+            if not user.plan:
+                from .models import Plan
+                default_plan = Plan.get_default()
+                if default_plan:
+                    user.plan = default_plan
+            
             # Salvar termo aceito
             accepted_term_id = request.POST.get("accepted_term_id")
             if accepted_term_id:
@@ -211,13 +218,6 @@ class RegisterView(View):
                     user.accepted_term = term
                 except PrivacyTerm.DoesNotExist:
                     pass
-            
-            # Associar plano padrão automaticamente se não houver
-            if not user.plan:
-                from .models import Plan
-                default_plan = Plan.get_default()
-                if default_plan:
-                    user.plan = default_plan
             
             user.save()
             form.save_m2m()  # Salva ManyToMany (se houver)
