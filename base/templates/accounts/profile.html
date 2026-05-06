@@ -9,7 +9,7 @@
     <div class="bg-white rounded-lg shadow p-6">
         <form method="post" enctype="multipart/form-data" id="photoForm" class="hidden">
             {% csrf_token %}
-            <input type="file" name="photo" id="photoInput" accept="image/*">
+            <input type="file" name="photo" id="photoInput" accept="image/jpeg,image/png,image/webp">
         </form>
         <div class="flex flex-col sm:flex-row items-center gap-6">
             <label for="photoInput" class="cursor-pointer relative group">
@@ -422,7 +422,11 @@ document.getElementById('photoInput').addEventListener('change', function() {
         })
         .then(data => {
             if (data && data.success !== undefined) {
-                console.log('Success:', data);
+                if (!data.success) {
+                    alert(data.error || 'Nao foi possivel atualizar a foto. Tente usar JPG ou PNG.');
+                    return;
+                }
+
                 if (data.photo_url) {
                     const version = data.version || Date.now();
                     document.querySelectorAll('[data-user-photo="1"]').forEach((img) => {
