@@ -270,6 +270,7 @@ class Job(models.Model):
         from base.accounts.models import Notification
 
         Notification.objects.filter(action_url__contains=f"/app/trabalhos/{self.pk}/").delete()
+        self.expenses.update(is_active=False)
         self.is_active = False
         self.save()
 

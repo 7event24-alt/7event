@@ -234,11 +234,11 @@
                 <!-- CTA Button -->
                 <div class="flex items-center gap-4">
                     {% if user.is_authenticated %}
-                        {% if user.get_plan.type == 'free' %}
+                        {% if user.get_plan.type == 'free' and user.get_plan.can_upgrade %}
                             <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
                                 <i class="fas fa-level-up mr-2"></i>{{ user.get_plan.get_upgrade_text }}
                             </a>
-                        {% elif user.get_plan.type == 'pro' %}
+                        {% elif user.get_plan.type == 'pro' and user.get_plan.can_upgrade %}
                             <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
                                 <i class="fas fa-level-up mr-2"></i>{{ user.get_plan.get_upgrade_text }}
                             </a>
@@ -329,12 +329,12 @@
                         <!-- Phone Hero: No mobile tem left-[30%], no desktop volta ao normal -->
                         <img src="{% static 'img/phonehero.png' %}" alt="7Event App" 
                             class="relative w-full h-auto animate-float z-0 
-                                    left-[30%] lg:left-0">
+                                    left-[min(50%,120px)] lg:left-0">
                         
                         <!-- Bubbles: No mobile é relative com deslocamento, no desktop é absolute e centralizado -->
                         <img src="{% static 'img/bubbles.png' %}" alt="7Event Bolhas" 
                             class="animate-float-reverse z-10 w-full h-auto
-                                    relative top-[-30%] left-[-30%] 
+                                    relative top-[-30%] left-[min(30%,-120px)] 
                                     lg:absolute lg:inset-0 lg:top-0 lg:left-0" 
                             style="opacity: 0.9;">
                     </div>
@@ -495,6 +495,12 @@
                     </div>
                     
                     <ul class="space-y-2 mb-6 text-sm">
+                        {% if plan.can_associate_professionals %}
+                        <li class="flex items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-blue-800 font-semibold">
+                            <i class="fas fa-user-plus text-blue-600"></i>
+                            <span>Permite associar profissionais</span>
+                        </li>
+                        {% endif %}
                         {% if plan.max_clients == 0 %}
                         <li class="flex items-center gap-3 text-gray-600">
                             <i class="fas fa-check text-green-500"></i>

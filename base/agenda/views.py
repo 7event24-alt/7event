@@ -17,11 +17,12 @@ class AgendaView(LoginRequiredMixin, View):
         is_superuser = user.is_superuser
 
         if is_superuser:
-            base_jobs = Job.objects.all()
+            base_jobs = Job.objects.filter(is_active=True)
         else:
             # Mostrar trabalhos criados pelo user OU onde ele é staff
             base_jobs = Job.objects.filter(
-                models.Q(created_by=user) | models.Q(job_staff__professional=user)
+                models.Q(created_by=user) | models.Q(job_staff__professional=user),
+                is_active=True,
             ).distinct()
 
         now = timezone.now()

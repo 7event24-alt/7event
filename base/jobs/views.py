@@ -265,7 +265,16 @@ class JobCancelView(LoginRequiredMixin, View):
     def post(self, request, pk):
         job = get_object_or_404(Job, pk=pk, created_by=request.user, is_active=True)
         job.status = JobStatus.CANCELLED
+        job.cache = 0
+        job.total_budget = 0
+        job.payment_total = 0
+        job.payment_partial_value = 0
+        job.payment_remaining_value = 0
+        job.payment_status = PaymentStatusJob.PENDING
         job.save()
+
+        job.job_staff.update(cache_value=0)
+
         messages.success(request, "Trabalho cancelado!")
         return redirect("jobs:list")
 

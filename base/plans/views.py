@@ -14,12 +14,16 @@ class PlanListView(LoginRequiredMixin, View):
     template_name = "plans/list.html"
 
     def get(self, request):
-        plans = Plan.objects.filter(is_visible=True).order_by("price_monthly")
+        plans = Plan.objects.filter(is_visible=True, is_active=True).order_by("price_monthly")
+        current_plan = request.user.get_plan() if request.user.is_authenticated else None
 
         return render(
             request,
             self.template_name,
-            {"plans": plans},
+            {
+                "plans": plans,
+                "current_plan_id": current_plan.id if current_plan else None,
+            },
         )
 
     def post(self, request):
@@ -30,7 +34,7 @@ class PlanListView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse("plans:list"))
 
         try:
-            plan = Plan.objects.get(id=plan_id, is_visible=True)
+            plan = Plan.objects.get(id=plan_id, is_visible=True, is_active=True)
         except Plan.DoesNotExist:
             return HttpResponseRedirect(reverse("plans:list"))
 

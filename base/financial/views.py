@@ -23,12 +23,13 @@ class FinancialView(LoginRequiredMixin, View):
         today = now.date()
 
         if is_superuser:
-            base_jobs = Job.objects.all()
+            base_jobs = Job.objects.filter(is_active=True)
             base_expenses = Expense.objects.all()
         else:
             # Include jobs created by user OR where user is a staff member
             base_jobs = Job.objects.filter(
-                Q(created_by=user) | Q(job_staff__professional=user)
+                Q(created_by=user) | Q(job_staff__professional=user),
+                is_active=True,
             ).distinct()
             # Include expenses where:
             # 1. performed_by=user (user created the expense)
@@ -48,7 +49,8 @@ class FinancialView(LoginRequiredMixin, View):
             staff_jobs = Q(job_staff__professional=user)
             
             return Job.objects.filter(
-                created_jobs | staff_jobs
+                created_jobs | staff_jobs,
+                is_active=True,
             ).distinct().annotate(
                 # This will be used in calculation
                 is_creator=models.Case(
@@ -60,7 +62,8 @@ class FinancialView(LoginRequiredMixin, View):
         
         # Get all relevant jobs for revenue calculation
         all_relevant_jobs = Job.objects.filter(
-            Q(created_by=user) | Q(job_staff__professional=user)
+            Q(created_by=user) | Q(job_staff__professional=user),
+            is_active=True,
         ).distinct().select_related('created_by').prefetch_related('job_staff')
         
         # Calculate total revenue including staff cache values
@@ -241,7 +244,8 @@ class FinancialView(LoginRequiredMixin, View):
         
         # Get all relevant jobs for this user (creator or staff)
         relevant_jobs = Job.objects.filter(
-            Q(created_by=user) | Q(job_staff__professional=user)
+            Q(created_by=user) | Q(job_staff__professional=user),
+            is_active=True,
         ).distinct().select_related('created_by').prefetch_related('job_staff')
         
         # Calculate revenue including staff cache values

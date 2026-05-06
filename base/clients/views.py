@@ -121,7 +121,7 @@ class ClientDetailView(LoginRequiredMixin, TemplateView):
             Client, pk=self.kwargs["pk"], created_by=self.request.user
         )
         context["client"] = client
-        context["jobs"] = client.jobs.all()
+        context["jobs"] = client.jobs.filter(is_active=True)
         return context
 
 

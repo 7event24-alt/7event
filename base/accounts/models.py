@@ -191,15 +191,17 @@ class Plan(models.Model):
         return self.can_associate_professionals
 
     def get_upgrade_link(self):
-        """Retorna o link de pagamento do próximo plano para upgrade."""
+        """Retorna sempre a página de planos para fluxo padronizado de upgrade."""
+        return '/app/planos/'
+
+    def get_next_plan(self):
         next_type = self.get_next_plan_type()
         if not next_type:
-            return "/app/planos/"
+            return None
+        return Plan.objects.filter(type=next_type, is_active=True, is_visible=True).first()
 
-        next_plan = Plan.objects.filter(type=next_type, is_active=True).first()
-        if next_plan and next_plan.payment_link:
-            return next_plan.payment_link
-        return '/app/planos/'
+    def can_upgrade(self):
+        return self.get_next_plan() is not None
     
     def get_next_plan_type(self):
         """Retorna o tipo do próximo plano para upgrade"""
@@ -211,7 +213,11 @@ class Plan(models.Model):
     
     def get_upgrade_text(self):
         """Retorna o texto do botão de upgrade baseado no plano atual"""
-        next_type = self.get_next_plan_type()
+        next_plan = self.get_next_plan()
+        if not next_plan:
+            return 'Ver Planos'
+
+        next_type = next_plan.type
         if next_type == PlanType.PROFESSIONAL:
             return 'Seja Pro'
         elif next_type == PlanType.BUSINESS:
