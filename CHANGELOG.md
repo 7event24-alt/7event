@@ -10,6 +10,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
+- Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.
 
 ## [1.5.0] - 2026-04-21
 
