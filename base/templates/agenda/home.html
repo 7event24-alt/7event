@@ -50,24 +50,79 @@
     
     <!-- Sidebar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 lg:p-4">
-        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Próximos Eventos</h3>
-        <div class="space-y-2 lg:space-y-3 max-h-64 lg:max-h-96 overflow-y-auto">
-            {% for job in upcoming_jobs %}
-            <a href="{% url 'jobs:detail' job.id %}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition border-l-4" style="border-left-color: {{ job.status_color }}">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-primary text-white flex flex-col items-center justify-center flex-shrink-0">
-                        <span class="text-xs font-bold">{{ job.start_date|date:"d" }}</span>
-                        <span class="text-[10px] font-medium uppercase">{{ job.start_date|date:"M" }}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="font-medium text-gray-800 truncate">{{ job.title }}</div>
-                        <div class="text-sm text-gray-500 truncate">{{ job.client.name }}</div>
-                    </div>
+        <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3">Próximos no mês</h3>
+
+        <div class="grid grid-cols-3 gap-2 mb-3" id="sidebarTabs">
+            <button data-tab="jobs" class="agenda-tab-btn bg-primary text-white text-xs px-2 py-2 rounded-lg">Eventos</button>
+            <button data-tab="visits" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Visitas</button>
+            <button data-tab="tasks" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Agenda Pessoal</button>
+        </div>
+
+        <div class="max-h-64 lg:max-h-96 overflow-y-auto">
+            <div class="agenda-tab-content" id="tab-jobs">
+                <div class="space-y-2 lg:space-y-3">
+                    {% for job in upcoming_jobs %}
+                    <a href="{% url 'jobs:detail' job.id %}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition border-l-4" style="border-left-color: {{ job.status_color }}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-primary text-white flex flex-col items-center justify-center flex-shrink-0">
+                                <span class="text-xs font-bold">{{ job.start_date|date:"d" }}</span>
+                                <span class="text-[10px] font-medium uppercase">{{ job.start_date|date:"M" }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-800 truncate">{{ job.title }}</div>
+                                <div class="text-sm text-gray-500 truncate">{{ job.client.name }}</div>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">Nenhum evento no mês vigente</p>
+                    {% endfor %}
                 </div>
-            </a>
-            {% empty %}
-            <p class="text-gray-500 text-center py-4">Nenhum evento próximo</p>
-            {% endfor %}
+            </div>
+
+            <div class="agenda-tab-content hidden" id="tab-visits">
+                <div class="space-y-2 lg:space-y-3">
+                    {% for visit in upcoming_visits %}
+                    <a href="{% url 'jobs:detail' visit.id %}" class="block p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition border-l-4 border-yellow-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-yellow-500 text-white flex flex-col items-center justify-center flex-shrink-0">
+                                <span class="text-xs font-bold">{{ visit.technical_visit_date|date:"d" }}</span>
+                                <span class="text-[10px] font-medium uppercase">{{ visit.technical_visit_date|date:"M" }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-800 truncate">VT: {{ visit.title }}</div>
+                                <div class="text-sm text-gray-500 truncate">{{ visit.client.name }}</div>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">Nenhuma visita no mês vigente</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="agenda-tab-content hidden" id="tab-tasks">
+                <div class="space-y-2 lg:space-y-3">
+                    {% for task in upcoming_tasks %}
+                    <a href="{% url 'accounts:personal_tasks' %}" class="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition border-l-4 border-blue-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex flex-col items-center justify-center flex-shrink-0">
+                                <span class="text-xs font-bold">{{ task.date|date:"d" }}</span>
+                                <span class="text-[10px] font-medium uppercase">{{ task.date|date:"M" }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-800 truncate">{{ task.title }}</div>
+                                <div class="text-sm text-gray-500 truncate">
+                                    Agenda Pessoal{% if task.time %} - {{ task.time|time:"H:i" }}{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">Nenhum item da agenda pessoal no mês vigente</p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
         
         <div class="mt-6 pt-4 border-t border-gray-200">
@@ -84,7 +139,7 @@
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" value="task" checked class="filter-checkbox type-filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                    <span class="text-sm text-gray-600">Tarefas</span>
+                    <span class="text-sm text-gray-600">Agenda Pessoal</span>
                 </label>
             </div>
 
@@ -270,6 +325,39 @@ document.addEventListener('DOMContentLoaded', function() {
             calendar.addEvent(eventData);
         });
     }
+
+    function loadEventsForCurrentMonth() {
+        if (typeof calendar === 'undefined') return;
+
+        var currentDate = calendar.getDate();
+        var year = currentDate.getFullYear();
+        var month = currentDate.getMonth() + 1;
+
+        var url = '/app/agenda/api/eventos/?year=' + year + '&month=' + month;
+        var userFilter = document.getElementById('userFilter');
+        if (userFilter && userFilter.value) {
+            url += '&user=' + encodeURIComponent(userFilter.value);
+        }
+
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('HTTP Error: ' + response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            allEvents = data || [];
+            refreshCalendarEvents();
+        })
+        .catch(function(error) {
+            console.error('Erro ao carregar eventos:', error);
+        });
+    }
     
     var calendar;
     
@@ -372,52 +460,22 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }, 500);
         
-        // Carrega eventos após renderizar
-        console.log('Fetching events from /app/agenda/api/eventos/...');
-        fetch('/app/agenda/api/eventos/', {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(function(response) {
-            console.log('Response status:', response.status);
-            if (response.ok) return response.json();
-            throw new Error('HTTP Error: ' + response.status);
-        })
-        .then(function(data) {
-            console.log('API returned', data.length, 'events:', JSON.stringify(data));
-            allEvents = data;
-            var filtered = filterEvents(allEvents);
-            filtered.forEach(function(event) {
-                console.log('Adding event:', event.title, event.start);
-                calendar.addEvent(event);
-            });
-            console.log('Total events in calendar:', calendar.getEvents().length);
-        })
-        .catch(function(error) {
-            console.error('Fetch error:', error);
-            // Fallback: mostra eventos da variável Django
-            console.log('Trying fallback events from page...');
-            if (typeof allEvents !== 'undefined' && allEvents.length > 0) {
-                allEvents.forEach(function(event) {
-                    calendar.addEvent(event);
-                });
-            }
-        });
+        loadEventsForCurrentMonth();
         
         document.getElementById('prevMonth').addEventListener('click', function() {
             calendar.prev();
             updateMonthDisplay(calendar);
+            loadEventsForCurrentMonth();
         });
         document.getElementById('nextMonth').addEventListener('click', function() {
             calendar.next();
             updateMonthDisplay(calendar);
+            loadEventsForCurrentMonth();
         });
         document.getElementById('todayBtn').addEventListener('click', function() {
             calendar.today();
             updateMonthDisplay(calendar);
+            loadEventsForCurrentMonth();
         });
         document.getElementById('addJobBtn').addEventListener('click', function() {
             var date = calendar.getDate();
@@ -442,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var userFilterSelect = document.getElementById('userFilter');
         if (userFilterSelect) {
             userFilterSelect.addEventListener('change', function() {
-                refreshCalendarEvents();
+                loadEventsForCurrentMonth();
             });
         }
         
@@ -464,6 +522,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = '/app/trabalhos/novo/?date=' + dateStr;
             });
         }
+
+        document.querySelectorAll('.agenda-tab-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var tab = btn.getAttribute('data-tab');
+
+                document.querySelectorAll('.agenda-tab-btn').forEach(function(other) {
+                    other.classList.remove('bg-primary', 'text-white');
+                    other.classList.add('bg-gray-100', 'text-gray-700');
+                });
+                btn.classList.remove('bg-gray-100', 'text-gray-700');
+                btn.classList.add('bg-primary', 'text-white');
+
+                document.querySelectorAll('.agenda-tab-content').forEach(function(content) {
+                    content.classList.add('hidden');
+                });
+                var active = document.getElementById('tab-' + tab);
+                if (active) active.classList.remove('hidden');
+            });
+        });
     }
 });
 </script>

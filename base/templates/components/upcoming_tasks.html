@@ -1,9 +1,9 @@
 {% load static %}
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-        <h3 class="font-semibold text-gray-800">Tarefas Pessoais</h3>
+        <h3 class="font-semibold text-gray-800">Agenda Pessoal</h3>
         <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-            {% if upcoming_tasks_count > 0 %}{{ upcoming_tasks_count }} tarefas{% else %}--{% endif %}
+            {% if upcoming_tasks_count > 0 %}{{ upcoming_tasks_count }} itens{% else %}--{% endif %}
         </span>
     </div>
     <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
@@ -24,11 +24,11 @@
             </div>
             {% endfor %}
         {% else %}
-            <p class="text-gray-500 text-center py-4">Nenhuma tarefa pendente</p>
+            <p class="text-gray-500 text-center py-4">Nenhum item pendente</p>
         {% endif %}
     </div>
     <div class="px-4 py-3 border-t border-gray-200">
-        <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Ver todas as tarefas</a>
+        <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Ver minha agenda pessoal</a>
     </div>
 </div>
 
@@ -49,14 +49,11 @@ function toggleTaskComplete(taskId, checkbox) {
     .then(data => {
         if (data.success) {
             const taskElement = document.getElementById('dashboard-task-' + taskId);
-            if (data.is_completed) {
-                taskElement.classList.add('line-through', 'text-gray-400');
-            } else {
-                taskElement.classList.remove('line-through', 'text-gray-400');
-            }
+            if (taskElement) taskElement.remove();
+            window.location.reload();
         } else {
             checkbox.checked = !checkbox.checked;
-            alert('Erro ao atualizar tarefa');
+            alert('Erro ao atualizar item da agenda');
         }
     })
     .catch(error => {

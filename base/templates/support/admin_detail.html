@@ -33,7 +33,9 @@
                 <span class="text-sm text-gray-500">Usuário (se logado)</span>
                 <p class="font-medium text-gray-800">
                     {% if message.user %}
-                    {{ message.user.get_full_name|default:message.user.email }}
+                    <a href="{% url 'admin_panel:user_edit' message.user.pk %}" class="text-primary hover:text-secondary hover:underline">
+                        {{ message.user.get_full_name|default:message.user.email }}
+                    </a>
                     <span class="text-gray-400">({{ message.user.legal_name|default:message.user.username }})</span>
                     {% else %}
                     Visitante não logado
@@ -79,6 +81,37 @@
             <p class="text-gray-700 whitespace-pre-wrap">{{ message.message }}</p>
         </div>
     </div>
+
+    {% if message.subject == 'planos' and message.user %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-level-up-alt mr-2 text-primary"></i>Ações de Upgrade
+        </h3>
+
+        <div class="mb-4 text-sm text-gray-600">
+            <p>Plano atual: <span class="font-semibold text-gray-800">{{ message.user.get_plan.name }}</span></p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'admin_panel:user_edit' message.user.pk %}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+                <i class="fas fa-user-cog"></i> Editar Usuário
+            </a>
+
+            {% if message.user.get_plan.can_upgrade %}
+            <form method="post" action="{% url 'admin_panel:user_upgrade_plan' message.user.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i> Confirmar Upgrade
+                </button>
+            </form>
+            {% else %}
+            <button type="button" disabled class="bg-gray-100 text-gray-500 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                Sem upgrade disponível
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Resposta -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

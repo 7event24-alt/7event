@@ -2,7 +2,7 @@
 <div class="bg-white rounded-lg shadow p-6">
     <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <i class="fas fa-tasks text-primary"></i>
-        Minhas Tarefas
+        Minha Agenda Pessoal
         {% if pending_tasks_count %}
         <span class="ml-auto bg-primary text-white text-xs px-2 py-1 rounded-full">{{ pending_tasks_count }}</span>
         {% endif %}
@@ -24,12 +24,12 @@
             {% endfor %}
         </div>
         <div class="mt-4">
-            <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Ver todas as tarefas</a>
+            <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Ver minha agenda pessoal</a>
         </div>
     {% else %}
-        <p class="text-gray-400 text-sm">Nenhuma tarefa pendente para hoje</p>
+        <p class="text-gray-400 text-sm">Nenhum item pendente para hoje</p>
         <div class="mt-4">
-            <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Gerenciar tarefas</a>
+            <a href="{% url 'accounts:personal_tasks' %}" class="text-sm text-primary hover:underline">Gerenciar agenda pessoal</a>
         </div>
     {% endif %}
 </div>
@@ -51,14 +51,11 @@ function toggleTaskComplete(taskId, checkbox) {
     .then(data => {
         if (data.success) {
             const taskElement = document.getElementById('dashboard-task-' + taskId);
-            if (data.is_completed) {
-                taskElement.classList.add('line-through', 'text-gray-400');
-            } else {
-                taskElement.classList.remove('line-through', 'text-gray-400');
-            }
+            if (taskElement) taskElement.remove();
+            window.location.reload();
         } else {
             checkbox.checked = !checkbox.checked;
-            alert('Erro ao atualizar tarefa');
+            alert('Erro ao atualizar item da agenda');
         }
     })
     .catch(error => {

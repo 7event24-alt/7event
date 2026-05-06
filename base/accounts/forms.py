@@ -630,10 +630,21 @@ class PersonalInfoForm(forms.ModelForm):
             }
         ),
     )
+    pix_key = forms.CharField(
+        max_length=255,
+        required=False,
+        label="Chave PIX",
+        widget=forms.TextInput(
+            attrs={
+                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm",
+                "placeholder": "CPF, telefone, email ou chave aleatória",
+            }
+        ),
+    )
 
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "email", "phone", "cpf", "rg")
+        fields = ("first_name", "last_name", "email", "phone", "cpf", "rg", "pix_key")
 
     def clean_email(self):
         email = self.cleaned_data.get("email", "").strip().lower()

@@ -2,6 +2,15 @@
 
 Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
+## [Unreleased]
+
+### Feat
+- Perfil do usuário agora possui campo de **Chave PIX** com exibição e edição na tela de perfil.
+- Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.
+
+### Fix
+- Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
+
 ## [1.5.0] - 2026-04-21
 
 ### Feat

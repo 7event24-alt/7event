@@ -16,7 +16,7 @@
     <i class="fas fa-plus"></i> <span class="hidden sm:inline">Novo Trabalho</span>
 </a>
 <a href="/app/accounts/minhas-tarefas/?date={{ selected_date|date:"Y-m-d" }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-    <i class="fas fa-tasks"></i> <span class="hidden sm:inline">Nova Tarefa</span>
+    <i class="fas fa-tasks"></i> <span class="hidden sm:inline">Minha Agenda Pessoal</span>
 </a>
 </div>
 {% endblock %}
@@ -151,10 +151,10 @@
     </div>
     {% endif %}
     
-    <!-- Tarefas Pessoais -->
+    <!-- Agenda Pessoal -->
     {% if tasks %}
     <div class="mt-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Tarefas Pessoais</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Agenda Pessoal</h3>
         <div class="space-y-2">
             {% for task in tasks %}
             <div class="bg-blue-50 rounded-lg p-3 flex items-center gap-3 {% if task.is_completed %}opacity-50 line-through{% endif %}">

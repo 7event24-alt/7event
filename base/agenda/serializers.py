@@ -110,7 +110,8 @@ class AgendaEventsView(APIView):
             tasks = PersonalTask.objects.filter(
                 user=user,
                 date__gte=first_day.date(),
-                date__lte=last_day.date()
+                date__lte=last_day.date(),
+                is_completed=False,
             ).order_by("time")
 
             for task in tasks:
@@ -204,7 +205,8 @@ class AgendaViewSet(viewsets.ViewSet):
             tasks = PersonalTask.objects.filter(
                 user=user,
                 date__gte=first_day.date(),
-                date__lte=last_day.date()
+                date__lte=last_day.date(),
+                is_completed=False,
             ).order_by("time")
 
             for task in tasks:

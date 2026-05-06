@@ -304,6 +304,7 @@ class User(AbstractUser):
     full_name = models.CharField(max_length=200, blank=True, verbose_name=_("Nome Completo"))
     cpf = models.CharField(max_length=14, blank=True, verbose_name=_("CPF"))
     rg = models.CharField(max_length=20, blank=True, verbose_name=_("RG"))
+    pix_key = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Chave PIX"))
 
     legal_name = models.CharField(
         max_length=200, blank=True, verbose_name=_("Nome Fantasia / Razão Social")

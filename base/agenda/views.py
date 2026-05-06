@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from calendar import monthrange, Calendar
 
 from base.jobs.models import Job, JobStatus, JobStaff
+from base.accounts.models import PersonalTask
 
 
 class AgendaView(LoginRequiredMixin, View):
@@ -111,8 +112,12 @@ class AgendaView(LoginRequiredMixin, View):
                     )
             calendar_weeks.append(week_data)
 
+        today = now.date()
+        current_month_end = today.replace(day=monthrange(today.year, today.month)[1])
+
         upcoming_jobs = base_jobs.filter(
-            start_date__gte=now.date(),
+            start_date__gte=today,
+            start_date__lte=current_month_end,
             status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
         )
         if user_filter and is_superuser:
@@ -125,6 +130,23 @@ class AgendaView(LoginRequiredMixin, View):
         for job in upcoming_jobs:
             job.status_color = self.get_status_color(job.status)
 
+        upcoming_visits = base_jobs.filter(
+            has_technical_visit=True,
+            technical_visit_date__gte=today,
+            technical_visit_date__lte=current_month_end,
+            status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
+        )
+        if user_filter and is_superuser:
+            upcoming_visits = upcoming_visits.filter(user_id=user_filter)
+        upcoming_visits = upcoming_visits.select_related("client").order_by("technical_visit_date")[:10]
+
+        upcoming_tasks = PersonalTask.objects.filter(
+            user=user,
+            date__gte=today,
+            date__lte=current_month_end,
+            is_completed=False,
+        ).order_by("date", "time")[:10]
+
         context = {
             "year": year,
             "month": month,
@@ -136,6 +158,8 @@ class AgendaView(LoginRequiredMixin, View):
             "calendar_weeks": calendar_weeks,
             "jobs": jobs,
             "upcoming_jobs": upcoming_jobs,
+            "upcoming_visits": upcoming_visits,
+            "upcoming_tasks": upcoming_tasks,
             "status_filter": status_filter,
             "user_filter": user_filter,
             "is_superuser": is_superuser,

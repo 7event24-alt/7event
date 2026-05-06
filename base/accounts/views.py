@@ -784,13 +784,20 @@ class PersonalTasksView(LoginRequiredMixin, View):
             
             elif action == "toggle_complete":
                 task = PersonalTask.objects.get(id=task_id, user=request.user)
-                task.is_completed = not task.is_completed
-                task.save(update_fields=["is_completed"])
-                return JsonResponse({"success": True, "is_completed": task.is_completed})
+                task.delete()
+                return JsonResponse({"success": True, "deleted": True})
             
             elif action == "delete":
                 task = PersonalTask.objects.get(id=task_id, user=request.user)
                 task.delete()
+                return JsonResponse({"success": True})
+
+            elif action == "update":
+                task = PersonalTask.objects.get(id=task_id, user=request.user)
+                task.title = data.get("title", task.title)
+                task.date = data.get("date", task.date)
+                task.time = data.get("time") or None
+                task.save(update_fields=["title", "date", "time"])
                 return JsonResponse({"success": True})
             
         except Exception as e:

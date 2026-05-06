@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Minhas Tarefas - 7event{% endblock %}
+{% block title %}Minha Agenda Pessoal - 7event{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -9,13 +9,13 @@
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Minhas Tarefas</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Minha Agenda Pessoal</h1>
                 <p class="text-gray-500">
                     {{ pending_count }} pendente(s), {{ completed_count }} concluída(s)
                 </p>
             </div>
             <button onclick="openTaskModal()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition flex items-center gap-2">
-                <i class="fas fa-plus"></i> Nova Tarefa
+                <i class="fas fa-plus"></i> Novo Item
             </button>
         </div>
     
@@ -36,7 +36,7 @@
         </div>
     </div>
     
-    <!-- Lista de Tarefas -->
+    <!-- Lista da Agenda Pessoal -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="divide-y divide-gray-100">
             {% for task in tasks %}
@@ -52,6 +52,9 @@
                         {% if task.time %} às {{ task.time|time:"H:i" }}{% endif %}
                     </p>
                 </div>
+                <button onclick="openTaskModal({{ task.id }}, '{{ task.title|escapejs }}', '{{ task.date|date:"Y-m-d" }}', '{% if task.time %}{{ task.time|time:"H:i" }}{% endif %}')" class="text-primary hover:text-secondary">
+                    <i class="fas fa-edit"></i>
+                </button>
                 <button onclick="deleteTask({{ task.id }})" class="text-red-500 hover:text-red-700">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -59,18 +62,19 @@
             {% empty %}
             <div class="p-8 text-center text-gray-400">
                 <i class="fas fa-tasks text-4xl mb-2"></i>
-                <p>Nenhuma tarefa cadastrada</p>
+                <p>Nenhum item cadastrado</p>
             </div>
             {% endfor %}
         </div>
     </div>
 </div>
 
-<!-- Modal Nova Tarefa -->
+<!-- Modal Novo Item -->
 <div id="taskModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold mb-4">Nova Tarefa</h3>
+        <h3 class="text-lg font-semibold mb-4" id="taskModalTitle">Novo Item da Agenda Pessoal</h3>
         <form onsubmit="createTask(event)">
+            <input type="hidden" id="taskId" value="">
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
@@ -91,7 +95,7 @@
             <div class="flex gap-3 justify-end mt-6">
                 <button type="button" onclick="closeTaskModal()" 
                         class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-                <button type="submit" 
+                <button type="submit" id="taskSubmitBtn"
                         class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">Criar</button>
             </div>
         </form>
@@ -101,10 +105,29 @@
 
 {% block scripts %}
 <script>
-function openTaskModal() {
+function openTaskModal(taskId = null, title = '', date = '', time = '') {
     document.getElementById('taskModal').classList.remove('hidden');
     document.getElementById('taskModal').classList.add('flex');
-    document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+
+    const modalTitle = document.getElementById('taskModalTitle');
+    const submitBtn = document.getElementById('taskSubmitBtn');
+    const idField = document.getElementById('taskId');
+
+    if (taskId) {
+        modalTitle.textContent = 'Editar Item da Agenda Pessoal';
+        submitBtn.textContent = 'Salvar';
+        idField.value = taskId;
+        document.getElementById('taskTitle').value = title || '';
+        document.getElementById('taskDate').value = date || new Date().toISOString().split('T')[0];
+        document.getElementById('taskTime').value = time || '';
+    } else {
+        modalTitle.textContent = 'Novo Item da Agenda Pessoal';
+        submitBtn.textContent = 'Criar';
+        idField.value = '';
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('taskTime').value = '';
+    }
 }
 
 function closeTaskModal() {
@@ -114,6 +137,7 @@ function closeTaskModal() {
 
 function createTask(e) {
     e.preventDefault();
+    const taskId = document.getElementById('taskId').value;
     const title = document.getElementById('taskTitle').value;
     const date = document.getElementById('taskDate').value;
     const time = document.getElementById('taskTime').value;
@@ -121,7 +145,8 @@ function createTask(e) {
     fetch('{% url "accounts:personal_tasks" %}', {
         method: 'POST',
         body: JSON.stringify({
-            action: 'create',
+            action: taskId ? 'update' : 'create',
+            task_id: taskId || null,
             title: title,
             date: date,
             time: time
@@ -154,13 +179,13 @@ function toggleComplete(taskId, checkbox) {
     .then(data => {
         if (!data.success) {
             checkbox.checked = !checkbox.checked;
-            alert('Erro ao atualizar');
+            alert('Erro ao atualizar item da agenda');
         }
     });
 }
 
 function deleteTask(taskId) {
-    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    if (!confirm('Tem certeza que deseja excluir este item da agenda?')) return;
     
     fetch('{% url "accounts:personal_tasks" %}', {
         method: 'POST',
