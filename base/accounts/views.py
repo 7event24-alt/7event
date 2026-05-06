@@ -492,7 +492,11 @@ class ProfileView(LoginRequiredMixin, View):
                             old_photo.delete(save=False)
                         except Exception:
                             pass
-                    return JsonResponse({"success": True})
+                    return JsonResponse({
+                        "success": True,
+                        "photo_url": request.user.photo.url,
+                        "version": int(timezone.now().timestamp()),
+                    })
                 else:
                     return JsonResponse({"success": False, "error": "Nenhuma foto enviada"})
             except Exception as e:

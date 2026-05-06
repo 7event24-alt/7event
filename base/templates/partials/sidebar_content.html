@@ -104,7 +104,7 @@
     <div class="border-t border-white/10 p-4 flex-shrink-0">
         <div class="flex items-center gap-3 mb-3">
             {% if user.photo %}
-            <img src="{{ user.photo.url }}" alt="Foto de {{ user.first_name|default:user.username }}" class="w-10 h-10 rounded-full object-cover border-2 border-white/30">
+            <img src="{{ user.photo.url }}?v={{ user.updated_at|date:'U' }}" data-user-photo="1" alt="Foto de {{ user.first_name|default:user.username }}" class="w-10 h-10 rounded-full object-cover border-2 border-white/30">
             {% else %}
             <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-semibold text-white">
                 {{ user.first_name|default:user.username|slice:":1"|upper }}

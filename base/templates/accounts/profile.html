@@ -14,7 +14,7 @@
         <div class="flex flex-col sm:flex-row items-center gap-6">
             <label for="photoInput" class="cursor-pointer relative group">
                 {% if user.photo %}
-                    <img src="{{ user.photo.url }}" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-primary transition">
+                    <img src="{{ user.photo.url }}?v={{ user.updated_at|date:'U' }}" data-user-photo="1" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-primary transition">
                 {% else %}
                     <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold border-4 border-gray-200 group-hover:border-primary transition">
                         {{ user.first_name|default:user.username|slice:":1"|upper }}
@@ -423,7 +423,13 @@ document.getElementById('photoInput').addEventListener('change', function() {
         .then(data => {
             if (data && data.success !== undefined) {
                 console.log('Success:', data);
-                location.reload();
+                if (data.photo_url) {
+                    const version = data.version || Date.now();
+                    document.querySelectorAll('[data-user-photo="1"]').forEach((img) => {
+                        img.src = `${data.photo_url}?v=${version}`;
+                    });
+                }
+                setTimeout(() => location.reload(), 300);
             }
         })
         .catch(error => {

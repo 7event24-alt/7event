@@ -151,7 +151,7 @@
                                 <div class="relative group">
                                     <button class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
                                         {% if user.photo %}
-                                            <img src="{{ user.photo.url }}" alt="Foto" class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200">
+                                            <img src="{{ user.photo.url }}?v={{ user.updated_at|date:'U' }}" data-user-photo="1" alt="Foto" class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200">
                                         {% else %}
                                             <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white">
                                                 <i class="fas fa-user"></i>
