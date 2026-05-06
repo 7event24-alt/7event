@@ -47,9 +47,9 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                 <div class="flex gap-2">
                     {{ form.client }}
-                    <a href="{% url 'clients:create' %}?next=quote_create" class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600" title="Adicionar cliente">
+                    <button type="button" onclick="openClientModal()" class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600" title="Adicionar cliente">
                         <i class="fas fa-plus"></i>
-                    </a>
+                    </button>
                 </div>
                 {% if form.client.errors %}
                 <p class="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -154,10 +154,100 @@
         </div>
     </div>
 </form>
+
+<!-- Modal Cliente Rápido -->
+<div id="clientModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div class="flex justify-between items-center p-5 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Novo Cliente</h3>
+            <button type="button" onclick="closeClientModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <form id="quickClientForm" class="p-5 space-y-4" data-ajax-form="true">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                <input type="text" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="Nome do cliente" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Telefone *</label>
+                <input type="text" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="(00) 00000-0000" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                <input type="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="email@exemplo.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">CPF/CNPJ</label>
+                <input type="text" name="document" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm" placeholder="CPF ou CNPJ">
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeClientModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-primary hover:bg-secondary text-white rounded-lg transition-colors text-sm font-medium">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function openClientModal() {
+    document.getElementById('clientModal').classList.remove('hidden');
+}
+
+function closeClientModal() {
+    document.getElementById('clientModal').classList.add('hidden');
+}
+
+document.getElementById('quickClientForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('{% url "clients:quick_create" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('Erro ' + r.status);
+        return r.json();
+    })
+    .then(data => {
+        if (data.id) {
+            const select = document.getElementById('id_client');
+            const option = new Option(data.name, data.id, true, true);
+            select.add(option);
+            select.value = data.id;
+            closeClientModal();
+            document.getElementById('quickClientForm').reset();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao criar cliente.');
+    });
+});
+
 function recalculate() {
     const hourlyRate = parseFloat(document.getElementById('id_hourly_rate').value) || 0;
     const workHours = parseFloat(document.getElementById('id_work_hours').value) || 0;

@@ -122,7 +122,38 @@ def send_quote_email(quote, client_email):
 
     subject = f"Orçamento: {quote.title}"
 
-    html_message = render_to_string("emails/quote.html", {"quote": quote})
+    sender = quote.created_by
+    sender_name = "Equipe 7Event"
+    sender_email = ""
+    sender_phone = ""
+    sender_whatsapp_url = ""
+
+    if sender:
+        sender_name = (
+            (sender.full_name or "").strip()
+            or (sender.get_full_name() or "").strip()
+            or sender.username
+            or "Equipe 7Event"
+        )
+        sender_email = (sender.email or "").strip()
+        sender_phone = (sender.phone or "").strip()
+
+        digits = "".join(ch for ch in sender_phone if ch.isdigit())
+        if digits:
+            if not digits.startswith("55"):
+                digits = "55" + digits
+            sender_whatsapp_url = f"https://wa.me/{digits}"
+
+    html_message = render_to_string(
+        "emails/quote.html",
+        {
+            "quote": quote,
+            "sender_name": sender_name,
+            "sender_email": sender_email,
+            "sender_phone": sender_phone,
+            "sender_whatsapp_url": sender_whatsapp_url,
+        },
+    )
 
     return send_html_email_with_template(client_email, subject, html_message)
 

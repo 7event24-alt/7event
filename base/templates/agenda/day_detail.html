@@ -18,6 +18,9 @@
 <button type="button" onclick="openTaskModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
     <i class="fas fa-tasks"></i> <span class="hidden sm:inline">Nova Tarefa</span>
 </button>
+<a href="/app/accounts/agenda-pessoal/" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+    <i class="fas fa-calendar-check"></i> <span class="hidden sm:inline">Nova Agenda Pessoal</span>
+</a>
 </div>
 {% endblock %}
 
@@ -122,6 +125,9 @@
         <button type="button" onclick="openTaskModal()" class="mt-3 inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition">
             <i class="fas fa-tasks mr-2"></i> Criar Nova Tarefa
         </button>
+        <a href="/app/accounts/agenda-pessoal/" class="mt-3 inline-block bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded-lg font-medium transition">
+            <i class="fas fa-calendar-check mr-2"></i> Criar Agenda Pessoal
+        </a>
     </div>
     {% endif %}
     

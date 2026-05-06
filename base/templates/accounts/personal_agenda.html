@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Agenda Pessoal - 7event{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Agenda Pessoal</h1>
+                <p class="text-gray-500">
+                    {{ pending_count }} pendente(s), {{ completed_count }} concluída(s), {{ cancelled_count }} cancelada(s)
+                </p>
+            </div>
+            <button onclick="openAgendaModal()" class="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700 transition flex items-center gap-2">
+                <i class="fas fa-plus"></i> Novo Evento
+            </button>
+        </div>
+
+        <div class="mt-4 flex gap-2 flex-wrap">
+            <a href="?status=all" class="px-3 py-1.5 rounded-full text-sm {% if filter_status == 'all' %}bg-violet-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Todos</a>
+            <a href="?status=pending" class="px-3 py-1.5 rounded-full text-sm {% if filter_status == 'pending' %}bg-violet-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Pendentes</a>
+            <a href="?status=completed" class="px-3 py-1.5 rounded-full text-sm {% if filter_status == 'completed' %}bg-violet-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Concluídos</a>
+            <a href="?status=cancelled" class="px-3 py-1.5 rounded-full text-sm {% if filter_status == 'cancelled' %}bg-violet-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Cancelados</a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="divide-y divide-gray-100">
+            {% for event in events %}
+            <div class="p-4 hover:bg-gray-50" id="event-{{ event.id }}">
+                <div class="flex items-start gap-4">
+                    <div class="w-2 self-stretch rounded-full {% if event.status == 'pending' %}bg-violet-500{% elif event.status == 'completed' %}bg-green-500{% else %}bg-gray-400{% endif %}"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-gray-800">{{ event.title }}</p>
+                        <p class="text-sm text-gray-500">{{ event.date|date:"d/m/Y" }} - {{ event.start_time|time:"H:i" }} às {{ event.end_time|time:"H:i" }}</p>
+                        {% if event.location %}<p class="text-sm text-gray-500">{{ event.location }}</p>{% endif %}
+                        {% if event.description %}<p class="text-sm text-gray-600 mt-1">{{ event.description }}</p>{% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap justify-end">
+                        {% if event.status == 'pending' %}
+                        <button onclick="setStatus({{ event.id }}, 'completed')" class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded hover:bg-green-200">Concluir</button>
+                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded hover:bg-gray-200">Cancelar</button>
+                        {% elif event.status == 'completed' %}
+                        <button onclick="setStatus({{ event.id }}, 'pending')" class="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded hover:bg-violet-200">Reabrir</button>
+                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded hover:bg-gray-200">Cancelar</button>
+                        {% else %}
+                        <button onclick="setStatus({{ event.id }}, 'pending')" class="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded hover:bg-violet-200">Reativar</button>
+                        <button onclick="setStatus({{ event.id }}, 'completed')" class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded hover:bg-green-200">Concluir</button>
+                        {% endif %}
+                        <button onclick="openAgendaModal({{ event.id }}, '{{ event.title|escapejs }}', '{{ event.date|date:"Y-m-d" }}', '{{ event.start_time|time:"H:i" }}', '{{ event.end_time|time:"H:i" }}', '{{ event.location|escapejs }}', '{{ event.description|escapejs }}')" class="text-violet-600 hover:text-violet-800"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteEvent({{ event.id }})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center text-gray-400">
+                <i class="fas fa-calendar-check text-4xl mb-2"></i>
+                <p>Nenhum evento de agenda pessoal cadastrado</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="agendaModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+        <h3 class="text-lg font-semibold mb-4" id="agendaModalTitle">Novo Evento</h3>
+        <form onsubmit="saveAgendaEvent(event)">
+            <input type="hidden" id="agendaEventId" value="">
+            <div class="space-y-4">
+                <input type="text" id="agendaTitle" required placeholder="Título" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="date" id="agendaDate" required class="px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="time" id="agendaStart" required class="px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="time" id="agendaEnd" required class="px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <input type="text" id="agendaLocation" placeholder="Local (opcional)" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <textarea id="agendaDescription" placeholder="Descrição (opcional)" class="w-full px-4 py-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button type="button" onclick="closeAgendaModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+                <button type="submit" id="agendaSubmitBtn" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function openAgendaModal(eventId = '', title = '', date = '', start = '', end = '', location = '', description = '') {
+    document.getElementById('agendaModal').classList.remove('hidden');
+    document.getElementById('agendaModal').classList.add('flex');
+    document.getElementById('agendaEventId').value = eventId || '';
+    document.getElementById('agendaTitle').value = title || '';
+    document.getElementById('agendaDate').value = date || new Date().toISOString().split('T')[0];
+    document.getElementById('agendaStart').value = start || '';
+    document.getElementById('agendaEnd').value = end || '';
+    document.getElementById('agendaLocation').value = location || '';
+    document.getElementById('agendaDescription').value = description || '';
+    document.getElementById('agendaModalTitle').textContent = eventId ? 'Editar Evento' : 'Novo Evento';
+}
+
+function closeAgendaModal() {
+    document.getElementById('agendaModal').classList.add('hidden');
+    document.getElementById('agendaModal').classList.remove('flex');
+}
+
+function saveAgendaEvent(e) {
+    e.preventDefault();
+    const eventId = document.getElementById('agendaEventId').value;
+    fetch('/app/accounts/agenda-pessoal/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            action: eventId ? 'update' : 'create',
+            event_id: eventId || null,
+            title: document.getElementById('agendaTitle').value,
+            date: document.getElementById('agendaDate').value,
+            start_time: document.getElementById('agendaStart').value,
+            end_time: document.getElementById('agendaEnd').value,
+            location: document.getElementById('agendaLocation').value,
+            description: document.getElementById('agendaDescription').value
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert('Erro: ' + (data.error || 'Não foi possível salvar'));
+    });
+}
+
+function setStatus(eventId, status) {
+    fetch('/app/accounts/agenda-pessoal/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ action: 'set_status', event_id: eventId, status: status })
+    }).then(r => r.json()).then(data => {
+        if (!data.success) {
+            alert('Erro ao atualizar status');
+            location.reload();
+        }
+    });
+}
+
+function deleteEvent(eventId) {
+    if (!confirm('Deseja excluir este evento da agenda pessoal?')) return;
+    fetch('/app/accounts/agenda-pessoal/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ action: 'delete', event_id: eventId })
+    }).then(r => r.json()).then(data => {
+        if (data.success) document.getElementById('event-' + eventId).remove();
+        else alert('Erro ao excluir evento');
+    });
+}
+</script>
+{% endblock %}

@@ -45,27 +45,27 @@
     </div>
     {% endif %}
     
-    <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
-        Para aceitar este orçamento, entre em contato conosco ou responda este email.
-    </p>
-    
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-        <tr>
-            <td align="center" style="padding: 30px 0;">
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #334155 0%, #475569 100%);">
-                            <a href="https://7event.com.br/app/" style="display: inline-block; color: #ffffff; padding: 16px 32px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, sans-serif;">Falar Conosco</a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; margin: 20px 0; border: 1px solid #e2e8f0;">
+        <p style="font-size: 14px; color: #334155; line-height: 1.6; margin: 0;">
+            Para confirmar, entre em contato com <strong>{{ sender_name }}</strong>
+            {% if sender_email %}pelo email <strong>{{ sender_email }}</strong>{% endif %}
+            {% if sender_phone %}{% if sender_email %} ou {% else %}pelo {% endif %}telefone <strong>{{ sender_phone }}</strong>{% endif %}.
+        </p>
+
+        {% if sender_whatsapp_url %}
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="left" style="padding-top: 14px;">
+                    <a href="{{ sender_whatsapp_url }}" style="display: inline-block; color: #ffffff; background: #16a34a; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; font-family: Arial, sans-serif;">Conversar pelo WhatsApp</a>
+                </td>
+            </tr>
+        </table>
+        {% endif %}
+    </div>
     
     <p style="font-size: 14px; color: #1f2937; margin-top: 20px;">
         Atenciosamente,<br>
-        <strong>Equipe 7Event</strong>
+        <strong>{{ sender_name }}</strong>
     </p>
 </div>
 {% endblock %}

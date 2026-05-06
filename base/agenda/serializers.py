@@ -8,6 +8,7 @@ from datetime import datetime
 from calendar import monthrange
 
 from base.jobs.models import Job
+from base.accounts.models import PersonalAgendaEvent, PersonalAgendaStatus
 
 
 class AgendaEventSerializer(serializers.ModelSerializer):
@@ -131,6 +132,31 @@ class AgendaEventsView(APIView):
                     }
                 })
 
+            personal_agenda_events = PersonalAgendaEvent.objects.filter(
+                user=user,
+                date__gte=first_day.date(),
+                date__lte=last_day.date(),
+                status=PersonalAgendaStatus.PENDING,
+            ).order_by("date", "start_time")
+
+            for personal_event in personal_agenda_events:
+                start_dt = f"{personal_event.date}T{personal_event.start_time.strftime('%H:%M:%S')}"
+                end_dt = f"{personal_event.date}T{personal_event.end_time.strftime('%H:%M:%S')}"
+                all_events.append({
+                    "id": f"personal_agenda_{personal_event.id}",
+                    "title": personal_event.title,
+                    "start": start_dt,
+                    "end": end_dt,
+                    "backgroundColor": "#8b5cf6",
+                    "borderColor": "#7c3aed",
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "personal_agenda",
+                        "status": personal_event.status,
+                        "filter_status": personal_event.status,
+                    }
+                })
+
         except Exception as e:
             pass
 
@@ -223,6 +249,31 @@ class AgendaViewSet(viewsets.ViewSet):
                         "type": "task",
                         "is_completed": task.is_completed,
                         "filter_status": "completed" if task.is_completed else "pending",
+                    }
+                })
+
+            personal_agenda_events = PersonalAgendaEvent.objects.filter(
+                user=user,
+                date__gte=first_day.date(),
+                date__lte=last_day.date(),
+                status=PersonalAgendaStatus.PENDING,
+            ).order_by("date", "start_time")
+
+            for personal_event in personal_agenda_events:
+                start_dt = f"{personal_event.date}T{personal_event.start_time.strftime('%H:%M:%S')}"
+                end_dt = f"{personal_event.date}T{personal_event.end_time.strftime('%H:%M:%S')}"
+                all_events.append({
+                    "id": f"personal_agenda_{personal_event.id}",
+                    "title": personal_event.title,
+                    "start": start_dt,
+                    "end": end_dt,
+                    "backgroundColor": "#8b5cf6",
+                    "borderColor": "#7c3aed",
+                    "textColor": "#ffffff",
+                    "extendedProps": {
+                        "type": "personal_agenda",
+                        "status": personal_event.status,
+                        "filter_status": personal_event.status,
                     }
                 })
 

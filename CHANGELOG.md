@@ -9,6 +9,9 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.
 - Orçamentos aceitos agora permitem criar trabalho pré-preenchido com dados do orçamento (`cache` usando total do orçamento).
 - PDF de orçamento foi reestruturado com logo dinâmica da empresa (fallback 7event) e assinatura de marca no rodapé.
+- Agenda ganhou suporte ao modelo **Agenda Pessoal** (`PersonalAgendaEvent`) com status e validação de horário (`hora fim > hora início`).
+- Calendário e sidebar de agenda agora exibem itens de agenda pessoal em roxo, separados de tarefas e com ordenação por data/hora.
+- Área pessoal ganhou página dedicada **Agenda Pessoal** com listagem, filtros e CRUD dos eventos.
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.

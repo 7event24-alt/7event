@@ -62,6 +62,10 @@ class QuoteForm(forms.ModelForm):
         parsed = self._parse_decimal_input(raw)
         if parsed is None:
             return self.cleaned_data.get("work_hours")
+        if parsed <= 0:
+            raise forms.ValidationError("Informe uma quantidade de diárias maior que zero.")
+        if parsed != parsed.to_integral_value():
+            raise forms.ValidationError("Quantidade de diárias deve ser um número inteiro.")
         return parsed
 
     class Meta:
@@ -104,7 +108,8 @@ class QuoteForm(forms.ModelForm):
                 attrs={
                     "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
                     "placeholder": "0",
-                    "step": "0.01",
+                    "step": "1",
+                    "min": "1",
                 }
             ),
             "status": forms.Select(

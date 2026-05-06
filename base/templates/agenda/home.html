@@ -53,9 +53,9 @@
         <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3">Próximos no mês</h3>
 
         <div class="grid grid-cols-3 gap-2 mb-3" id="sidebarTabs">
-            <button data-tab="jobs" class="agenda-tab-btn bg-primary text-white text-xs px-2 py-2 rounded-lg">Eventos</button>
+            <button data-tab="jobs" class="agenda-tab-btn bg-primary text-white text-xs px-2 py-2 rounded-lg">Trabalhos</button>
             <button data-tab="visits" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Visitas</button>
-            <button data-tab="tasks" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Tarefas</button>
+            <button data-tab="tasks" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Agenda Pessoal</button>
         </div>
 
         <div class="max-h-64 lg:max-h-96 overflow-y-auto">
@@ -75,7 +75,7 @@
                         </div>
                     </a>
                     {% empty %}
-                    <p class="text-gray-500 text-center py-4">Nenhum evento no mês vigente</p>
+                    <p class="text-gray-500 text-center py-4">Nenhum trabalho no mês vigente</p>
                     {% endfor %}
                 </div>
             </div>
@@ -103,23 +103,27 @@
 
             <div class="agenda-tab-content hidden" id="tab-tasks">
                 <div class="space-y-2 lg:space-y-3" id="upcomingTasksContainer">
-                    {% for task in upcoming_tasks %}
-                    <a href="{% url 'accounts:personal_tasks' %}" class="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition border-l-4 border-blue-400">
+                    {% for item in upcoming_personal_items %}
+                    <a href="{% if item.kind == 'agenda' %}/app/accounts/agenda-pessoal/{% else %}{% url 'accounts:personal_tasks' %}{% endif %}" class="block p-3 {% if item.kind == 'agenda' %}bg-violet-50 hover:bg-violet-100 border-violet-400{% else %}bg-blue-50 hover:bg-blue-100 border-blue-400{% endif %} rounded-lg transition border-l-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex flex-col items-center justify-center flex-shrink-0">
-                                <span class="text-xs font-bold">{{ task.date|date:"d" }}</span>
-                                <span class="text-[10px] font-medium uppercase">{{ task.date|date:"M" }}</span>
+                            <div class="w-10 h-10 rounded-lg {% if item.kind == 'agenda' %}bg-violet-500{% else %}bg-blue-500{% endif %} text-white flex flex-col items-center justify-center flex-shrink-0">
+                                <span class="text-xs font-bold">{{ item.date|date:"d" }}</span>
+                                <span class="text-[10px] font-medium uppercase">{{ item.date|date:"M" }}</span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="font-medium text-gray-800 truncate">{{ task.title }}</div>
+                                <div class="font-medium text-gray-800 truncate">{{ item.title }}</div>
                                 <div class="text-sm text-gray-500 truncate">
-                                    Tarefas{% if task.time %} - {{ task.time|time:"H:i" }}{% endif %}
+                                    {% if item.kind == 'agenda' %}
+                                        Agenda Pessoal - {{ item.start_time|time:"H:i" }}{% if item.end_time %} às {{ item.end_time|time:"H:i" }}{% endif %}
+                                    {% else %}
+                                        Tarefas{% if item.start_time %} - {{ item.start_time|time:"H:i" }}{% endif %}
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     </a>
                     {% empty %}
-                    <p class="text-gray-500 text-center py-4">Nenhuma tarefa no mês vigente</p>
+                    <p class="text-gray-500 text-center py-4">Nenhum item de agenda pessoal no mês vigente</p>
                     {% endfor %}
                 </div>
             </div>
@@ -140,6 +144,10 @@
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" value="task" checked class="filter-checkbox type-filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
                     <span class="text-sm text-gray-600">Tarefas</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="personal_agenda" checked class="filter-checkbox type-filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <span class="text-sm text-gray-600">Agenda Pessoal</span>
                 </label>
             </div>
 
@@ -183,6 +191,9 @@
         
         html body .fc .fc-daygrid-event.event-task,
         html body .fc .fc-daygrid-event.event-task .fc-event-main { background-color: #60a5fa !important; border-color: #3b82f6 !important; color: #ffffff !important; }
+
+        html body .fc .fc-daygrid-event.event-personal-agenda,
+        html body .fc .fc-daygrid-event.event-personal-agenda .fc-event-main { background-color: #8b5cf6 !important; border-color: #7c3aed !important; color: #ffffff !important; }
         
         .fc .fc-event { cursor: pointer; }
         .fc .fc-event .fc-event-main { color: #ffffff !important; }
@@ -395,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             + '<span class="text-xs font-bold">' + dm.day + '</span><span class="text-[10px] font-medium uppercase">' + dm.month + '</span></div>'
                             + '<div class="flex-1 min-w-0"><div class="font-medium text-gray-800 truncate">' + job.title + '</div>'
                             + '<div class="text-sm text-gray-500 truncate">' + job.client + '</div></div></div></a>';
-                    }).join('') : '<p class="text-gray-500 text-center py-4">Nenhum evento no mês vigente</p>';
+                    }).join('') : '<p class="text-gray-500 text-center py-4">Nenhum trabalho no mês vigente</p>';
                 }
 
                 if (visitsEl) {
@@ -410,15 +421,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (tasksEl) {
-                    tasksEl.innerHTML = (data.tasks || []).length ? (data.tasks || []).map(function(task) {
-                        var dm = formatDayMonth(task.date);
-                        var subtitle = 'Tarefas' + (task.time ? ' - ' + task.time : '');
-                        return '<a href="/app/accounts/minhas-tarefas/" class="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition border-l-4 border-blue-400">'
-                            + '<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex flex-col items-center justify-center flex-shrink-0">'
+                    tasksEl.innerHTML = (data.personal_items || []).length ? (data.personal_items || []).map(function(item) {
+                        var dm = formatDayMonth(item.date);
+                        var subtitle = item.kind === 'agenda'
+                            ? ('Agenda Pessoal - ' + item.time + (item.end_time ? (' às ' + item.end_time) : ''))
+                            : ('Tarefas' + (item.time ? ' - ' + item.time : ''));
+                        var cardClass = item.kind === 'agenda'
+                            ? 'block p-3 bg-violet-50 rounded-lg hover:bg-violet-100 transition border-l-4 border-violet-400'
+                            : 'block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition border-l-4 border-blue-400';
+                        var badgeClass = item.kind === 'agenda'
+                            ? 'w-10 h-10 rounded-lg bg-violet-500 text-white flex flex-col items-center justify-center flex-shrink-0'
+                            : 'w-10 h-10 rounded-lg bg-blue-500 text-white flex flex-col items-center justify-center flex-shrink-0';
+                        var itemUrl = item.kind === 'agenda' ? '/app/accounts/agenda-pessoal/' : '/app/accounts/minhas-tarefas/';
+                        return '<a href="' + itemUrl + '" class="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition border-l-4 border-blue-400">'
+                            .replace('block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition border-l-4 border-blue-400', cardClass)
+                            + '<div class="flex items-center gap-3"><div class="' + badgeClass + '">'
                             + '<span class="text-xs font-bold">' + dm.day + '</span><span class="text-[10px] font-medium uppercase">' + dm.month + '</span></div>'
-                            + '<div class="flex-1 min-w-0"><div class="font-medium text-gray-800 truncate">' + task.title + '</div>'
+                            + '<div class="flex-1 min-w-0"><div class="font-medium text-gray-800 truncate">' + item.title + '</div>'
                             + '<div class="text-sm text-gray-500 truncate">' + subtitle + '</div></div></div></a>';
-                    }).join('') : '<p class="text-gray-500 text-center py-4">Nenhuma tarefa no mês vigente</p>';
+                    }).join('') : '<p class="text-gray-500 text-center py-4">Nenhum item de agenda pessoal no mês vigente</p>';
                 }
             })
             .catch(function(error) { console.error('Erro ao carregar sidebar da agenda:', error); });
@@ -465,7 +486,9 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             initialDate: initialDate,
             eventClick: function(info) {
-                if (info.event.extendedProps.type === 'task') {
+                if (info.event.extendedProps.type === 'personal_agenda') {
+                    window.location.href = '/app/accounts/agenda-pessoal/';
+                } else if (info.event.extendedProps.type === 'task') {
                     // Tarefas abrem na página de listagem
                     window.location.href = '/app/accounts/minhas-tarefas/';
                 } else if (info.event.extendedProps.type === 'technical_visit') {
@@ -488,6 +511,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Adicionar classe baseada no tipo para CSS
                 if (info.event.extendedProps.type === 'technical_visit') {
                     classes.push('event-technical-visit');
+                } else if (info.event.extendedProps.type === 'personal_agenda') {
+                    classes.push('event-personal-agenda');
                 } else if (info.event.extendedProps.type === 'task') {
                     classes.push('event-task');
                 } else {
@@ -500,6 +525,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 var el = info.el;
                 if (info.event.extendedProps.type === 'technical_visit') {
                     el.setAttribute('style', el.getAttribute('style') + '; background-color: #fbbf24 !important; border-color: #f59e0b !important; color: #000000 !important;');
+                } else if (info.event.extendedProps.type === 'personal_agenda') {
+                    el.setAttribute('style', el.getAttribute('style') + '; background-color: #8b5cf6 !important; border-color: #7c3aed !important; color: #ffffff !important;');
                 } else if (info.event.extendedProps.type === 'task') {
                     el.setAttribute('style', el.getAttribute('style') + '; background-color: #60a5fa !important; border-color: #3b82f6 !important; color: #ffffff !important;');
                 } else {

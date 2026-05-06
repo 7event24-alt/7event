@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from calendar import monthrange, Calendar
 
 from base.jobs.models import Job, JobStatus, JobStaff
-from base.accounts.models import PersonalTask
+from base.accounts.models import PersonalTask, PersonalAgendaEvent, PersonalAgendaStatus
 
 
 class AgendaView(LoginRequiredMixin, View):
@@ -150,6 +150,37 @@ class AgendaView(LoginRequiredMixin, View):
             is_completed=False,
         ).order_by("date", "time")[:10]
 
+        upcoming_personal_agenda = PersonalAgendaEvent.objects.filter(
+            user=user,
+            date__gte=range_start,
+            date__lte=month_end,
+            status=PersonalAgendaStatus.PENDING,
+        ).order_by("date", "start_time")[:10]
+
+        upcoming_personal_items = []
+        for task in upcoming_tasks:
+            upcoming_personal_items.append(
+                {
+                    "kind": "task",
+                    "title": task.title,
+                    "date": task.date,
+                    "start_time": task.time,
+                }
+            )
+        for event in upcoming_personal_agenda:
+            upcoming_personal_items.append(
+                {
+                    "kind": "agenda",
+                    "title": event.title,
+                    "date": event.date,
+                    "start_time": event.start_time,
+                    "end_time": event.end_time,
+                }
+            )
+
+        upcoming_personal_items.sort(key=lambda item: (item["date"], item["start_time"] or datetime.min.time()))
+        upcoming_personal_items = upcoming_personal_items[:10]
+
         context = {
             "year": year,
             "month": month,
@@ -163,6 +194,8 @@ class AgendaView(LoginRequiredMixin, View):
             "upcoming_jobs": upcoming_jobs,
             "upcoming_visits": upcoming_visits,
             "upcoming_tasks": upcoming_tasks,
+            "upcoming_personal_agenda": upcoming_personal_agenda,
+            "upcoming_personal_items": upcoming_personal_items,
             "status_filter": status_filter,
             "user_filter": user_filter,
             "is_superuser": is_superuser,
@@ -239,6 +272,38 @@ class AgendaSidebarDataView(LoginRequiredMixin, View):
             is_completed=False,
         ).order_by("date", "time")[:10]
 
+        upcoming_personal_agenda = PersonalAgendaEvent.objects.filter(
+            user=user,
+            date__gte=range_start,
+            date__lte=last_day,
+            status=PersonalAgendaStatus.PENDING,
+        ).order_by("date", "start_time")[:10]
+
+        personal_items = []
+        for task in upcoming_tasks:
+            personal_items.append(
+                {
+                    "kind": "task",
+                    "title": task.title,
+                    "date": task.date,
+                    "start_time": task.time,
+                }
+            )
+        for event in upcoming_personal_agenda:
+            personal_items.append(
+                {
+                    "kind": "agenda",
+                    "title": event.title,
+                    "date": event.date,
+                    "start_time": event.start_time,
+                    "end_time": event.end_time,
+                    "location": event.location,
+                }
+            )
+
+        personal_items.sort(key=lambda item: (item["date"], item["start_time"] or datetime.min.time()))
+        personal_items = personal_items[:10]
+
         return JsonResponse(
             {
                 "jobs": [
@@ -259,14 +324,16 @@ class AgendaSidebarDataView(LoginRequiredMixin, View):
                     }
                     for visit in upcoming_visits
                 ],
-                "tasks": [
+                "personal_items": [
                     {
-                        "id": task.id,
-                        "title": task.title,
-                        "date": task.date.strftime("%Y-%m-%d"),
-                        "time": task.time.strftime("%H:%M") if task.time else "",
+                        "kind": item["kind"],
+                        "title": item["title"],
+                        "date": item["date"].strftime("%Y-%m-%d"),
+                        "time": item["start_time"].strftime("%H:%M") if item["start_time"] else "",
+                        "end_time": item.get("end_time").strftime("%H:%M") if item.get("end_time") else "",
+                        "location": item.get("location", ""),
                     }
-                    for task in upcoming_tasks
+                    for item in personal_items
                 ],
             }
         )

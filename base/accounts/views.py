@@ -826,3 +826,95 @@ class PersonalTasksView(LoginRequiredMixin, View):
 
 
 personal_tasks = PersonalTasksView.as_view()
+
+
+class PersonalAgendaView(LoginRequiredMixin, View):
+    template_name = "accounts/personal_agenda.html"
+
+    def get(self, request):
+        from .models import PersonalAgendaEvent, PersonalAgendaStatus
+
+        filter_status = request.GET.get("status", "all")
+        events = PersonalAgendaEvent.objects.filter(user=request.user)
+
+        if filter_status in {
+            PersonalAgendaStatus.PENDING,
+            PersonalAgendaStatus.COMPLETED,
+            PersonalAgendaStatus.CANCELLED,
+        }:
+            events = events.filter(status=filter_status)
+
+        events = events.order_by("date", "start_time")
+
+        context = {
+            "events": events,
+            "filter_status": filter_status,
+            "pending_count": PersonalAgendaEvent.objects.filter(
+                user=request.user, status=PersonalAgendaStatus.PENDING
+            ).count(),
+            "completed_count": PersonalAgendaEvent.objects.filter(
+                user=request.user, status=PersonalAgendaStatus.COMPLETED
+            ).count(),
+            "cancelled_count": PersonalAgendaEvent.objects.filter(
+                user=request.user, status=PersonalAgendaStatus.CANCELLED
+            ).count(),
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        from .models import PersonalAgendaEvent, PersonalAgendaStatus
+        import json
+
+        try:
+            data = json.loads(request.body)
+            action = data.get("action")
+            event_id = data.get("event_id")
+
+            if action == "create":
+                event = PersonalAgendaEvent.objects.create(
+                    user=request.user,
+                    title=(data.get("title") or "").strip(),
+                    date=data.get("date"),
+                    start_time=data.get("start_time"),
+                    end_time=data.get("end_time"),
+                    location=(data.get("location") or "").strip(),
+                    description=(data.get("description") or "").strip(),
+                )
+                return JsonResponse({"success": True, "event_id": event.id})
+
+            if action == "update":
+                event = PersonalAgendaEvent.objects.get(id=event_id, user=request.user)
+                event.title = (data.get("title") or event.title).strip()
+                event.date = data.get("date", event.date)
+                event.start_time = data.get("start_time", event.start_time)
+                event.end_time = data.get("end_time", event.end_time)
+                event.location = (data.get("location") or event.location).strip()
+                event.description = (data.get("description") or event.description).strip()
+                event.save()
+                return JsonResponse({"success": True})
+
+            if action == "set_status":
+                event = PersonalAgendaEvent.objects.get(id=event_id, user=request.user)
+                new_status = data.get("status")
+                if new_status not in {
+                    PersonalAgendaStatus.PENDING,
+                    PersonalAgendaStatus.COMPLETED,
+                    PersonalAgendaStatus.CANCELLED,
+                }:
+                    return JsonResponse({"success": False, "error": "Status inválido."})
+                event.status = new_status
+                event.save(update_fields=["status", "updated_at"])
+                return JsonResponse({"success": True})
+
+            if action == "delete":
+                event = PersonalAgendaEvent.objects.get(id=event_id, user=request.user)
+                event.delete()
+                return JsonResponse({"success": True})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
+        return JsonResponse({"success": False, "error": "Ação inválida."})
+
+
+personal_agenda = PersonalAgendaView.as_view()

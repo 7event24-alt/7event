@@ -566,3 +566,55 @@ class PersonalTask(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.username}"
+
+
+class PersonalAgendaStatus(models.TextChoices):
+    PENDING = "pending", _("Pendente")
+    COMPLETED = "completed", _("Concluída")
+    CANCELLED = "cancelled", _("Cancelada")
+
+
+class PersonalAgendaEvent(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="personal_agenda_events",
+        verbose_name=_("Usuário"),
+    )
+    title = models.CharField(max_length=200, verbose_name=_("Título"))
+    date = models.DateField(verbose_name=_("Data"))
+    start_time = models.TimeField(verbose_name=_("Hora de Início"))
+    end_time = models.TimeField(verbose_name=_("Hora de Fim"))
+    location = models.CharField(max_length=255, blank=True, verbose_name=_("Local"))
+    description = models.TextField(blank=True, verbose_name=_("Descrição"))
+    status = models.CharField(
+        max_length=20,
+        choices=PersonalAgendaStatus.choices,
+        default=PersonalAgendaStatus.PENDING,
+        verbose_name=_("Status"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Criada em"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Atualizada em"))
+
+    class Meta:
+        db_table = "personal_agenda_events"
+        verbose_name = _("Agenda Pessoal")
+        verbose_name_plural = _("Agenda Pessoal")
+        ordering = ["date", "start_time"]
+        indexes = [
+            models.Index(fields=["user", "date"]),
+            models.Index(fields=["user", "status"]),
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.end_time <= self.start_time:
+            raise ValidationError({"end_time": _("A hora final deve ser maior que a hora inicial.")})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.title} - {self.user.username} ({self.date})"
