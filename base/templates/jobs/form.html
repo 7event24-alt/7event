@@ -104,7 +104,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.start_date.label }} *</label>
                                 {{ form.start_date }}
                             </div>
-                            <div id="end_date_container" {% if not object or object.is_single_day %}style="display:none"{% endif %}>
+                            <div id="end_date_container" {% if object and object.is_single_day %}style="display:none"{% endif %}>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.end_date.label }}</label>
                                 {{ form.end_date }}
                             </div>
@@ -309,6 +309,8 @@ document.getElementById('single_day').addEventListener('change', function() {
         endDateContainer.style.display = 'block';
     }
 });
+
+document.getElementById('single_day').dispatchEvent(new Event('change'));
 
 function onPaymentTypeChange() {
     const paymentType = document.getElementById('id_payment_type').value;
