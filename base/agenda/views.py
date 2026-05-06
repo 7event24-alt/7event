@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
 from django.views import View
 from django.utils import timezone
 from django.db import models
@@ -180,6 +181,95 @@ class AgendaView(LoginRequiredMixin, View):
 
 
 agenda = AgendaView.as_view()
+
+
+class AgendaSidebarDataView(LoginRequiredMixin, View):
+    def get(self, request):
+        user = request.user
+        is_superuser = user.is_superuser
+
+        now = timezone.now()
+        year = int(request.GET.get("year") or now.year)
+        month = int(request.GET.get("month") or now.month)
+        user_filter = request.GET.get("user", "")
+
+        if month > 12:
+            month = 1
+            year += 1
+        elif month < 1:
+            month = 12
+            year -= 1
+
+        first_day = datetime(year, month, 1).date()
+        last_day = datetime(year, month, monthrange(year, month)[1]).date()
+        today = now.date()
+        range_start = max(today, first_day) if (year == today.year and month == today.month) else first_day
+
+        if is_superuser:
+            base_jobs = Job.objects.filter(is_active=True)
+        else:
+            base_jobs = Job.objects.filter(
+                models.Q(created_by=user) | models.Q(job_staff__professional=user),
+                is_active=True,
+            ).distinct()
+
+        upcoming_jobs = base_jobs.filter(
+            start_date__gte=range_start,
+            start_date__lte=last_day,
+            status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
+        )
+        if user_filter and is_superuser:
+            upcoming_jobs = upcoming_jobs.filter(user_id=user_filter)
+        upcoming_jobs = upcoming_jobs.select_related("client").order_by("start_date")[:10]
+
+        upcoming_visits = base_jobs.filter(
+            has_technical_visit=True,
+            technical_visit_date__gte=range_start,
+            technical_visit_date__lte=last_day,
+            status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
+        )
+        if user_filter and is_superuser:
+            upcoming_visits = upcoming_visits.filter(user_id=user_filter)
+        upcoming_visits = upcoming_visits.select_related("client").order_by("technical_visit_date")[:10]
+
+        upcoming_tasks = PersonalTask.objects.filter(
+            user=user,
+            date__gte=range_start,
+            date__lte=last_day,
+            is_completed=False,
+        ).order_by("date", "time")[:10]
+
+        return JsonResponse(
+            {
+                "jobs": [
+                    {
+                        "id": job.id,
+                        "title": job.title,
+                        "client": job.client.name if job.client else "-",
+                        "date": job.start_date.strftime("%Y-%m-%d"),
+                    }
+                    for job in upcoming_jobs
+                ],
+                "visits": [
+                    {
+                        "id": visit.id,
+                        "title": visit.title,
+                        "client": visit.client.name if visit.client else "-",
+                        "date": visit.technical_visit_date.strftime("%Y-%m-%d") if visit.technical_visit_date else "",
+                    }
+                    for visit in upcoming_visits
+                ],
+                "tasks": [
+                    {
+                        "id": task.id,
+                        "title": task.title,
+                        "date": task.date.strftime("%Y-%m-%d"),
+                        "time": task.time.strftime("%H:%M") if task.time else "",
+                    }
+                    for task in upcoming_tasks
+                ],
+            }
+        )
 
 
 class DayDetailView(LoginRequiredMixin, View):

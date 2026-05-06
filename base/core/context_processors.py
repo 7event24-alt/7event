@@ -22,9 +22,9 @@ def user_plan_context(request):
         plan = request.user.get_plan()
 
         if plan is None:
-            return {"user_plan": None, "user_plan_badge": "FREE"}
+            return {"user_plan": None, "user_plan_badge": "BSC"}
 
-        plan_badge = "FREE"
+        plan_badge = "BSC"
         if plan.type == "pro":
             plan_badge = "PRO"
         elif plan.type == "business":

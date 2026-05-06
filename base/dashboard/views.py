@@ -114,13 +114,10 @@ class DashboardView(LoginRequiredMixin, View):
 
         upcoming_visits_count = upcoming_events.filter(has_technical_visit=True).count()
         
-        # NOVO: Tarefas pessoais pendentes (próximos 90 dias)
+        # Tarefas pessoais pendentes
         from base.accounts.models import PersonalTask
-        today_date = timezone.now().date()
         upcoming_tasks = PersonalTask.objects.filter(
             user=user,
-            date__gte=today_date,
-            date__lte=today_date + timedelta(days=90),
             is_completed=False
         ).order_by("date", "time")[:10]
         

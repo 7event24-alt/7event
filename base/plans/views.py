@@ -136,7 +136,7 @@ class ActivateFreeView(LoginRequiredMixin, View):
         free_plan = Plan.objects.filter(type=PlanType.FREE, is_active=True).first()
 
         if not free_plan:
-            messages.error(request, "Plano FREE não disponível.")
+            messages.error(request, "Plano BASIC não disponível.")
             return HttpResponseRedirect(reverse("plans:list"))
 
         messages.success(request, f"Plano {free_plan.name} ativado com sucesso!")

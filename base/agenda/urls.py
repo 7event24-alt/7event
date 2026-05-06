@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import agenda, day_detail
+from .views import agenda, day_detail, AgendaSidebarDataView
 from .serializers import AgendaViewSet, AgendaEventsView
 from base.admin_panel.views import admin_panel as admin_panel_view
 
@@ -14,4 +14,5 @@ urlpatterns = [
     path("dia/<int:year>/<int:month>/<int:day>/", day_detail, name="day_detail"),
     path("", include(router.urls)),
     path("api/eventos/", AgendaEventsView.as_view(), name="agenda-events"),
+    path("api/sidebar/", AgendaSidebarDataView.as_view(), name="agenda-sidebar-data"),
 ]

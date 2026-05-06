@@ -75,7 +75,7 @@ class UserManager(DjangoUserManager):
 
 
 class PlanType(models.TextChoices):
-    FREE = "free", _("Grátis")
+    FREE = "free", _("Basic")
     PROFESSIONAL = "pro", _("Profissional")
     BUSINESS = "business", _("Business")
 
