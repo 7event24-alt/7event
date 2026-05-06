@@ -481,20 +481,22 @@ class ProfileView(LoginRequiredMixin, View):
             try:
                 photo = request.FILES.get("photo")
                 if photo:
-                    old_photo = request.user.photo
+                    old_photo_name = request.user.photo.name if request.user.photo else ""
                     
                     request.user.photo = photo
                     request.user.updated_at = timezone.now()
                     request.user.save()
+
+                    photo_url = request.user.photo.url if (request.user.photo and request.user.photo.name) else ""
                     
-                    if old_photo:
+                    if old_photo_name and old_photo_name != request.user.photo.name:
                         try:
-                            old_photo.delete(save=False)
+                            request.user.photo.storage.delete(old_photo_name)
                         except Exception:
                             pass
                     return JsonResponse({
                         "success": True,
-                        "photo_url": request.user.photo.url,
+                        "photo_url": photo_url,
                         "version": int(timezone.now().timestamp()),
                     })
                 else:
