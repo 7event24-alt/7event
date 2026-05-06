@@ -261,7 +261,7 @@ class FinancialView(LoginRequiredMixin, View):
             else:
                 # User is staff member: use staff record cache_value
                 staff_record = job.job_staff.filter(professional=user).first()
-                job_revenue = staff_record.cache_value if staff_record else Decimal('0')
+                job_revenue = (staff_record.cache_value or Decimal('0')) if staff_record else Decimal('0')
             
             total_revenue += job_revenue
             
