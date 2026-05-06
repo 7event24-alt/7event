@@ -113,11 +113,13 @@ class AgendaView(LoginRequiredMixin, View):
             calendar_weeks.append(week_data)
 
         today = now.date()
-        current_month_end = today.replace(day=monthrange(today.year, today.month)[1])
+        month_start = first_day.date()
+        month_end = last_day.date()
+        range_start = max(today, month_start) if (year == today.year and month == today.month) else month_start
 
         upcoming_jobs = base_jobs.filter(
-            start_date__gte=today,
-            start_date__lte=current_month_end,
+            start_date__gte=range_start,
+            start_date__lte=month_end,
             status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
         )
         if user_filter and is_superuser:
@@ -132,8 +134,8 @@ class AgendaView(LoginRequiredMixin, View):
 
         upcoming_visits = base_jobs.filter(
             has_technical_visit=True,
-            technical_visit_date__gte=today,
-            technical_visit_date__lte=current_month_end,
+            technical_visit_date__gte=range_start,
+            technical_visit_date__lte=month_end,
             status__in=[JobStatus.PENDING, JobStatus.CONFIRMED],
         )
         if user_filter and is_superuser:
@@ -142,8 +144,8 @@ class AgendaView(LoginRequiredMixin, View):
 
         upcoming_tasks = PersonalTask.objects.filter(
             user=user,
-            date__gte=today,
-            date__lte=current_month_end,
+            date__gte=range_start,
+            date__lte=month_end,
             is_completed=False,
         ).order_by("date", "time")[:10]
 
