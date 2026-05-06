@@ -27,7 +27,11 @@
             <tbody class="divide-y divide-gray-200">
                 {% for quote in quotes %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 font-medium text-gray-800">{{ quote.title }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">
+                        <a href="{% url 'quote:detail' quote.pk %}" class="hover:text-primary transition-colors">
+                            {{ quote.title }}
+                        </a>
+                    </td>
                     <td class="px-4 py-3 text-gray-600 hidden md:table-cell">{{ quote.client.name|default:"-" }}</td>
                     <td class="px-4 py-3 font-medium text-green-600">{{ quote.total|brl }}</td>
                     <td class="px-4 py-3">

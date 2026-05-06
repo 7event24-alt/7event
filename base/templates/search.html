@@ -179,7 +179,7 @@
                                 <p class="font-semibold text-primary">R$ {{ quote.total|floatformat:2 }}</p>
                                 {% endif %}
                                 <span class="text-xs {% if quote.is_accepted %}text-green-500{% else %}text-gray-400{% endif %}">
-                                    {% if quote.is_accepted %}Aceito{% elif quote.is_sent %}Enviado{% else %}Rascunho{% endif %}
+                                    {% if quote.is_accepted %}Aceito{% elif quote.is_sent %}Enviado{% else %}Criado{% endif %}
                                 </span>
                             </div>
                         </div>

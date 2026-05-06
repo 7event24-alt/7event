@@ -46,7 +46,9 @@
                                 </div>
                                 {% endif %}
                                 <div>
-                                    <div class="font-medium text-gray-800">{{ member.get_full_name }}</div>
+                                    <a href="{% url 'accounts:user_profile_detail' member.id %}" class="font-medium text-gray-800 hover:text-primary transition-colors">
+                                        {{ member.get_full_name|default:member.username }}
+                                    </a>
                                     <div class="text-sm text-gray-500">{{ member.email }}</div>
                                 </div>
                             </div>

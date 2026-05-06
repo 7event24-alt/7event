@@ -724,6 +724,8 @@ def user_profile_detail(request, user_id=None):
         "can_view_full_profile": can_view_full_profile,
         "can_view_sensitive": can_view_sensitive,
         "is_own_profile": is_own_profile,
+        "skills_list": [s.strip() for s in (profile_user.skills or "").split(",") if s.strip()],
+        "full_name_display": (profile_user.full_name or profile_user.get_full_name() or "").strip(),
     }
     
     return render(request, "accounts/user_profile_detail.html", context)

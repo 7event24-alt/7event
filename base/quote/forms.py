@@ -1,10 +1,12 @@
 from django import forms
+from decimal import Decimal, InvalidOperation
 from .models import Quote, QuoteExpense
 
 
 class QuoteForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         created_by = kwargs.pop("created_by", None)
+        hide_status = kwargs.pop("hide_status", False)
         super().__init__(*args, **kwargs)
         self.fields["client"].required = False
         if created_by:
@@ -29,6 +31,38 @@ class QuoteForm(forms.ModelForm):
                     " border-red-500 focus:ring-red-500 focus:border-red-500"
                 )
             field.widget.attrs["class"] = current_class.strip()
+
+        if hide_status and "status" in self.fields:
+            self.fields["status"].widget = forms.HiddenInput()
+            self.fields["status"].required = False
+            self.fields["status"].initial = "created"
+
+    def _parse_decimal_input(self, raw_value):
+        if raw_value in (None, ""):
+            return None
+
+        value = str(raw_value).strip().replace(" ", "")
+        if "," in value:
+            value = value.replace(".", "").replace(",", ".")
+
+        try:
+            return Decimal(value)
+        except (InvalidOperation, ValueError):
+            raise forms.ValidationError("Informe um número válido.")
+
+    def clean_hourly_rate(self):
+        raw = self.data.get("hourly_rate")
+        parsed = self._parse_decimal_input(raw)
+        if parsed is None:
+            return self.cleaned_data.get("hourly_rate")
+        return parsed
+
+    def clean_work_hours(self):
+        raw = self.data.get("work_hours")
+        parsed = self._parse_decimal_input(raw)
+        if parsed is None:
+            return self.cleaned_data.get("work_hours")
+        return parsed
 
     class Meta:
         model = Quote

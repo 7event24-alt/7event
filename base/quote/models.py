@@ -5,7 +5,7 @@ from decimal import Decimal
 
 
 class QuoteStatus(models.TextChoices):
-    DRAFT = "draft", _("Rascunho")
+    CREATED = "created", _("Criado")
     SENT = "sent", _("Enviado")
     NEGOTIATION = "negotiation", _("Em Negociação")
     ACCEPTED = "accepted", _("Aceito")
@@ -35,10 +35,10 @@ class Quote(models.Model):
     description = models.TextField(blank=True, verbose_name=_("Descrição"))
 
     hourly_rate = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name=_("Valor da Hora")
+        max_digits=10, decimal_places=2, verbose_name=_("Valor da Diária")
     )
     work_hours = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name=_("Horas de Trabalho")
+        max_digits=10, decimal_places=2, verbose_name=_("Quantidade de Diárias")
     )
 
     labor_cost = models.DecimalField(
@@ -59,7 +59,7 @@ class Quote(models.Model):
     status = models.CharField(
         max_length=20,
         choices=QuoteStatus.choices,
-        default=QuoteStatus.DRAFT,
+        default=QuoteStatus.CREATED,
         verbose_name=_("Status"),
     )
     is_active = models.BooleanField(default=True, verbose_name=_("Ativo"))

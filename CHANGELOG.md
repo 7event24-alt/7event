@@ -7,10 +7,15 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 ### Feat
 - Perfil do usuário agora possui campo de **Chave PIX** com exibição e edição na tela de perfil.
 - Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.
+- Orçamentos aceitos agora permitem criar trabalho pré-preenchido com dados do orçamento (`cache` usando total do orçamento).
+- PDF de orçamento foi reestruturado com logo dinâmica da empresa (fallback 7event) e assinatura de marca no rodapé.
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.
+- Fluxo de orçamento passou a usar status padrão **Criado** (em vez de rascunho), com campo de status visível apenas na edição.
+- Template de email e detalhe de orçamento corrigidos para nomenclatura de diária e formatação monetária brasileira.
+- Botão de envio de orçamento no detalhe permanece visível e vira **Reenviar por email** após envio.
 
 ## [1.5.0] - 2026-04-21
 

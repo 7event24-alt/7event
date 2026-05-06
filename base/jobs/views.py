@@ -81,12 +81,25 @@ class JobCreateView(LoginRequiredMixin, View):
 
         form = JobForm(user=request.user)
         initial_date = request.GET.get("date")
+        initial_client = request.GET.get("client")
+        initial_title = request.GET.get("title")
+        initial_description = request.GET.get("description")
+        initial_cache = request.GET.get("cache")
         if initial_date:
             try:
                 dt = datetime.strptime(initial_date, "%Y-%m-%d")
                 form.fields["start_date"].initial = dt.date()
             except ValueError:
                 pass
+
+        if initial_client:
+            form.fields["client"].initial = initial_client
+        if initial_title:
+            form.fields["title"].initial = initial_title
+        if initial_description:
+            form.fields["description"].initial = initial_description
+        if initial_cache:
+            form.fields["cache"].initial = initial_cache
 
         return render(
             request,
@@ -208,7 +221,7 @@ class JobDetailView(LoginRequiredMixin, View):
             available_professionals = User.objects.filter(
                 is_active=True,
                 is_staff=False,
-                plan__type=PlanType.PROFESSIONAL,
+                plan__type__in=[PlanType.PROFESSIONAL, PlanType.FREE],
             ).exclude(pk=job.created_by.pk).exclude(pk__in=current_staff_ids)
         
         return render(
@@ -431,6 +444,10 @@ class JobAddStaffView(LoginRequiredMixin, View):
             return JsonResponse({"success": False, "error": "Você não tem permissão para adicionar profissionais."}, status=403)
         
         professional_ids = request.POST.getlist("professionals")
+        if not professional_ids:
+            single_professional = request.POST.get("professional")
+            if single_professional:
+                professional_ids = [single_professional]
         role = request.POST.get("role")
         cache_value = request.POST.get("cache_value")
         
@@ -477,7 +494,7 @@ class ProfessionalSearchView(LoginRequiredMixin, View):
         professionals = User.objects.filter(
             is_active=True,
             is_staff=False,
-            plan__type=PlanType.PROFESSIONAL,
+            plan__type__in=[PlanType.PROFESSIONAL, PlanType.FREE],
         ).exclude(pk__in=current_staff_ids).filter(
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |

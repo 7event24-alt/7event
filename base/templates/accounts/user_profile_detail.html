@@ -1,31 +1,16 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ profile_user.get_full_name|default:profile_user.username }} - Perfil Profissional</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1e3a5f',
-                        secondary: '#2d5a8a',
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="max-w-4xl mx-auto p-4 py-8">
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.get_full_name|default:profile_user.username }} - Perfil Profissional{% endblock %}
+{% block page_title %}Perfil Profissional{% endblock %}
+
+{% block header_pre_actions %}
+<a href="javascript:history.back()" class="text-gray-600 hover:text-primary p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Voltar">
+    <i class="fas fa-arrow-left"></i>
+</a>
+{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto p-1 sm:p-2">
         <!-- Header -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div class="bg-primary p-6 text-white relative">
@@ -38,13 +23,19 @@
                         {% endif %}
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                        <h1 class="text-2xl font-bold">
+                            {% if can_view_sensitive or is_own_profile %}
+                                {{ profile_user.get_full_name|default:profile_user.username }}
+                            {% else %}
+                                {{ profile_user.username }}
+                            {% endif %}
+                        </h1>
                         <p class="text-white/80">{{ profile_user.get_role_display|default:"Profissional" }}</p>
-                        {% if profile_user.show_sensitive_data %}
-                            <span class="inline-block mt-2 px-3 py-1 bg-green-500/20 text-sm rounded-full">
-                                <i class="fas fa-shield-alt mr-1"></i> Dados sensíveis liberados
-                            </span>
-                        {% endif %}
+                {% if profile_user.show_sensitive_data %}
+                    <span class="inline-block mt-2 px-3 py-1 bg-green-500/20 text-sm rounded-full">
+                        <i class="fas fa-shield-alt mr-1"></i> Dados sensíveis liberados
+                    </span>
+                {% endif %}
                     </div>
                 </div>
                 
@@ -74,36 +65,60 @@
                         <span>{{ profile_user.address }}</span>
                     </div>
                     {% endif %}
+                    <div class="flex items-center gap-3 text-gray-600">
+                        <i class="fas fa-qrcode text-primary w-5"></i>
+                        {% if profile_user.pix_key %}
+                        <span>{{ profile_user.pix_key }}</span>
+                        {% else %}
+                        <span class="text-gray-400">Não foi preenchido</span>
+                        {% endif %}
+                    </div>
                 </div>
                 
-                <!-- Dados Sensíveis (CPF/RG) - Apenas se can_view_sensitive -->
-                {% if can_view_sensitive %}
+                <!-- Dados Sensíveis (LGPD) -->
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                     <h3 class="text-sm font-semibold text-yellow-800 mb-2">
                         <i class="fas fa-lock mr-1"></i> Dados Pessoais (LGPD)
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        {% if profile_user.full_name %}
                         <div>
                             <span class="text-gray-500">Nome Completo:</span>
-                            <span class="font-medium text-gray-800">{{ profile_user.full_name }}</span>
+                            {% if full_name_display and can_view_sensitive %}
+                            <span class="font-medium text-gray-800">{{ full_name_display }}</span>
+                            {% elif full_name_display %}
+                            <span class="font-medium text-gray-800 blur-sm select-none">{{ full_name_display }}</span>
+                            {% else %}
+                            <span class="text-gray-400">Não foi preenchido</span>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                        {% if profile_user.cpf %}
                         <div>
                             <span class="text-gray-500">CPF:</span>
+                            {% if profile_user.cpf and can_view_sensitive %}
                             <span class="font-medium text-gray-800">{{ profile_user.cpf }}</span>
+                            {% elif profile_user.cpf %}
+                            <span class="font-medium text-gray-800 blur-sm select-none">{{ profile_user.cpf }}</span>
+                            {% else %}
+                            <span class="text-gray-400">Não foi preenchido</span>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                        {% if profile_user.rg %}
                         <div>
                             <span class="text-gray-500">RG:</span>
+                            {% if profile_user.rg and can_view_sensitive %}
                             <span class="font-medium text-gray-800">{{ profile_user.rg }}</span>
+                            {% elif profile_user.rg %}
+                            <span class="font-medium text-gray-800 blur-sm select-none">{{ profile_user.rg }}</span>
+                            {% else %}
+                            <span class="text-gray-400">Não foi preenchido</span>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
+                    {% if not can_view_sensitive %}
+                    <p class="text-xs text-yellow-700 mt-3">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Dados visíveis apenas após liberação do profissional.
+                    </p>
+                    {% endif %}
                 </div>
-                {% endif %}
                 
                 <!-- Biografia -->
                 {% if profile_user.bio and can_view_full_profile %}
@@ -118,14 +133,14 @@
                 {% endif %}
                 
                 <!-- Habilidades -->
-                {% if profile_user.skills and can_view_full_profile %}
+                {% if skills_list and can_view_full_profile %}
                 <div class="mb-6">
                     <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                         <i class="fas fa-tools text-primary"></i> Habilidades
                     </h2>
                     <div class="flex flex-wrap gap-2">
-                        {% for skill in profile_user.skills.split(",") %}
-                            <span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">{{ skill|trim }}</span>
+                        {% for skill in skills_list %}
+                            <span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">{{ skill }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -157,5 +172,4 @@
         </div>
         {% endif %}
     </div>
-</body>
-</html>
+{% endblock %}

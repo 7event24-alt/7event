@@ -10,6 +10,7 @@ from .views import (
     QuoteDeleteExpenseView,
     QuotePDFView,
     QuoteSendView,
+    QuoteCreateJobView,
 )
 
 app_name = "quote"
@@ -21,6 +22,7 @@ urlpatterns = [
     path("<int:pk>/editar/", QuoteUpdateView.as_view(), name="update"),
     path("<int:pk>/excluir/", QuoteDeleteView.as_view(), name="delete"),
     path("<int:pk>/enviar/", QuoteSendView.as_view(), name="send"),
+    path("<int:pk>/criar-trabalho/", QuoteCreateJobView.as_view(), name="create_job"),
     path("<int:pk>/despesa/nova/", QuoteAddExpenseView.as_view(), name="add_expense"),
     path(
         "<int:pk>/despesa/<int:expense_pk>/excluir/",

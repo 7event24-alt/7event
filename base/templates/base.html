@@ -257,7 +257,6 @@
             .then(response => response.json())
             .then(data => {
                 const badge = document.getElementById('notificationBadge');
-                console.log('Contagem carregada:', data.unread_count);
                 if (data.unread_count > 0) {
                     badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
                     badge.classList.remove('hidden');
@@ -270,10 +269,7 @@
     
     // Carregar contagem ao carregar a página
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Carregando contagem...');
         loadUnreadCount();
-        // Atualizar a cada 10 segundos
-        setInterval(loadUnreadCount, 10000);
     });
     
     function loadNotifications() {

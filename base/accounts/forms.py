@@ -417,9 +417,9 @@ class UserProfileForm(forms.ModelForm):
             }
         ),
     )
-    photo = forms.ImageField(
+    company_logo = forms.ImageField(
         required=False,
-        label="Foto de Perfil",
+        label="Logo da Empresa",
         widget=forms.FileInput(
             attrs={
                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm",
@@ -759,7 +759,7 @@ class ProfessionalInfoForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("bio", "skills", "portfolio_url", "role", "photo")
+        fields = ("bio", "skills", "portfolio_url", "role", "company_logo")
 
 
 class PrivacyForm(forms.ModelForm):

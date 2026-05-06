@@ -440,16 +440,10 @@
                         </div>
                         <div>
                             <p class="font-medium text-gray-800">
-                                {% if member.status == 'confirmed' or member.status == 'paid' %}
-                                <!-- Link para perfil se confirmado/pago -->
                                 <a href="{% url 'accounts:user_profile_detail' member.professional.id %}" 
                                    class="hover:text-primary hover:underline">
                                     {{ member.professional.get_full_name|default:member.professional.username }}
                                 </a>
-                                {% else %}
-                                <!-- Estático se pendente -->
-                                {{ member.professional.get_full_name|default:member.professional.username }}
-                                {% endif %}
                                 
                                 {% if member.professional == request.user %}
                                 <span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">Você</span>
@@ -558,7 +552,7 @@
         }
         return cookieValue;
     }
-    const csrftoken = getCookie('csrftoken');
+    const jobCsrftoken = getCookie('csrftoken');
     
     // Open Add Staff Modal
     function openStaffModal() {
@@ -679,7 +673,7 @@
         
         fetch('/app/trabalhos/{{ job.pk }}/adicionar-staff/', {
             method: 'POST',
-            headers: { 'X-CSRFToken': csrftoken },
+            headers: { 'X-CSRFToken': jobCsrftoken },
             body: formData
         })
         .then(response => response.json())
@@ -741,7 +735,7 @@
         
         fetch(`/app/trabalhos/${jobId}/staff/${staffId}/atualizar/`, {
             method: 'POST',
-            headers: { 'X-CSRFToken': csrftoken },
+            headers: { 'X-CSRFToken': jobCsrftoken },
             body: formData
         })
         .then(response => response.json())
@@ -783,7 +777,7 @@
         
         fetch(`/app/trabalhos/${jobId}/staff/${staffId}/remover/`, {
             method: 'POST',
-            headers: { 'X-CSRFToken': csrftoken },
+            headers: { 'X-CSRFToken': jobCsrftoken },
             body: formData
         })
         .then(response => response.json())
@@ -815,7 +809,7 @@
         
         fetch(`/app/trabalhos/${jobId}/staff/${staffId}/status/`, {
             method: 'POST',
-            headers: { 'X-CSRFToken': csrftoken },
+            headers: { 'X-CSRFToken': jobCsrftoken },
             body: formData
         })
         .then(response => response.json())

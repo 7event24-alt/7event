@@ -4,13 +4,10 @@ from django.views import View
 from django.contrib import messages
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.conf import settings
 from decimal import Decimal
+from urllib.parse import urlencode
 import weasyprint
 
-from base.clients.models import Client
-from base.accounts.models import Notification, NotificationType
-from base.core.emails import send_quote_email
 from .models import Quote, QuoteExpense, QuoteStatus
 from .forms import QuoteForm, QuoteExpenseForm
 
@@ -32,7 +29,7 @@ class QuoteCreateView(LoginRequiredMixin, View):
 
     def get(self, request):
         user = request.user
-        form = QuoteForm(created_by=user)
+        form = QuoteForm(created_by=user, hide_status=True)
         return render(
             request,
             self.template_name,
@@ -41,11 +38,14 @@ class QuoteCreateView(LoginRequiredMixin, View):
 
     def post(self, request):
         user = request.user
-        form = QuoteForm(request.POST, created_by=user)
+        post_data = request.POST.copy()
+        post_data["status"] = QuoteStatus.CREATED
+        form = QuoteForm(post_data, created_by=user, hide_status=True)
 
         if form.is_valid():
             quote = form.save(commit=False)
             quote.created_by = user
+            quote.status = QuoteStatus.CREATED
             quote.expenses_cost = Decimal("0")
             quote.labor_cost = quote.hourly_rate * quote.work_hours
             quote.save()
@@ -69,7 +69,11 @@ class QuoteDetailView(LoginRequiredMixin, View):
         return render(
             request,
             self.template_name,
-            {"quote": quote, "expenses": expenses},
+            {
+                "quote": quote,
+                "expenses": expenses,
+                "can_send_email": bool(quote.client and quote.client.email),
+            },
         )
 
 
@@ -191,7 +195,22 @@ class QuotePDFView(LoginRequiredMixin, View):
         )
         year = datetime.now().year
 
-        logo_url = request.build_absolute_uri("/static/img/logo7event.png")
+        platform_logo_url = request.build_absolute_uri("/static/img/logo7event.png")
+        company = quote.created_by
+        company_logo_url = None
+        company_display_name = "7event"
+        if company and company.company_logo:
+            company_logo_url = request.build_absolute_uri(company.company_logo.url)
+        if company:
+            legal_name = (company.legal_name or "").strip()
+            generic_legal_names = {"conta profissional", "conta business", "conta"}
+            use_legal_name = bool(legal_name) and legal_name.lower() not in generic_legal_names
+            company_display_name = (
+                legal_name if use_legal_name else None
+                or company.get_full_name()
+                or company.username
+                or "7event"
+            )
 
         html = render_to_string(
             "quote/pdf.html",
@@ -199,7 +218,10 @@ class QuotePDFView(LoginRequiredMixin, View):
                 "quote": quote,
                 "expenses": expenses,
                 "created_by": user,
-                "logo_url": logo_url,
+                "company": company,
+                "company_logo_url": company_logo_url,
+                "company_display_name": company_display_name,
+                "platform_logo_url": platform_logo_url,
             },
         )
 
@@ -227,7 +249,27 @@ class QuoteSendView(LoginRequiredMixin, View):
         quote.status = QuoteStatus.SENT
         quote.save()
 
-        send_quote_email(quote, quote.client.email)
-
         messages.success(request, f"Orçamento enviado para {quote.client.email}!")
         return redirect("quote:detail", pk=pk)
+
+
+class QuoteCreateJobView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        user = request.user
+        if user.is_superuser:
+            quote = get_object_or_404(Quote, pk=pk, is_active=True)
+        else:
+            quote = get_object_or_404(Quote, pk=pk, created_by=user, is_active=True)
+
+        if quote.status != QuoteStatus.ACCEPTED:
+            messages.error(request, "Apenas orçamentos aceitos podem gerar trabalhos.")
+            return redirect("quote:detail", pk=quote.pk)
+
+        params = {
+            "quote_id": quote.pk,
+            "client": quote.client_id or "",
+            "title": quote.title,
+            "description": "\n\n".join([x for x in [quote.description, quote.notes] if x]).strip(),
+            "cache": quote.total,
+        }
+        return redirect(f"/app/trabalhos/novo/?{urlencode(params)}")

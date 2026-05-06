@@ -26,7 +26,7 @@
             <div class="flex items-center gap-3 mt-2">
                 <p class="text-white/80 text-sm">Criado em: {{ quote.created_at|date:"d/m/Y" }}</p>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                    {% if quote.status == 'draft' %}Rascunho
+                    {% if quote.status == 'created' %}Criado
                     {% elif quote.status == 'sent' %}Enviado
                     {% elif quote.status == 'negotiation' %}Em Negociação
                     {% elif quote.status == 'accepted' %}Aceito
@@ -37,13 +37,18 @@
             </div>
         </div>
         <div class="flex gap-2">
-            {% if quote.status == 'draft' and quote.client and quote.client.email %}
+            {% if can_send_email %}
             <form method="post" action="{% url 'quote:send' quote.pk %}" class="inline">
                 {% csrf_token %}
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2" onclick="return confirm('Enviar orçamento por email para {{ quote.client.email }}?')">
-                    <i class="fas fa-paper-plane"></i> Enviar
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2" onclick="return confirm('{% if quote.status == 'sent' %}Reenviar{% else %}Enviar{% endif %} orçamento por email para {{ quote.client.email }}?')">
+                    <i class="fas fa-paper-plane"></i> {% if quote.status == 'sent' %}Reenviar por email{% else %}Enviar por email{% endif %}
                 </button>
             </form>
+            {% endif %}
+            {% if quote.status == 'accepted' %}
+            <a href="{% url 'quote:create_job' quote.pk %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                <i class="fas fa-briefcase"></i> Criar trabalho
+            </a>
             {% endif %}
             <a href="{% url 'quote:update' quote.pk %}" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
                 <i class="fas fa-edit"></i> Editar
@@ -58,20 +63,20 @@
 <!-- Detalhamento do Orçamento -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <h3 class="text-lg font-semibold text-gray-800">Mão de Obra</h3>
+        <h3 class="text-lg font-semibold text-gray-800">Orçamento do Evento</h3>
     </div>
     <div class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <span class="text-sm font-medium text-gray-500">Valor da Hora</span>
+                <span class="text-sm font-medium text-gray-500">Valor da Diária</span>
                 <p class="text-xl font-semibold text-gray-800">{{ quote.hourly_rate|brl }}</p>
             </div>
             <div>
-                <span class="text-sm font-medium text-gray-500">Horas de Trabalho</span>
-                <p class="text-xl font-semibold text-gray-800">{{ quote.work_hours|floatformat:2 }}h</p>
+                <span class="text-sm font-medium text-gray-500">Diárias</span>
+                <p class="text-xl font-semibold text-gray-800">{{ quote.work_hours|number }}</p>
             </div>
             <div>
-                <span class="text-sm font-medium text-gray-500">Total Mão de Obra</span>
+                <span class="text-sm font-medium text-gray-500">Total</span>
                 <p class="text-xl font-semibold text-primary">{{ quote.labor_cost|brl }}</p>
             </div>
         </div>

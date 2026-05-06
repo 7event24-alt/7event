@@ -1,52 +1,47 @@
 {% extends "emails/base.html" %}
+{% load currency_tags %}
 
 {% block content %}
 <div style="color: #1f2937;">
-    <h2 style="color: #1e3a5f; margin-bottom: 20px;">Olá, {{ quote.client.name }}!</h2>
+    <h2 style="color: #334155; margin-bottom: 20px;">Olá, {{ quote.client.name }}!</h2>
     
-    <p style="font-size: 16px; line-height: 1.6;">
-        Segue o orçamento para <strong>{{ quote.title }}</strong>.
-    </p>
+    <p style="font-size: 16px; line-height: 1.6;">Segue o orçamento para <strong>{{ quote.title }}</strong>.</p>
     
     {% if quote.description %}
-    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
-        <h3 style="color: #1e3a5f; margin: 0 0 15px 0; font-size: 16px;">Descrição</h3>
+    <div style="background-color: #f1f5f9; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e2e8f0;">
+        <h3 style="color: #334155; margin: 0 0 15px 0; font-size: 16px;">Descrição</h3>
         <p style="color: #1f2937; font-size: 14px; line-height: 1.6;">{{ quote.description|linebreaks }}</p>
     </div>
     {% endif %}
-    
-    <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
-        <h3 style="color: #1e3a5f; margin: 0 0 15px 0; font-size: 16px;">Detalhes do Orçamento</h3>
+
+    <div style="background-color: #f1f5f9; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e2e8f0;">
+        <h3 style="color: #334155; margin: 0 0 15px 0; font-size: 16px;">Detalhes do Orçamento</h3>
         <table style="width: 100%; border-collapse: collapse;">
             <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Valor da Diária:</td>
-                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">R$ {{ quote.hourly_rate }}</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ quote.hourly_rate|brl }}</td>
             </tr>
             <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Quantidade de Diárias:</td>
-                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ quote.work_hours }}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Total Mão de Obra:</td>
-                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">R$ {{ quote.labor_cost }}</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ quote.work_hours|number }}</td>
             </tr>
             {% if quote.expenses_cost > 0 %}
             <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Despesas:</td>
-                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">R$ {{ quote.expenses_cost }}</td>
+                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 500;">{{ quote.expenses_cost|brl }}</td>
             </tr>
             {% endif %}
-            <tr style="border-top: 2px solid #1e3a5f;">
-                <td style="padding: 12px 0 8px 0; color: #1e3a5f; font-size: 16px; font-weight: bold;">TOTAL DO ORÇAMENTO:</td>
-                <td style="padding: 12px 0 8px 0; color: #059669; font-size: 20px; font-weight: bold;">R$ {{ quote.total }}</td>
+            <tr style="border-top: 2px solid #475569;">
+                <td style="padding: 12px 0 8px 0; color: #334155; font-size: 16px; font-weight: bold;">TOTAL DO ORÇAMENTO:</td>
+                <td style="padding: 12px 0 8px 0; color: #059669; font-size: 20px; font-weight: bold;">{{ quote.total|brl }}</td>
             </tr>
         </table>
     </div>
     
     {% if quote.notes %}
-    <div style="background-color: #fef3c7; border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-        <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 14px;">Observações</h3>
-        <p style="color: #78350f; font-size: 14px; line-height: 1.6;">{{ quote.notes|linebreaks }}</p>
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #94a3b8; border: 1px solid #e2e8f0;">
+        <h3 style="color: #475569; margin: 0 0 10px 0; font-size: 14px;">Observações</h3>
+        <p style="color: #334155; font-size: 14px; line-height: 1.6;">{{ quote.notes|linebreaks }}</p>
     </div>
     {% endif %}
     
@@ -59,7 +54,7 @@
             <td align="center" style="padding: 30px 0;">
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);">
+                        <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #334155 0%, #475569 100%);">
                             <a href="https://7event.com.br/app/" style="display: inline-block; color: #ffffff; padding: 16px 32px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, sans-serif;">Falar Conosco</a>
                         </td>
                     </tr>
