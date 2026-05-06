@@ -2,9 +2,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.views import View
 from django.contrib import messages
 from django.utils import timezone
+import weasyprint
 
 from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob, JobStaff, JobStaffStatus
 from base.accounts.models import ProfessionalRole, PlanType
@@ -412,6 +415,32 @@ class JobDuplicateView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         return self._duplicate(request, pk)
+
+
+class JobTeamPDFView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        job = get_object_or_404(Job, pk=pk, is_active=True)
+
+        is_owner = job.created_by == request.user
+        if not (is_owner or request.user.is_superuser):
+            return HttpResponse("Sem permissão", status=403)
+
+        staff = job.job_staff.select_related("professional").order_by("professional__first_name", "professional__last_name")
+
+        html = render_to_string(
+            "jobs/team_list_pdf.html",
+            {
+                "job": job,
+                "staff": staff,
+                "generated_at": timezone.now(),
+            },
+        )
+
+        pdf = weasyprint.HTML(string=html).write_pdf()
+
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="equipe_{job.pk}.pdf"'
+        return response
 
 
 class ClientQuickCreateView(LoginRequiredMixin, View):

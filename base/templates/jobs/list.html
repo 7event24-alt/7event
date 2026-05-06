@@ -86,6 +86,11 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-2">
+                            {% if user == job.created_by and job.job_staff.count > 0 %}
+                            <a href="{% url 'jobs:team_pdf' job.pk %}" target="_blank" class="text-gray-600 hover:text-red-600 p-1" title="Lista da equipe (PDF)">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            {% endif %}
                             <a href="/app/trabalhos/{{ job.pk }}/duplicar/" class="text-gray-600 hover:text-green-600 p-1" title="Duplicar">
                                 <i class="fas fa-copy"></i>
                             </a>

@@ -15,9 +15,9 @@
 <a href="{% url 'jobs:create' %}?date={{ selected_date|date:"Y-m-d" }}" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
     <i class="fas fa-plus"></i> <span class="hidden sm:inline">Novo Trabalho</span>
 </a>
-<a href="/app/accounts/minhas-tarefas/?date={{ selected_date|date:"Y-m-d" }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-    <i class="fas fa-tasks"></i> <span class="hidden sm:inline">Minha Agenda Pessoal</span>
-</a>
+<button type="button" onclick="openTaskModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+    <i class="fas fa-tasks"></i> <span class="hidden sm:inline">Nova Tarefa</span>
+</button>
 </div>
 {% endblock %}
 
@@ -119,6 +119,9 @@
         <a href="{% url 'jobs:create' %}?date={{ selected_date|date:"Y-m-d" }}" class="inline-block bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium transition">
             <i class="fas fa-plus mr-2"></i> Criar novo trabalho
         </a>
+        <button type="button" onclick="openTaskModal()" class="mt-3 inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition">
+            <i class="fas fa-tasks mr-2"></i> Criar Nova Tarefa
+        </button>
     </div>
     {% endif %}
     
@@ -151,10 +154,10 @@
     </div>
     {% endif %}
     
-    <!-- Agenda Pessoal -->
+    <!-- Tarefas -->
     {% if tasks %}
     <div class="mt-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Agenda Pessoal</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Tarefas</h3>
         <div class="space-y-2">
             {% for task in tasks %}
             <div class="bg-blue-50 rounded-lg p-3 flex items-center gap-3 {% if task.is_completed %}opacity-50 line-through{% endif %}">
@@ -167,4 +170,98 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Modal Nova Tarefa -->
+<div id="taskModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Nova Tarefa</h3>
+            <button type="button" onclick="closeTaskModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form onsubmit="createTask(event)">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                    <input type="text" id="taskTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Ex: Confirmar equipamentos">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                    <input type="date" id="taskDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" value="{{ selected_date|date:'Y-m-d' }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Horário (opcional)</label>
+                    <input type="time" id="taskTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-5">
+                <button type="button" onclick="closeTaskModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Criar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function openTaskModal() {
+    document.getElementById('taskDate').value = '{{ selected_date|date:"Y-m-d" }}';
+    document.getElementById('taskModal').classList.remove('hidden');
+    document.getElementById('taskModal').classList.add('flex');
+}
+
+function closeTaskModal() {
+    document.getElementById('taskModal').classList.add('hidden');
+    document.getElementById('taskModal').classList.remove('flex');
+}
+
+function createTask(e) {
+    e.preventDefault();
+    const title = document.getElementById('taskTitle').value;
+    const date = document.getElementById('taskDate').value;
+    const time = document.getElementById('taskTime').value;
+
+    fetch('{% url "accounts:personal_tasks" %}', {
+        method: 'POST',
+        body: JSON.stringify({
+            action: 'create',
+            title: title,
+            date: date,
+            time: time
+        }),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.error || 'Não foi possível criar a tarefa'));
+        }
+    })
+    .catch(error => {
+        alert('Erro: ' + error.message);
+    });
+}
+</script>
 {% endblock %}

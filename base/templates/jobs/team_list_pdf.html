@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Equipe - {{ job.title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; color: #1f2937; padding: 22px; }
+        .header { border-bottom: 2px solid #475569; padding-bottom: 10px; margin-bottom: 14px; }
+        .title { font-size: 22px; color: #334155; font-weight: 700; }
+        .subtitle { margin-top: 4px; color: #64748b; font-size: 13px; }
+        .meta { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+        .meta-row { margin-bottom: 4px; font-size: 13px; }
+        .meta-row:last-child { margin-bottom: 0; }
+        .meta-label { color: #64748b; font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #eef2f7; color: #475569; font-size: 12px; text-transform: uppercase; text-align: left; padding: 9px 10px; border: 1px solid #e2e8f0; }
+        td { font-size: 12px; padding: 9px 10px; border: 1px solid #e5e7eb; }
+        .empty { text-align: center; color: #9ca3af; padding: 18px; }
+        .footer { margin-top: 14px; font-size: 11px; color: #6b7280; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Lista de Equipe do Evento</div>
+        <div class="subtitle">Documento operacional para credenciamento e controle de acesso</div>
+    </div>
+
+    <div class="meta">
+        <div class="meta-row"><span class="meta-label">Evento:</span> {{ job.title }}</div>
+        <div class="meta-row"><span class="meta-label">Cliente:</span> {{ job.client.name|default:"Não informado" }}</div>
+        <div class="meta-row"><span class="meta-label">Data:</span> {{ job.start_date|date:"d/m/Y" }}{% if job.end_date and job.end_date != job.start_date %} até {{ job.end_date|date:"d/m/Y" }}{% endif %}</div>
+        <div class="meta-row"><span class="meta-label">Local:</span> {{ job.location|default:"Não informado" }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome completo</th>
+                <th>CPF</th>
+                <th>RG</th>
+                <th>Função</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in staff %}
+            <tr>
+                <td>{{ member.professional.full_name|default:member.professional.get_full_name|default:member.professional.username }}</td>
+                <td>{{ member.professional.cpf|default:"Não informado" }}</td>
+                <td>{{ member.professional.rg|default:"Não informado" }}</td>
+                <td>{% if member.role %}{{ member.get_role_display|default:member.role }}{% else %}Não informado{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="empty">Nenhum profissional associado a este trabalho.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Emitido em {{ generated_at|date:"d/m/Y H:i" }}
+    </div>
+</body>
+</html>

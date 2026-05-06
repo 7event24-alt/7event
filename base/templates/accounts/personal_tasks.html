@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Minha Agenda Pessoal - 7event{% endblock %}
+{% block title %}Tarefas - 7event{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -9,7 +9,7 @@
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Minha Agenda Pessoal</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Tarefas</h1>
                 <p class="text-gray-500">
                     {{ pending_count }} pendente(s), {{ completed_count }} concluída(s)
                 </p>
@@ -36,7 +36,7 @@
         </div>
     </div>
     
-    <!-- Lista da Agenda Pessoal -->
+    <!-- Lista de Tarefas -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="divide-y divide-gray-100">
             {% for task in tasks %}
@@ -72,7 +72,7 @@
 <!-- Modal Novo Item -->
 <div id="taskModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold mb-4" id="taskModalTitle">Novo Item da Agenda Pessoal</h3>
+        <h3 class="text-lg font-semibold mb-4" id="taskModalTitle">Nova Tarefa</h3>
         <form onsubmit="createTask(event)">
             <input type="hidden" id="taskId" value="">
             <div class="space-y-4">
@@ -114,14 +114,14 @@ function openTaskModal(taskId = null, title = '', date = '', time = '') {
     const idField = document.getElementById('taskId');
 
     if (taskId) {
-        modalTitle.textContent = 'Editar Item da Agenda Pessoal';
+        modalTitle.textContent = 'Editar Tarefa';
         submitBtn.textContent = 'Salvar';
         idField.value = taskId;
         document.getElementById('taskTitle').value = title || '';
         document.getElementById('taskDate').value = date || new Date().toISOString().split('T')[0];
         document.getElementById('taskTime').value = time || '';
     } else {
-        modalTitle.textContent = 'Novo Item da Agenda Pessoal';
+        modalTitle.textContent = 'Nova Tarefa';
         submitBtn.textContent = 'Criar';
         idField.value = '';
         document.getElementById('taskTitle').value = '';

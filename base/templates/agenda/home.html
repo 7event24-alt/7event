@@ -55,7 +55,7 @@
         <div class="grid grid-cols-3 gap-2 mb-3" id="sidebarTabs">
             <button data-tab="jobs" class="agenda-tab-btn bg-primary text-white text-xs px-2 py-2 rounded-lg">Eventos</button>
             <button data-tab="visits" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Visitas</button>
-            <button data-tab="tasks" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Agenda Pessoal</button>
+            <button data-tab="tasks" class="agenda-tab-btn bg-gray-100 text-gray-700 text-xs px-2 py-2 rounded-lg">Tarefas</button>
         </div>
 
         <div class="max-h-64 lg:max-h-96 overflow-y-auto">
@@ -113,7 +113,7 @@
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium text-gray-800 truncate">{{ task.title }}</div>
                                 <div class="text-sm text-gray-500 truncate">
-                                    Agenda Pessoal{% if task.time %} - {{ task.time|time:"H:i" }}{% endif %}
+                                    Tarefas{% if task.time %} - {{ task.time|time:"H:i" }}{% endif %}
                                 </div>
                             </div>
                         </div>
@@ -139,7 +139,7 @@
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" value="task" checked class="filter-checkbox type-filter-checkbox w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
-                    <span class="text-sm text-gray-600">Agenda Pessoal</span>
+                    <span class="text-sm text-gray-600">Tarefas</span>
                 </label>
             </div>
 

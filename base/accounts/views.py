@@ -477,6 +477,17 @@ class ProfileView(LoginRequiredMixin, View):
                 return JsonResponse({'success': False, 'error': str(e)})
 
         # Handle photo upload
+        if request.POST.get("delete_photo_only"):
+            try:
+                if request.user.photo:
+                    request.user.photo.delete(save=False)
+                    request.user.photo = None
+                    request.user.updated_at = timezone.now()
+                    request.user.save(update_fields=["photo", "updated_at"])
+                return JsonResponse({"success": True})
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)})
+
         if request.POST.get("photo_only"):
             try:
                 photo = request.FILES.get("photo")
