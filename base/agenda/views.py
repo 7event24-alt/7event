@@ -376,8 +376,13 @@ class DayDetailView(LoginRequiredMixin, View):
                 models.Q(is_active=True, has_technical_visit=True, technical_visit_date=selected_date)
             ).select_related("client").distinct()
 
+        # Agenda Pessoal
+        personal_agenda_events = PersonalAgendaEvent.objects.filter(
+            user=user,
+            date=selected_date,
+        ).order_by("start_time")
+
         # Tarefas Pessoais
-        from base.accounts.models import PersonalTask
         tasks = PersonalTask.objects.filter(
             user=user,
             date=selected_date
@@ -416,6 +421,8 @@ class DayDetailView(LoginRequiredMixin, View):
             "visits_count": visits.count(),
             "tasks": tasks,
             "tasks_count": tasks.count(),
+            "personal_agenda_events": personal_agenda_events,
+            "personal_agenda_count": personal_agenda_events.count(),
             "total_cache": total_cache,
             "prev_day": prev_day,
             "next_day": next_day,

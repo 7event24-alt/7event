@@ -179,5 +179,13 @@ function deleteEvent(eventId) {
         else alert('Erro ao excluir evento');
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const prefillDate = params.get('date');
+    if (prefillDate) {
+        openAgendaModal('', '', prefillDate);
+    }
+});
 </script>
 {% endblock %}

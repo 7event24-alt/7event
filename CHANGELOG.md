@@ -19,6 +19,8 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Fluxo de orçamento passou a usar status padrão **Criado** (em vez de rascunho), com campo de status visível apenas na edição.
 - Template de email e detalhe de orçamento corrigidos para nomenclatura de diária e formatação monetária brasileira.
 - Botão de envio de orçamento no detalhe permanece visível e vira **Reenviar por email** após envio.
+- Redefinição de senha agora redireciona diretamente para a tela de login após confirmação da nova senha.
+- Página de agenda do dia passou a exibir Agenda Pessoal com organização por blocos (Trabalhos, Agenda Pessoal, Visitas Técnicas e Tarefas) e ações rápidas de criação.
 
 ## [1.5.0] - 2026-04-21
 
