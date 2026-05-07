@@ -574,6 +574,14 @@ class PersonalAgendaStatus(models.TextChoices):
     CANCELLED = "cancelled", _("Cancelada")
 
 
+class PersonalAgendaRecurrence(models.TextChoices):
+    NONE = "none", _("Não repetir")
+    DAILY = "daily", _("Diariamente")
+    WEEKLY = "weekly", _("Semanalmente")
+    MONTHLY = "monthly", _("Mensalmente")
+    YEARLY = "yearly", _("Anualmente")
+
+
 class PersonalAgendaEvent(models.Model):
     user = models.ForeignKey(
         User,
@@ -593,6 +601,17 @@ class PersonalAgendaEvent(models.Model):
         default=PersonalAgendaStatus.PENDING,
         verbose_name=_("Status"),
     )
+    recurrence = models.CharField(
+        max_length=20,
+        choices=PersonalAgendaRecurrence.choices,
+        default=PersonalAgendaRecurrence.NONE,
+        verbose_name=_("Recorrência"),
+    )
+    recurrence_until = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Repetir até"),
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Criada em"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Atualizada em"))
 
@@ -611,6 +630,8 @@ class PersonalAgendaEvent(models.Model):
 
         if self.end_time <= self.start_time:
             raise ValidationError({"end_time": _("A hora final deve ser maior que a hora inicial.")})
+        if self.recurrence_until and self.recurrence_until < self.date:
+            raise ValidationError({"recurrence_until": _("A data final da recorrência deve ser maior ou igual à data inicial.")})
 
     def save(self, *args, **kwargs):
         self.full_clean()

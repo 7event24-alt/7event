@@ -831,6 +831,34 @@ personal_tasks = PersonalTasksView.as_view()
 class PersonalAgendaView(LoginRequiredMixin, View):
     template_name = "accounts/personal_agenda.html"
 
+    @staticmethod
+    def _build_time_window(payload):
+        from datetime import datetime, timedelta
+
+        if payload.get("start_time") and payload.get("end_time"):
+            return payload.get("start_time"), payload.get("end_time")
+
+        schedule_time = payload.get("time")
+        duration = payload.get("duration", "1h")
+
+        if duration == "all_day":
+            return "00:00", "23:59"
+
+        if not schedule_time:
+            return None, None
+
+        duration_map = {
+            "30m": 30,
+            "1h": 60,
+            "2h": 120,
+            "3h": 180,
+            "4h": 240,
+        }
+        minutes = duration_map.get(duration, 60)
+        start_dt = datetime.strptime(schedule_time, "%H:%M")
+        end_dt = start_dt + timedelta(minutes=minutes)
+        return start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M")
+
     def get(self, request):
         from .models import PersonalAgendaEvent, PersonalAgendaStatus
 
@@ -871,25 +899,33 @@ class PersonalAgendaView(LoginRequiredMixin, View):
             event_id = data.get("event_id")
 
             if action == "create":
+                start_time, end_time = self._build_time_window(data)
                 event = PersonalAgendaEvent.objects.create(
                     user=request.user,
                     title=(data.get("title") or "").strip(),
                     date=data.get("date"),
-                    start_time=data.get("start_time"),
-                    end_time=data.get("end_time"),
+                    start_time=start_time,
+                    end_time=end_time,
                     location=(data.get("location") or "").strip(),
                     description=(data.get("description") or "").strip(),
+                    recurrence=data.get("recurrence") or "none",
+                    recurrence_until=data.get("recurrence_until") or None,
                 )
                 return JsonResponse({"success": True, "event_id": event.id})
 
             if action == "update":
                 event = PersonalAgendaEvent.objects.get(id=event_id, user=request.user)
+                start_time, end_time = self._build_time_window(data)
                 event.title = (data.get("title") or event.title).strip()
                 event.date = data.get("date", event.date)
-                event.start_time = data.get("start_time", event.start_time)
-                event.end_time = data.get("end_time", event.end_time)
+                if start_time:
+                    event.start_time = start_time
+                if end_time:
+                    event.end_time = end_time
                 event.location = (data.get("location") or event.location).strip()
                 event.description = (data.get("description") or event.description).strip()
+                event.recurrence = data.get("recurrence", event.recurrence) or "none"
+                event.recurrence_until = data.get("recurrence_until") or None
                 event.save()
                 return JsonResponse({"success": True})
 

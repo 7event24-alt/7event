@@ -4,11 +4,51 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 from calendar import monthrange
 
 from base.jobs.models import Job
 from base.accounts.models import PersonalAgendaEvent, PersonalAgendaStatus
+
+
+def _last_day_of_month(year, month):
+    return monthrange(year, month)[1]
+
+
+def _add_months(base_date, months_to_add):
+    month_index = base_date.month - 1 + months_to_add
+    year = base_date.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(base_date.day, _last_day_of_month(year, month))
+    return base_date.replace(year=year, month=month, day=day)
+
+
+def _iter_occurrence_dates(event, range_start, range_end):
+    recurrence_end = event.recurrence_until or range_end
+    effective_end = min(recurrence_end, range_end)
+    if event.date > effective_end:
+        return
+
+    if event.recurrence == "none":
+        if range_start <= event.date <= effective_end:
+            yield event.date
+        return
+
+    current = event.date
+    while current <= effective_end:
+        if current >= range_start:
+            yield current
+
+        if event.recurrence == "daily":
+            current += timedelta(days=1)
+        elif event.recurrence == "weekly":
+            current += timedelta(days=7)
+        elif event.recurrence == "monthly":
+            current = _add_months(current, 1)
+        elif event.recurrence == "yearly":
+            current = _add_months(current, 12)
+        else:
+            break
 
 
 class AgendaEventSerializer(serializers.ModelSerializer):
@@ -41,7 +81,7 @@ class AgendaEventSerializer(serializers.ModelSerializer):
     
     def get_end(self, obj):
         if obj.end_date:
-            return str(obj.end_date)
+            return str(obj.end_date + timedelta(days=1))
         return None
 
     def get_textColor(self, obj):
@@ -134,28 +174,34 @@ class AgendaEventsView(APIView):
 
             personal_agenda_events = PersonalAgendaEvent.objects.filter(
                 user=user,
-                date__gte=first_day.date(),
-                date__lte=last_day.date(),
                 status=PersonalAgendaStatus.PENDING,
             ).order_by("date", "start_time")
 
             for personal_event in personal_agenda_events:
-                start_dt = f"{personal_event.date}T{personal_event.start_time.strftime('%H:%M:%S')}"
-                end_dt = f"{personal_event.date}T{personal_event.end_time.strftime('%H:%M:%S')}"
-                all_events.append({
-                    "id": f"personal_agenda_{personal_event.id}",
-                    "title": personal_event.title,
-                    "start": start_dt,
-                    "end": end_dt,
-                    "backgroundColor": "#8b5cf6",
-                    "borderColor": "#7c3aed",
-                    "textColor": "#ffffff",
-                    "extendedProps": {
-                        "type": "personal_agenda",
-                        "status": personal_event.status,
-                        "filter_status": personal_event.status,
+                for occurrence_date in _iter_occurrence_dates(personal_event, first_day.date(), last_day.date()):
+                    is_all_day = (
+                        personal_event.start_time.strftime('%H:%M') == '00:00'
+                        and personal_event.end_time.strftime('%H:%M') == '23:59'
+                    )
+                    start_dt = str(occurrence_date) if is_all_day else f"{occurrence_date}T{personal_event.start_time.strftime('%H:%M:%S')}"
+                    end_dt = str(occurrence_date + timedelta(days=1)) if is_all_day else f"{occurrence_date}T{personal_event.end_time.strftime('%H:%M:%S')}"
+                    payload = {
+                        "id": f"personal_agenda_{personal_event.id}_{occurrence_date}",
+                        "title": personal_event.title,
+                        "start": start_dt,
+                        "end": end_dt,
+                        "backgroundColor": "#8b5cf6",
+                        "borderColor": "#7c3aed",
+                        "textColor": "#ffffff",
+                        "extendedProps": {
+                            "type": "personal_agenda",
+                            "status": personal_event.status,
+                            "filter_status": personal_event.status,
+                        }
                     }
-                })
+                    if is_all_day:
+                        payload["allDay"] = True
+                    all_events.append(payload)
 
         except Exception as e:
             pass
@@ -254,28 +300,34 @@ class AgendaViewSet(viewsets.ViewSet):
 
             personal_agenda_events = PersonalAgendaEvent.objects.filter(
                 user=user,
-                date__gte=first_day.date(),
-                date__lte=last_day.date(),
                 status=PersonalAgendaStatus.PENDING,
             ).order_by("date", "start_time")
 
             for personal_event in personal_agenda_events:
-                start_dt = f"{personal_event.date}T{personal_event.start_time.strftime('%H:%M:%S')}"
-                end_dt = f"{personal_event.date}T{personal_event.end_time.strftime('%H:%M:%S')}"
-                all_events.append({
-                    "id": f"personal_agenda_{personal_event.id}",
-                    "title": personal_event.title,
-                    "start": start_dt,
-                    "end": end_dt,
-                    "backgroundColor": "#8b5cf6",
-                    "borderColor": "#7c3aed",
-                    "textColor": "#ffffff",
-                    "extendedProps": {
-                        "type": "personal_agenda",
-                        "status": personal_event.status,
-                        "filter_status": personal_event.status,
+                for occurrence_date in _iter_occurrence_dates(personal_event, first_day.date(), last_day.date()):
+                    is_all_day = (
+                        personal_event.start_time.strftime('%H:%M') == '00:00'
+                        and personal_event.end_time.strftime('%H:%M') == '23:59'
+                    )
+                    start_dt = str(occurrence_date) if is_all_day else f"{occurrence_date}T{personal_event.start_time.strftime('%H:%M:%S')}"
+                    end_dt = str(occurrence_date + timedelta(days=1)) if is_all_day else f"{occurrence_date}T{personal_event.end_time.strftime('%H:%M:%S')}"
+                    payload = {
+                        "id": f"personal_agenda_{personal_event.id}_{occurrence_date}",
+                        "title": personal_event.title,
+                        "start": start_dt,
+                        "end": end_dt,
+                        "backgroundColor": "#8b5cf6",
+                        "borderColor": "#7c3aed",
+                        "textColor": "#ffffff",
+                        "extendedProps": {
+                            "type": "personal_agenda",
+                            "status": personal_event.status,
+                            "filter_status": personal_event.status,
+                        }
                     }
-                })
+                    if is_all_day:
+                        payload["allDay"] = True
+                    all_events.append(payload)
 
         except Exception as e:
             pass

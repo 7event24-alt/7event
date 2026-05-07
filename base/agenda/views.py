@@ -11,6 +11,25 @@ from base.jobs.models import Job, JobStatus, JobStaff
 from base.accounts.models import PersonalTask, PersonalAgendaEvent, PersonalAgendaStatus
 
 
+def _matches_recurrence_on_date(event, target_date):
+    if target_date < event.date:
+        return False
+    if event.recurrence_until and target_date > event.recurrence_until:
+        return False
+
+    if event.recurrence == "none":
+        return target_date == event.date
+    if event.recurrence == "daily":
+        return True
+    if event.recurrence == "weekly":
+        return (target_date - event.date).days % 7 == 0
+    if event.recurrence == "monthly":
+        return target_date.day == event.date.day
+    if event.recurrence == "yearly":
+        return target_date.day == event.date.day and target_date.month == event.date.month
+    return False
+
+
 class AgendaView(LoginRequiredMixin, View):
     template_name = "agenda/home.html"
 
@@ -46,9 +65,9 @@ class AgendaView(LoginRequiredMixin, View):
 
         jobs = (
             base_jobs.filter(
-                start_date__gte=first_day.date(),
                 start_date__lte=last_day.date(),
             )
+            .filter(models.Q(end_date__isnull=True) | models.Q(end_date__gte=first_day.date()))
             .select_related("client")
             .order_by("start_date", "start_time")
         )
@@ -100,7 +119,11 @@ class AgendaView(LoginRequiredMixin, View):
                             else "",
                             "status_color": self.get_status_color(job.status),
                         }
-                        for job in jobs.filter(start_date=current_date)
+                        for job in jobs.filter(
+                            start_date__lte=current_date
+                        ).filter(
+                            models.Q(end_date__isnull=True) | models.Q(end_date__gte=current_date)
+                        )
                     ]
                     week_data.append(
                         {
@@ -377,10 +400,13 @@ class DayDetailView(LoginRequiredMixin, View):
             ).select_related("client").distinct()
 
         # Agenda Pessoal
-        personal_agenda_events = PersonalAgendaEvent.objects.filter(
+        personal_agenda_base = PersonalAgendaEvent.objects.filter(
             user=user,
-            date=selected_date,
+            date__lte=selected_date,
         ).order_by("start_time")
+        personal_agenda_events = [
+            event for event in personal_agenda_base if _matches_recurrence_on_date(event, selected_date)
+        ]
 
         # Tarefas Pessoais
         tasks = PersonalTask.objects.filter(
@@ -409,6 +435,62 @@ class DayDetailView(LoginRequiredMixin, View):
 
         total_cache = sum(job.cache or 0 for job in jobs)
 
+        day_items = []
+        for job in jobs:
+            day_items.append(
+                {
+                    "type": "job",
+                    "time": job.start_time,
+                    "title": job.title,
+                    "subtitle": job.client.name if job.client else "-",
+                    "status": job.status,
+                    "url": f"/app/trabalhos/{job.pk}/",
+                    "color": "#1e3a5f",
+                }
+            )
+
+        for event in personal_agenda_events:
+            day_items.append(
+                {
+                    "type": "personal_agenda",
+                    "time": event.start_time,
+                    "title": event.title,
+                    "subtitle": event.location or "Agenda Pessoal",
+                    "status": event.status,
+                    "url": "/app/accounts/agenda-pessoal/",
+                    "color": "#7c3aed",
+                    "end_time": event.end_time,
+                }
+            )
+
+        for visit in visits:
+            day_items.append(
+                {
+                    "type": "technical_visit",
+                    "time": visit.technical_visit_time,
+                    "title": f"VT: {visit.title}",
+                    "subtitle": visit.client.name if visit.client else "-",
+                    "status": visit.status,
+                    "url": f"/app/trabalhos/{visit.pk}/",
+                    "color": "#f59e0b",
+                }
+            )
+
+        for task in tasks:
+            day_items.append(
+                {
+                    "type": "task",
+                    "time": task.time,
+                    "title": task.title,
+                    "subtitle": "Tarefa Pessoal",
+                    "status": "completed" if task.is_completed else "pending",
+                    "url": "/app/accounts/minhas-tarefas/",
+                    "color": "#3b82f6",
+                }
+            )
+
+        day_items.sort(key=lambda item: (item["time"] is None, item["time"] or datetime.min.time()))
+
         context = {
             "selected_date": selected_date,
             "day": selected_date.day,
@@ -422,8 +504,9 @@ class DayDetailView(LoginRequiredMixin, View):
             "tasks": tasks,
             "tasks_count": tasks.count(),
             "personal_agenda_events": personal_agenda_events,
-            "personal_agenda_count": personal_agenda_events.count(),
+            "personal_agenda_count": len(personal_agenda_events),
             "total_cache": total_cache,
+            "day_items": day_items,
             "prev_day": prev_day,
             "next_day": next_day,
         }

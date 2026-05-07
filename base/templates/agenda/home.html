@@ -4,8 +4,8 @@
 {% block page_title %}Agenda de Eventos{% endblock %}
 
 {% block header_actions %}
-<a href="#" id="newJobBtn" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-    <i class="fas fa-plus"></i> <span class="hidden sm:inline">Novo Trabalho</span>
+<a href="#" id="newJobBtn" class="bg-primary hover:bg-secondary text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+    <i class="fas fa-plus"></i> <span>Novo</span>
 </a>
 {% endblock %}
 
@@ -13,36 +13,60 @@
 <div class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-6">
     <!-- Calendar -->
     <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-3 py-3 lg:px-6 lg:py-4 bg-gradient-to-r from-primary to-secondary flex flex-wrap items-center justify-between gap-2 lg:gap-4">
-            <div class="flex items-center gap-2 lg:gap-4">
+        <div class="px-3 py-3 lg:px-6 lg:py-4 bg-gradient-to-r from-primary to-secondary flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-4">
+            <div class="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-2 lg:gap-4">
                 <button id="prevMonth" class="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <h2 id="currentMonth" class="text-base lg:text-xl font-semibold text-white min-w-[140px] lg:min-w-[200px] text-center">{{ month_name }} {{ year }}</h2>
+                <h2 id="currentMonth" class="text-base lg:text-xl font-semibold text-white text-center flex-1 lg:flex-initial lg:min-w-[200px]">{{ month_name }} {{ year }}</h2>
                 <button id="nextMonth" class="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
-            <div class="flex items-center gap-1 lg:gap-2">
-                <button id="addJobBtn" class="bg-primary text-white px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg hover:bg-secondary transition text-sm" title="Criar trabalho">
+            <div class="w-full lg:w-auto grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2">
+                <button id="addJobBtn" class="bg-primary text-white px-2 lg:px-3 py-2 rounded-lg hover:bg-secondary transition text-sm flex items-center justify-center" title="Criar trabalho">
                     <i class="fas fa-plus"></i>
                 </button>
-                <button id="todayBtn" class="bg-white text-primary px-2 lg:px-4 py-1.5 lg:py-2 rounded-lg font-medium hover:bg-gray-100 transition text-xs lg:text-sm flex items-center gap-1">
-                    <i class="fas fa-calendar-day"></i><span class="hidden sm:inline">Hoje</span>
+                <button id="todayBtn" class="bg-white text-primary px-2 lg:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition text-xs lg:text-sm flex items-center justify-center gap-1">
+                    <i class="fas fa-calendar-day"></i><span class="hidden sm:inline">Hoje</span><span class="sm:hidden">Hoje</span>
                 </button>
                 {% if is_superuser and users %}
-                <select id="userFilter" class="px-2 lg:px-3 py-1.5 border border-white/30 rounded-lg text-xs lg:text-sm bg-[#1e3a5f] text-white focus:outline-none focus:ring-2 focus:ring-white">
+                <select id="userFilter" class="col-span-3 sm:col-span-1 px-2 lg:px-3 py-2 border border-white/30 rounded-lg text-xs lg:text-sm bg-[#1e3a5f] text-white focus:outline-none focus:ring-2 focus:ring-white">
                     <option value="">Todos Usuários</option>
                     {% for u in users %}
                     <option value="{{ u.pk }}" {% if user_filter == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.first_name|default:u.username }}</option>
                     {% endfor %}
                 </select>
                 {% endif %}
-                <select id="viewSelector" class="px-2 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white">
+                <select id="viewSelector" class="col-span-1 px-2 lg:px-3 py-2 rounded-lg text-xs lg:text-sm bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white">
                     <option class="bg-white text-blue-800" value="dayGridMonth">Mês</option>
                     <option class="bg-white text-blue-800" value="timeGridWeek">Semana</option>
                     <option class="bg-white text-blue-800" value="listMonth">Lista</option>
                 </select>
+            </div>
+        </div>
+        <div class="px-3 lg:px-6 py-2.5 bg-slate-50 border-y border-slate-200">
+            <div class="hidden sm:flex items-center gap-2 flex-wrap" id="eventLegendDesktop">
+                <span class="inline-flex items-center gap-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-full px-2.5 py-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#1e3a5f]"></span> Trabalho
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-full px-2.5 py-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span> Visita Técnica
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-full px-2.5 py-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></span> Tarefa
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-full px-2.5 py-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span> Agenda Pessoal
+                </span>
+            </div>
+            <div class="sm:hidden -mx-1 px-1 overflow-x-auto" id="eventLegendMobile">
+                <div class="inline-flex items-center gap-2 min-w-max pr-2">
+                    <span class="inline-flex items-center gap-1.5 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-full px-2 py-1"><span class="w-2.5 h-2.5 rounded-full bg-[#1e3a5f]"></span> Trabalho</span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-full px-2 py-1"><span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span> VT</span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-full px-2 py-1"><span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></span> Tarefa</span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-full px-2 py-1"><span class="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span> Agenda</span>
+                </div>
             </div>
         </div>
         <div id="calendar" class="p-2 lg:p-4"></div>
@@ -197,6 +221,120 @@
         
         .fc .fc-event { cursor: pointer; }
         .fc .fc-event .fc-event-main { color: #ffffff !important; }
+
+        /* Micro animações do calendário */
+        #calendar {
+            transition: opacity 220ms ease, transform 220ms ease;
+            will-change: opacity, transform;
+        }
+
+        #calendar.calendar-transition-out {
+            opacity: 0.25;
+            transform: translateY(6px);
+        }
+
+        #calendar.calendar-transition-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 640px) {
+            #calendar {
+                transition-duration: 170ms;
+            }
+            #calendar.calendar-transition-out {
+                transform: translateY(3px);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #calendar,
+            #calendar.calendar-transition-out,
+            #calendar.calendar-transition-in {
+                transition: none !important;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+        }
+
+        /* Semana: visual clean e legível */
+        .fc .fc-timegrid {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+        }
+
+        .fc .fc-timegrid-axis,
+        .fc .fc-timegrid-slot-label {
+            background: #f8fafc;
+        }
+
+        .fc .fc-timegrid-slot-label-cushion {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .fc .fc-timegrid-col {
+            background: #ffffff;
+        }
+
+        .fc .fc-timegrid-col:nth-child(even) {
+            background: #fcfdff;
+        }
+
+        .fc .fc-timegrid-col.fc-day-today {
+            background: #eff6ff !important;
+        }
+
+        .fc .fc-col-header-cell {
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 4px;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+            text-transform: capitalize;
+        }
+
+        .fc .fc-timegrid-slot {
+            border-color: #eef2f7;
+        }
+
+        .fc .fc-timegrid-now-indicator-line {
+            border-color: #ef4444;
+            border-width: 2px;
+        }
+
+        .fc .fc-timegrid-now-indicator-arrow {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .fc .fc-timegrid-event {
+            border: none !important;
+            border-radius: 10px !important;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+            padding: 2px 6px;
+        }
+
+        .fc .fc-timegrid-event .fc-event-time {
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.95;
+            margin-bottom: 1px;
+        }
+
+        .fc .fc-timegrid-event .fc-event-title {
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
         
         /* Estilo moderno para o botão "+ X more" */
         .fc .fc-daygrid-more-link {
@@ -245,12 +383,22 @@
     .fc .fc-daygrid-event .fc-event-main { font-size: 0.6rem !important; }
     .fc .fc-scrollgrid { font-size: 0.7rem !important; }
     .fc .fc-scrollgrid td, .fc .fc-scrollgrid th { padding: 1px !important; }
+
+    .fc .fc-timegrid-event .fc-event-time { font-size: 9px !important; }
+    .fc .fc-timegrid-event .fc-event-title { font-size: 10px !important; }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
+    var STORAGE = {
+        view: 'agenda:view:v1',
+        typeFilters: 'agenda:type-filters:v1',
+        statusFilters: 'agenda:status-filters:v1',
+        sidebarTab: 'agenda:sidebar-tab:v1'
+    };
+    var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     function getCookie(name) {
         var cookieValue = null;
@@ -270,6 +418,68 @@ document.addEventListener('DOMContentLoaded', function() {
     var allEvents = [];
     var calendarEl = document.getElementById('calendar');
     console.log('Calendar element:', calendarEl);
+
+    function getSavedView() {
+        var saved = localStorage.getItem(STORAGE.view);
+        var allowed = ['dayGridMonth', 'timeGridWeek', 'listMonth'];
+        return allowed.includes(saved) ? saved : 'dayGridMonth';
+    }
+
+    function saveView(viewName) {
+        localStorage.setItem(STORAGE.view, viewName);
+    }
+
+    function restoreFilterState() {
+        try {
+            var savedTypes = JSON.parse(localStorage.getItem(STORAGE.typeFilters) || 'null');
+            var savedStatuses = JSON.parse(localStorage.getItem(STORAGE.statusFilters) || 'null');
+
+            if (savedTypes && Array.isArray(savedTypes)) {
+                document.querySelectorAll('.type-filter-checkbox').forEach(function(cb) {
+                    cb.checked = savedTypes.includes(cb.value);
+                });
+            }
+
+            if (savedStatuses && Array.isArray(savedStatuses)) {
+                document.querySelectorAll('.status-filter-checkbox').forEach(function(cb) {
+                    cb.checked = savedStatuses.includes(cb.value);
+                });
+            }
+        } catch (e) {
+            console.warn('Falha ao restaurar filtros da agenda', e);
+        }
+    }
+
+    function saveFilterState() {
+        var types = Array.from(document.querySelectorAll('.type-filter-checkbox:checked')).map(function(cb) { return cb.value; });
+        var statuses = Array.from(document.querySelectorAll('.status-filter-checkbox:checked')).map(function(cb) { return cb.value; });
+        localStorage.setItem(STORAGE.typeFilters, JSON.stringify(types));
+        localStorage.setItem(STORAGE.statusFilters, JSON.stringify(statuses));
+    }
+
+    function restoreSidebarTab() {
+        var tab = localStorage.getItem(STORAGE.sidebarTab) || 'jobs';
+        var btn = document.querySelector('.agenda-tab-btn[data-tab="' + tab + '"]');
+        if (btn) btn.click();
+    }
+
+    function animateCalendarTransition(callback) {
+        if (!calendarEl || reducedMotion) {
+            callback();
+            return;
+        }
+
+        calendarEl.classList.remove('calendar-transition-in');
+        calendarEl.classList.add('calendar-transition-out');
+
+        setTimeout(function() {
+            callback();
+            requestAnimationFrame(function() {
+                calendarEl.classList.remove('calendar-transition-out');
+                calendarEl.classList.add('calendar-transition-in');
+            });
+        }, 120);
+    }
     
     function fetchEvents(info, successCallback, failureCallback) {
         console.log('Fetching events...');
@@ -340,9 +550,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadEventsForCurrentMonth() {
         if (typeof calendar === 'undefined') return;
 
-        var currentDate = calendar.getDate();
-        var year = currentDate.getFullYear();
-        var month = currentDate.getMonth() + 1;
+        var referenceDate = calendar.getDate();
+
+        // Em visualização semanal, getDate() pode cair no mês anterior
+        // (ex.: semana que começa em setembro e contém outubro).
+        // Usamos o ponto médio da faixa visível para identificar o mês correto.
+        if (calendar.view && calendar.view.type === 'timeGridWeek' && calendar.view.currentStart && calendar.view.currentEnd) {
+            var midTimestamp = (calendar.view.currentStart.getTime() + calendar.view.currentEnd.getTime()) / 2;
+            referenceDate = new Date(midTimestamp);
+        }
+
+        var year = referenceDate.getFullYear();
+        var month = referenceDate.getMonth() + 1;
 
         var url = '/app/agenda/api/eventos/?year=' + year + '&month=' + month;
         var userFilter = document.getElementById('userFilter');
@@ -381,9 +600,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadSidebarForCurrentMonth() {
         if (typeof calendar === 'undefined') return;
-        var currentDate = calendar.getDate();
-        var year = currentDate.getFullYear();
-        var month = currentDate.getMonth() + 1;
+        var referenceDate = calendar.getDate();
+
+        if (calendar.view && calendar.view.type === 'timeGridWeek' && calendar.view.currentStart && calendar.view.currentEnd) {
+            var midTimestamp = (calendar.view.currentStart.getTime() + calendar.view.currentEnd.getTime()) / 2;
+            referenceDate = new Date(midTimestamp);
+        }
+
+        var year = referenceDate.getFullYear();
+        var month = referenceDate.getMonth() + 1;
         var url = '/app/agenda/api/sidebar/?year=' + year + '&month=' + month;
 
         var userFilter = document.getElementById('userFilter');
@@ -469,11 +694,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (calendarEl) {
+        restoreFilterState();
+
         var initialDate = getInitialDate();
+        var initialView = getSavedView();
+        var viewSelector = document.getElementById('viewSelector');
+        if (viewSelector) {
+            viewSelector.value = initialView;
+        }
         calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
+            initialView: initialView,
             locale: 'pt-br',
             headerToolbar: false,
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            },
+            slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            },
+            slotLabelContent: function(arg) {
+                if (arg.view && arg.view.type === 'timeGridWeek') {
+                    return { html: arg.text + ' h' };
+                }
+                return { html: arg.text };
+            },
+            dayHeaderContent: function(arg) {
+                if (arg.view && arg.view.type === 'timeGridWeek') {
+                    var weekday = arg.date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+                    var dayNumber = arg.date.getDate();
+
+                    // Mobile: empilhar dia da semana abaixo do número
+                    if (window.innerWidth <= 640) {
+                        return {
+                            html: '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:1;">'
+                                + '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:#dbeafe;color:#1e3a5f;font-size:12px;font-weight:800;">' + dayNumber + '</span>'
+                                + '<span style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;">' + weekday + '</span>'
+                                + '</div>'
+                        };
+                    }
+
+                    return {
+                        html: '<div style="display:flex;align-items:center;justify-content:center;gap:6px;">'
+                            + '<span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;">' + weekday + '</span>'
+                            + '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#dbeafe;color:#1e3a5f;font-size:11px;font-weight:800;">' + dayNumber + '</span>'
+                            + '</div>'
+                    };
+                }
+                return true;
+            },
+            eventContent: function(arg) {
+                if (arg.view && arg.view.type === 'timeGridWeek' && arg.timeText) {
+                    var timeWithSuffix = arg.timeText.replace(/\s*h$/i, '').trim() + ' h';
+                    return {
+                        html: '<div class="fc-event-time">' + timeWithSuffix + '</div>' +
+                              '<div class="fc-event-title">' + arg.event.title + '</div>'
+                    };
+                }
+                return true;
+            },
             dayMaxEventRows: 4,  // Limita visualmente a 4 eventos por dia
             moreLinkClick: function(info) {
                 // Pegar data do elemento do dia (funciona em qualquer versão)
@@ -555,19 +837,25 @@ document.addEventListener('DOMContentLoaded', function() {
         loadEventsForCurrentMonth();
         
         document.getElementById('prevMonth').addEventListener('click', function() {
-            calendar.prev();
-            updateMonthDisplay(calendar);
-            loadEventsForCurrentMonth();
+            animateCalendarTransition(function() {
+                calendar.prev();
+                updateMonthDisplay(calendar);
+                loadEventsForCurrentMonth();
+            });
         });
         document.getElementById('nextMonth').addEventListener('click', function() {
-            calendar.next();
-            updateMonthDisplay(calendar);
-            loadEventsForCurrentMonth();
+            animateCalendarTransition(function() {
+                calendar.next();
+                updateMonthDisplay(calendar);
+                loadEventsForCurrentMonth();
+            });
         });
         document.getElementById('todayBtn').addEventListener('click', function() {
-            calendar.today();
-            updateMonthDisplay(calendar);
-            loadEventsForCurrentMonth();
+            animateCalendarTransition(function() {
+                calendar.today();
+                updateMonthDisplay(calendar);
+                loadEventsForCurrentMonth();
+            });
         });
         document.getElementById('addJobBtn').addEventListener('click', function() {
             var date = calendar.getDate();
@@ -578,7 +866,13 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '/app/trabalhos/novo/?date=' + dateStr;
         });
         document.getElementById('viewSelector').addEventListener('change', function() {
-            calendar.changeView(this.value);
+            var selectedView = this.value;
+            saveView(selectedView);
+            animateCalendarTransition(function() {
+                calendar.changeView(selectedView);
+                updateMonthDisplay(calendar);
+                loadEventsForCurrentMonth();
+            });
         });
         
         function updateMonthDisplay(calendar) {
@@ -597,7 +891,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
-            checkbox.addEventListener('change', refreshCalendarEvents);
+            checkbox.addEventListener('change', function() {
+                saveFilterState();
+                refreshCalendarEvents();
+            });
         });
         
         // Botão Novo Trabalho com data do calendário
@@ -618,6 +915,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.agenda-tab-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var tab = btn.getAttribute('data-tab');
+                localStorage.setItem(STORAGE.sidebarTab, tab);
 
                 document.querySelectorAll('.agenda-tab-btn').forEach(function(other) {
                     other.classList.remove('bg-primary', 'text-white');
@@ -633,6 +931,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (active) active.classList.remove('hidden');
             });
         });
+
+        restoreSidebarTab();
     }
 });
 </script>

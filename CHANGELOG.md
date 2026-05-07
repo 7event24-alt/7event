@@ -12,6 +12,11 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Agenda ganhou suporte ao modelo **Agenda Pessoal** (`PersonalAgendaEvent`) com status e validação de horário (`hora fim > hora início`).
 - Calendário e sidebar de agenda agora exibem itens de agenda pessoal em roxo, separados de tarefas e com ordenação por data/hora.
 - Área pessoal ganhou página dedicada **Agenda Pessoal** com listagem, filtros e CRUD dos eventos.
+- Agenda Pessoal ganhou opção de recorrência com frequências: diariamente, semanalmente, mensalmente e anualmente (com data final opcional).
+- Agenda Pessoal passou a usar campo de horário + duração (30m, 1h, 2h, 3h, 4h e dia inteiro), refletindo corretamente no calendário semanal.
+- Agenda recebeu micro animações suaves na troca de visão e navegação (mês/semana/lista) com fallback para `prefers-reduced-motion`.
+- Agenda ganhou legenda fixa de cores dos tipos de evento, com versão compacta no mobile.
+- Estado da agenda passou a persistir via `localStorage` (visão, filtros de tipo/status e aba da sidebar).
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.

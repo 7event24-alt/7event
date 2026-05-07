@@ -33,22 +33,46 @@
                     <div class="w-2 self-stretch rounded-full {% if event.status == 'pending' %}bg-violet-500{% elif event.status == 'completed' %}bg-green-500{% else %}bg-gray-400{% endif %}"></div>
                     <div class="flex-1 min-w-0">
                         <p class="font-medium text-gray-800">{{ event.title }}</p>
-                        <p class="text-sm text-gray-500">{{ event.date|date:"d/m/Y" }} - {{ event.start_time|time:"H:i" }} às {{ event.end_time|time:"H:i" }}</p>
+                        <p class="text-sm text-gray-500">
+                            {{ event.date|date:"d/m/Y" }} -
+                            {% if event.start_time|time:"H:i" == "00:00" and event.end_time|time:"H:i" == "23:59" %}
+                                Dia inteiro
+                            {% else %}
+                                {{ event.start_time|time:"H:i" }}h às {{ event.end_time|time:"H:i" }}h
+                            {% endif %}
+                        </p>
+                        {% if event.recurrence != 'none' %}<p class="text-xs text-violet-600">Recorrência: {{ event.get_recurrence_display }}{% if event.recurrence_until %} até {{ event.recurrence_until|date:"d/m/Y" }}{% endif %}</p>{% endif %}
                         {% if event.location %}<p class="text-sm text-gray-500">{{ event.location }}</p>{% endif %}
                         {% if event.description %}<p class="text-sm text-gray-600 mt-1">{{ event.description }}</p>{% endif %}
                     </div>
                     <div class="flex items-center gap-2 flex-wrap justify-end">
                         {% if event.status == 'pending' %}
-                        <button onclick="setStatus({{ event.id }}, 'completed')" class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded hover:bg-green-200">Concluir</button>
-                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded hover:bg-gray-200">Cancelar</button>
-                        {% elif event.status == 'completed' %}
-                        <button onclick="setStatus({{ event.id }}, 'pending')" class="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded hover:bg-violet-200">Reabrir</button>
-                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded hover:bg-gray-200">Cancelar</button>
-                        {% else %}
-                        <button onclick="setStatus({{ event.id }}, 'pending')" class="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded hover:bg-violet-200">Reativar</button>
-                        <button onclick="setStatus({{ event.id }}, 'completed')" class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded hover:bg-green-200">Concluir</button>
+                        {% if event.recurrence == 'none' %}
+                        <button onclick="setStatus({{ event.id }}, 'completed')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition-colors shadow-sm">
+                            <i class="fas fa-check text-[10px]"></i> Concluir
+                        </button>
                         {% endif %}
-                        <button onclick="openAgendaModal({{ event.id }}, '{{ event.title|escapejs }}', '{{ event.date|date:"Y-m-d" }}', '{{ event.start_time|time:"H:i" }}', '{{ event.end_time|time:"H:i" }}', '{{ event.location|escapejs }}', '{{ event.description|escapejs }}')" class="text-violet-600 hover:text-violet-800"><i class="fas fa-edit"></i></button>
+                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors">
+                            <i class="fas fa-ban text-[10px]"></i> Cancelar
+                        </button>
+                        {% elif event.status == 'completed' %}
+                        <button onclick="setStatus({{ event.id }}, 'pending')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition-colors shadow-sm">
+                            <i class="fas fa-rotate-left text-[10px]"></i> Reabrir
+                        </button>
+                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors">
+                            <i class="fas fa-ban text-[10px]"></i> Cancelar
+                        </button>
+                        {% else %}
+                        <button onclick="setStatus({{ event.id }}, 'pending')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition-colors shadow-sm">
+                            <i class="fas fa-rotate-left text-[10px]"></i> Reabrir
+                        </button>
+                        {% if event.recurrence == 'none' %}
+                        <button onclick="setStatus({{ event.id }}, 'completed')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition-colors shadow-sm">
+                            <i class="fas fa-check text-[10px]"></i> Concluir
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                        <button onclick="openAgendaModal({{ event.id }}, '{{ event.title|escapejs }}', '{{ event.date|date:"Y-m-d" }}', '{{ event.start_time|time:"H:i" }}', '{{ event.end_time|time:"H:i" }}', '{{ event.location|escapejs }}', '{{ event.description|escapejs }}', '{{ event.recurrence }}', '{% if event.recurrence_until %}{{ event.recurrence_until|date:"Y-m-d" }}{% endif %}')" class="text-violet-600 hover:text-violet-800"><i class="fas fa-edit"></i></button>
                         <button onclick="deleteEvent({{ event.id }})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
@@ -72,11 +96,34 @@
                 <input type="text" id="agendaTitle" required placeholder="Título" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <input type="date" id="agendaDate" required class="px-4 py-2 border border-gray-300 rounded-lg">
-                    <input type="time" id="agendaStart" required class="px-4 py-2 border border-gray-300 rounded-lg">
-                    <input type="time" id="agendaEnd" required class="px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="time" id="agendaTime" required class="px-4 py-2 border border-gray-300 rounded-lg">
+                    <select id="agendaDuration" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="30m">30m</option>
+                        <option value="1h" selected>1h</option>
+                        <option value="2h">2h</option>
+                        <option value="3h">3h</option>
+                        <option value="4h">4h</option>
+                        <option value="all_day">Dia inteiro</option>
+                    </select>
                 </div>
                 <input type="text" id="agendaLocation" placeholder="Local (opcional)" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                 <textarea id="agendaDescription" placeholder="Descrição (opcional)" class="w-full px-4 py-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Recorrência</label>
+                        <select id="agendaRecurrence" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="none">Não repetir</option>
+                            <option value="daily">Diariamente</option>
+                            <option value="weekly">Semanalmente</option>
+                            <option value="monthly">Mensalmente</option>
+                            <option value="yearly">Anualmente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Repetir até</label>
+                        <input type="date" id="agendaRecurrenceUntil" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
             </div>
             <div class="flex gap-3 justify-end mt-6">
                 <button type="button" onclick="closeAgendaModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -104,17 +151,41 @@ function getCookie(name) {
     return cookieValue;
 }
 
-function openAgendaModal(eventId = '', title = '', date = '', start = '', end = '', location = '', description = '') {
+function inferDuration(start, end) {
+    if (start === '00:00' && end === '23:59') return 'all_day';
+    if (!start || !end) return '1h';
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    const mins = (eh * 60 + em) - (sh * 60 + sm);
+    const map = {30: '30m', 60: '1h', 120: '2h', 180: '3h', 240: '4h'};
+    return map[mins] || '1h';
+}
+
+function openAgendaModal(eventId = '', title = '', date = '', start = '', end = '', location = '', description = '', recurrence = 'none', recurrenceUntil = '') {
     document.getElementById('agendaModal').classList.remove('hidden');
     document.getElementById('agendaModal').classList.add('flex');
     document.getElementById('agendaEventId').value = eventId || '';
     document.getElementById('agendaTitle').value = title || '';
     document.getElementById('agendaDate').value = date || new Date().toISOString().split('T')[0];
-    document.getElementById('agendaStart').value = start || '';
-    document.getElementById('agendaEnd').value = end || '';
+    document.getElementById('agendaTime').value = (start && start !== '00:00') ? start : '09:00';
+    document.getElementById('agendaDuration').value = inferDuration(start, end);
     document.getElementById('agendaLocation').value = location || '';
     document.getElementById('agendaDescription').value = description || '';
+    document.getElementById('agendaRecurrence').value = recurrence || 'none';
+    document.getElementById('agendaRecurrenceUntil').value = recurrenceUntil || '';
     document.getElementById('agendaModalTitle').textContent = eventId ? 'Editar Evento' : 'Novo Evento';
+    toggleTimeByDuration();
+}
+
+function toggleTimeByDuration() {
+    const duration = document.getElementById('agendaDuration').value;
+    const timeField = document.getElementById('agendaTime');
+    if (duration === 'all_day') {
+        timeField.value = '00:00';
+        timeField.setAttribute('disabled', 'disabled');
+    } else {
+        timeField.removeAttribute('disabled');
+    }
 }
 
 function closeAgendaModal() {
@@ -136,15 +207,20 @@ function saveAgendaEvent(e) {
             event_id: eventId || null,
             title: document.getElementById('agendaTitle').value,
             date: document.getElementById('agendaDate').value,
-            start_time: document.getElementById('agendaStart').value,
-            end_time: document.getElementById('agendaEnd').value,
+            time: document.getElementById('agendaTime').value,
+            duration: document.getElementById('agendaDuration').value,
             location: document.getElementById('agendaLocation').value,
-            description: document.getElementById('agendaDescription').value
+            description: document.getElementById('agendaDescription').value,
+            recurrence: document.getElementById('agendaRecurrence').value,
+            recurrence_until: document.getElementById('agendaRecurrenceUntil').value
         })
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) location.reload();
+        if (data.success) {
+            closeAgendaModal();
+            window.location.href = '/app/accounts/agenda-pessoal/';
+        }
         else alert('Erro: ' + (data.error || 'Não foi possível salvar'));
     });
 }
@@ -158,7 +234,9 @@ function setStatus(eventId, status) {
         },
         body: JSON.stringify({ action: 'set_status', event_id: eventId, status: status })
     }).then(r => r.json()).then(data => {
-        if (!data.success) {
+        if (data.success) {
+            window.location.reload();
+        } else {
             alert('Erro ao atualizar status');
             location.reload();
         }
@@ -186,6 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (prefillDate) {
         openAgendaModal('', '', prefillDate);
     }
+    document.getElementById('agendaDuration').addEventListener('change', toggleTimeByDuration);
 });
 </script>
 {% endblock %}
