@@ -78,7 +78,8 @@ class AdminPlanForm(forms.ModelForm):
         model = Plan
         fields = [
             "type", "name", "description", "max_users", "max_clients",
-            "max_jobs", "max_expenses", "max_agenda_events",
+            "max_jobs", "max_quotes", "max_expenses", "max_agenda_events",
+            "max_personal_tasks", "max_personal_agenda_events",
             "can_associate_professionals", "job_creation_limit",
             "price_monthly", "price_quarterly", "price_semester",
             "payment_link", "is_visible", "is_active", "highlight",

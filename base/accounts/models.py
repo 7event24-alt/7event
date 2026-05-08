@@ -127,11 +127,20 @@ class Plan(models.Model):
     max_jobs = models.PositiveIntegerField(
         default=10, verbose_name=_("Máximo de Trabalhos")
     )
+    max_quotes = models.PositiveIntegerField(
+        default=10, verbose_name=_("Máximo de Orçamentos")
+    )
     max_expenses = models.PositiveIntegerField(
         default=10, verbose_name=_("Máximo de Despesas")
     )
     max_agenda_events = models.PositiveIntegerField(
         default=10, verbose_name=_("Máximo de Eventos")
+    )
+    max_personal_tasks = models.PositiveIntegerField(
+        default=10, verbose_name=_("Máximo de Tarefas Pessoais")
+    )
+    max_personal_agenda_events = models.PositiveIntegerField(
+        default=10, verbose_name=_("Máximo de Itens de Agenda Pessoal")
     )
 
     can_associate_professionals = models.BooleanField(
@@ -393,8 +402,11 @@ class User(AbstractUser):
                 'max_users': 1,
                 'max_clients': 10,
                 'max_jobs': 10,
+                'max_quotes': 10,
                 'max_expenses': 10,
                 'max_agenda_events': 10,
+                'max_personal_tasks': 10,
+                'max_personal_agenda_events': 10,
                 'can_associate_professionals': False,
                 'job_creation_limit': -1,
             }
@@ -410,11 +422,20 @@ class User(AbstractUser):
     def get_max_jobs(self):
         return self.get_plan().max_jobs
 
+    def get_max_quotes(self):
+        return self.get_plan().max_quotes
+
     def get_max_expenses(self):
         return self.get_plan().max_expenses
 
     def get_max_agenda_events(self):
         return self.get_plan().max_agenda_events
+
+    def get_max_personal_tasks(self):
+        return self.get_plan().max_personal_tasks
+
+    def get_max_personal_agenda_events(self):
+        return self.get_plan().max_personal_agenda_events
 
     def can_associate_professionals(self):
         return self.get_plan().can_associate_professionals
@@ -425,6 +446,8 @@ class User(AbstractUser):
             max_count = plan.max_clients if plan.max_clients > 0 else float("inf")
         elif model_class.__name__ == "Job":
             max_count = plan.max_jobs if plan.max_jobs > 0 else float("inf")
+        elif model_class.__name__ == "Quote":
+            max_count = plan.max_quotes if plan.max_quotes > 0 else float("inf")
         elif model_class.__name__ == "Expense":
             max_count = plan.max_expenses if plan.max_expenses > 0 else float("inf")
         else:

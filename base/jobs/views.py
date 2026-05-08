@@ -12,6 +12,7 @@ import weasyprint
 from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob, JobStaff, JobStaffStatus
 from base.accounts.models import ProfessionalRole, PlanType
 from base.clients.models import Client
+from base.core.plan_check import enforce_plan_limit_or_redirect
 
 
 class JobListView(LoginRequiredMixin, View):
@@ -79,6 +80,14 @@ class JobCreateView(LoginRequiredMixin, View):
     template_name = "jobs/form.html"
 
     def get(self, request):
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "jobs",
+            counter_fn=lambda: Job.objects.filter(created_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         from .forms import JobForm
         from datetime import datetime
 
@@ -114,6 +123,14 @@ class JobCreateView(LoginRequiredMixin, View):
         )
 
     def post(self, request):
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "jobs",
+            counter_fn=lambda: Job.objects.filter(created_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         from .forms import JobForm
 
         form = JobForm(request.POST, user=request.user)

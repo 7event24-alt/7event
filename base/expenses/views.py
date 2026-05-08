@@ -6,6 +6,7 @@ from django.contrib import messages
 
 from .models import Expense, ExpenseCategory
 from base.jobs.models import Job
+from base.core.plan_check import enforce_plan_limit_or_redirect
 
 
 class ExpenseForm(forms.ModelForm):
@@ -104,6 +105,14 @@ class ExpenseCreateView(LoginRequiredMixin, View):
     template_name = "expenses/form.html"
 
     def get(self, request):
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "expenses",
+            counter_fn=lambda: Expense.objects.filter(performed_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         form = ExpenseForm(user=request.user)
         jobs = Job.objects.filter(is_active=True) if request.user.is_superuser else Job.objects.filter(created_by=request.user, is_active=True)
 
@@ -123,6 +132,14 @@ class ExpenseCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "jobs": jobs, "preselected_job": preselected_job})
 
     def post(self, request):
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "expenses",
+            counter_fn=lambda: Expense.objects.filter(performed_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         form = ExpenseForm(request.POST, user=request.user)
         if form.is_valid():
             expense = form.save(commit=False)

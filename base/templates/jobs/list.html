@@ -91,6 +91,7 @@
                                 <i class="fas fa-file-pdf"></i>
                             </a>
                             {% endif %}
+                            {% if user == job.created_by or user.is_superuser %}
                             <a href="/app/trabalhos/{{ job.pk }}/duplicar/" class="text-gray-600 hover:text-green-600 p-1" title="Duplicar">
                                 <i class="fas fa-copy"></i>
                             </a>
@@ -100,6 +101,7 @@
                             <a href="{% url 'jobs:delete' job.pk %}" class="text-gray-600 hover:text-red-600 p-1" title="Excluir">
                                 <i class="fas fa-trash"></i>
                             </a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

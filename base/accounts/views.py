@@ -17,6 +17,7 @@ from django.conf import settings
 from .forms import RegisterForm
 from base.core.utils import get_base_url
 from base.jobs.models import JobStaff, JobStaffStatus
+from base.core.plan_check import enforce_plan_limit_or_json
 
 
 class CustomLoginView(LoginView):
@@ -793,6 +794,14 @@ class PersonalTasksView(LoginRequiredMixin, View):
             task_id = data.get("task_id")
             
             if action == "create":
+                blocked = enforce_plan_limit_or_json(
+                    request,
+                    "personal_tasks",
+                    counter_fn=lambda: PersonalTask.objects.filter(user=request.user).count(),
+                )
+                if blocked:
+                    return blocked
+
                 task = PersonalTask.objects.create(
                     user=request.user,
                     title=data.get("title"),
@@ -899,6 +908,14 @@ class PersonalAgendaView(LoginRequiredMixin, View):
             event_id = data.get("event_id")
 
             if action == "create":
+                blocked = enforce_plan_limit_or_json(
+                    request,
+                    "personal_agenda",
+                    counter_fn=lambda: PersonalAgendaEvent.objects.filter(user=request.user).count(),
+                )
+                if blocked:
+                    return blocked
+
                 start_time, end_time = self._build_time_window(data)
                 event = PersonalAgendaEvent.objects.create(
                     user=request.user,

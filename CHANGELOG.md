@@ -17,6 +17,9 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Agenda recebeu micro animações suaves na troca de visão e navegação (mês/semana/lista) com fallback para `prefers-reduced-motion`.
 - Agenda ganhou legenda fixa de cores dos tipos de evento, com versão compacta no mobile.
 - Estado da agenda passou a persistir via `localStorage` (visão, filtros de tipo/status e aba da sidebar).
+- Lógica de limite de plano foi unificada e aplicada em criações de clientes (incluindo rápido), trabalhos, orçamentos, despesas, tarefas e agenda pessoal, com aviso de upgrade ao exceder limite.
+- Planos ganharam novos limites granulares: `max_quotes`, `max_personal_tasks` e `max_personal_agenda_events` (mantendo semântica `0 = sem limite`).
+- Testes automatizados de limite de plano foram adicionados para validar bloqueio e fluxo de liberação quando o limite é infinito.
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.

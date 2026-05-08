@@ -7,6 +7,7 @@ from django.views.generic import TemplateView
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model
+from base.core.plan_check import enforce_plan_limit_or_json, enforce_plan_limit_or_redirect
 
 from .models import Client
 from .forms import ClientForm
@@ -49,12 +50,14 @@ class ClientCreateView(LoginRequiredMixin, View):
     template_name = "clients/form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        from base.core.plan_check import check_plan_limit
-        from .models import Client
-
-        return check_plan_limit(Client, "max_clients")(super().dispatch)(
-            request, *args, **kwargs
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "clients",
+            counter_fn=lambda: Client.objects.filter(created_by=request.user, is_active=True).count(),
         )
+        if blocked:
+            return blocked
+        return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
         form = ClientForm()
@@ -84,6 +87,14 @@ class ClientCreateView(LoginRequiredMixin, View):
 
 class ClientQuickCreateView(LoginRequiredMixin, View):
     def post(self, request):
+        blocked = enforce_plan_limit_or_json(
+            request,
+            "clients",
+            counter_fn=lambda: Client.objects.filter(created_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save(commit=False)

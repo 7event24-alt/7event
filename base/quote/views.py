@@ -10,6 +10,7 @@ import weasyprint
 
 from .models import Quote, QuoteExpense, QuoteStatus
 from .forms import QuoteForm, QuoteExpenseForm
+from base.core.plan_check import enforce_plan_limit_or_redirect
 
 
 class QuoteListView(LoginRequiredMixin, View):
@@ -28,6 +29,14 @@ class QuoteCreateView(LoginRequiredMixin, View):
     template_name = "quote/form.html"
 
     def get(self, request):
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "quotes",
+            counter_fn=lambda: Quote.objects.filter(created_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         user = request.user
         form = QuoteForm(created_by=user, hide_status=True)
         return render(
@@ -37,6 +46,14 @@ class QuoteCreateView(LoginRequiredMixin, View):
         )
 
     def post(self, request):
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "quotes",
+            counter_fn=lambda: Quote.objects.filter(created_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         user = request.user
         post_data = request.POST.copy()
         post_data["status"] = QuoteStatus.CREATED
