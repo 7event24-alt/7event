@@ -387,6 +387,14 @@ class JobDuplicateView(LoginRequiredMixin, View):
             messages.error(request, "Você não tem permissão para duplicar este trabalho.")
             return redirect("jobs:list")
 
+        blocked = enforce_plan_limit_or_redirect(
+            request,
+            "jobs",
+            counter_fn=lambda: Job.objects.filter(created_by=request.user, is_active=True).count(),
+        )
+        if blocked:
+            return blocked
+
         with transaction.atomic():
             original_pk = job.pk
             job.pk = None

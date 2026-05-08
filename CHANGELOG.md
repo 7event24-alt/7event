@@ -31,6 +31,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Redefinição de senha agora redireciona diretamente para a tela de login após confirmação da nova senha.
 - Página de agenda do dia passou a exibir Agenda Pessoal com organização por blocos (Trabalhos, Agenda Pessoal, Visitas Técnicas e Tarefas) e ações rápidas de criação.
 - Botões de adicionar despesa em Trabalho e Orçamento passaram a abrir modal na própria tela, sem redirecionar para formulário externo.
+- Lista de mensagens de suporte foi redesenhada em cards para melhor leitura e o bug de exibir múltiplos popups ao abrir a lista foi corrigido.
 
 ## [1.5.0] - 2026-04-21
 

@@ -65,7 +65,7 @@ class SupportAdminListView(SupportAdminMixin, View):
             request,
             self.template_name,
             {
-                "messages": messages_list,
+                "support_messages": messages_list,
                 "unread_count": unread_count,
             },
         )
