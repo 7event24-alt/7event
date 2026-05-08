@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Version
-VERSION = "1.4.1"
+VERSION = "1.5.1"
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 

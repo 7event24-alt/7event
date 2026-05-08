@@ -243,7 +243,9 @@ class JobDetailView(LoginRequiredMixin, View):
                 is_staff=False,
                 plan__type__in=[PlanType.PROFESSIONAL, PlanType.FREE],
             ).exclude(pk=job.created_by.pk).exclude(pk__in=current_staff_ids)
-        
+
+        from base.expenses.models import ExpenseCategory
+
         return render(
             request,
             self.template_name,
@@ -261,6 +263,7 @@ class JobDetailView(LoginRequiredMixin, View):
                 "show_invite_modal": show_invite_modal,
                 "user_staff_record": user_staff_record,
                 "available_professionals": available_professionals,
+                "expense_categories": ExpenseCategory.choices,
                 "professional_roles": ProfessionalRole.choices,
                 "payment_types": PaymentType.choices,
             },

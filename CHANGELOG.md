@@ -20,6 +20,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Lógica de limite de plano foi unificada e aplicada em criações de clientes (incluindo rápido), trabalhos, orçamentos, despesas, tarefas e agenda pessoal, com aviso de upgrade ao exceder limite.
 - Planos ganharam novos limites granulares: `max_quotes`, `max_personal_tasks` e `max_personal_agenda_events` (mantendo semântica `0 = sem limite`).
 - Testes automatizados de limite de plano foram adicionados para validar bloqueio e fluxo de liberação quando o limite é infinito.
+- Listas de Trabalhos, Orçamentos, Clientes, Tarefas e Despesas foram padronizadas no layout em cards (estilo Agenda Pessoal), com melhor leitura, ações consistentes e badges no formato "rótulo: valor".
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
@@ -29,6 +30,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Botão de envio de orçamento no detalhe permanece visível e vira **Reenviar por email** após envio.
 - Redefinição de senha agora redireciona diretamente para a tela de login após confirmação da nova senha.
 - Página de agenda do dia passou a exibir Agenda Pessoal com organização por blocos (Trabalhos, Agenda Pessoal, Visitas Técnicas e Tarefas) e ações rápidas de criação.
+- Botões de adicionar despesa em Trabalho e Orçamento passaram a abrir modal na própria tela, sem redirecionar para formulário externo.
 
 ## [1.5.0] - 2026-04-21
 

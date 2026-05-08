@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from decimal import Decimal
 from urllib.parse import urlencode
@@ -164,6 +164,7 @@ class QuoteAddExpenseView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "quote": quote})
 
     def post(self, request, pk):
+        wants_json = request.headers.get("x-requested-with") == "XMLHttpRequest"
         user = request.user
         if user.is_superuser:
             quote = get_object_or_404(Quote, pk=pk, is_active=True)
@@ -176,8 +177,19 @@ class QuoteAddExpenseView(LoginRequiredMixin, View):
             expense.quote = quote
             expense.save()
             quote.save()
+
+            if wants_json:
+                return JsonResponse({"success": True, "expense_id": expense.pk})
+
             messages.success(request, "Despesa adicionada!")
             return redirect("quote:detail", pk=quote.pk)
+
+        if wants_json:
+            first_error = "Não foi possível adicionar a despesa."
+            if form.errors:
+                first_field = next(iter(form.errors))
+                first_error = form.errors[first_field][0]
+            return JsonResponse({"success": False, "error": first_error}, status=400)
 
         return render(request, self.template_name, {"form": form, "quote": quote})
 

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.views import View
 from django.contrib import messages
 
@@ -132,12 +133,16 @@ class ExpenseCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "jobs": jobs, "preselected_job": preselected_job})
 
     def post(self, request):
+        wants_json = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
         blocked = enforce_plan_limit_or_redirect(
             request,
             "expenses",
             counter_fn=lambda: Expense.objects.filter(performed_by=request.user, is_active=True).count(),
         )
         if blocked:
+            if wants_json:
+                return JsonResponse({"success": False, "error": "Limite do plano atingido."}, status=403)
             return blocked
 
         form = ExpenseForm(request.POST, user=request.user)
@@ -146,12 +151,23 @@ class ExpenseCreateView(LoginRequiredMixin, View):
             expense.performed_by = request.user
             expense.save()
 
+            if wants_json:
+                return JsonResponse({"success": True, "expense_id": expense.pk})
+
             messages.success(request, "Despesa criada com sucesso!")
             
             # Redirect to job detail if expense is associated with a job
             if expense.job:
                 return redirect("jobs:detail", pk=expense.job.pk)
             return redirect("expenses:list")
+
+        if wants_json:
+            first_error = "Não foi possível salvar a despesa."
+            if form.errors:
+                first_field = next(iter(form.errors))
+                first_error = form.errors[first_field][0]
+            return JsonResponse({"success": False, "error": first_error}, status=400)
+
         return render(request, self.template_name, {"form": form})
 
 
