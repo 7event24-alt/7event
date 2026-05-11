@@ -5,9 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}7event - Login{% endblock %}</title>
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (storedTheme === 'dark' || (!storedTheme && systemDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'selector',
             theme: {
                 extend: {
                     colors: {
@@ -37,18 +49,18 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative">
+<body class="min-h-screen flex items-center justify-center p-4 relative text-gray-900 dark:text-slate-100">
     <div class="bg-wrapper"></div>
     <div class="absolute inset-0 bg-primary/80 backdrop-blur-md"></div>
     <div class="w-full max-w-md relative z-10">
-        <div class="bg-white rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.4)] border border-transparent dark:border-slate-700">
             <div class="bg-primary p-8 text-center rounded-t-2xl">
                 <img src="{% static 'img/logo7eventbranco.png' %}" alt="7event" class="h-12 mx-auto mb-2">
                 <p class="text-white/80 text-sm">Sistema de Gestão de Eventos</p>
             </div>
             
             <div class="p-8">
-                <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Entrar</h2>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-slate-100 text-center mb-6">Entrar</h2>
                 
                 {% if messages %}
                 {% for message in messages %}
@@ -78,8 +90,8 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail ou Telefone</label>
-                        <input type="text" name="username" value="{{ username_value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.username.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com ou (00) 00000-0000" required>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">E-mail ou Telefone</label>
+                        <input type="text" name="username" value="{{ username_value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.username.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com ou (00) 00000-0000" required>
                         {% if form.username.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -88,9 +100,9 @@
                         {% endif %}
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Senha</label>
                         <div class="relative">
-                            <input type="password" name="password" id="passwordInput" class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" required autocomplete="current-password">
+                            <input type="password" name="password" id="passwordInput" class="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.password.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" required autocomplete="current-password">
                             <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <i class="fas fa-eye" id="eyeIcon"></i>
                             </button>
@@ -124,13 +136,13 @@
                     </button>
                 </form>
                 
-                <div class="mt-6 text-center text-sm text-gray-600">
+                <div class="mt-6 text-center text-sm text-gray-600 dark:text-slate-300">
                     <p><a href="{% url 'password_reset' %}" class="text-primary hover:underline">Esqueci minha senha</a></p>
                     <p class="mt-2">Não tem conta? <a href="{% url 'accounts:register' %}" class="text-primary hover:underline font-medium">Cadastre-se</a></p>
                 </div>
                 
-                <div class="mt-4 pt-4 border-t border-gray-200 text-center">
-                    <p class="text-sm text-gray-500">
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700 text-center">
+                    <p class="text-sm text-gray-500 dark:text-slate-400">
                         <a href="{% url 'support:contact' %}" class="text-primary hover:underline">
                             <i class="fas fa-question-circle"></i> Problemas com login?
                         </a>
@@ -138,8 +150,8 @@
                 </div>
             </div>
             
-            <div class="bg-gray-50 px-8 py-4 text-center">
-                <p class="text-xs text-gray-500">© 2025 7event - Sistema de Gestão de Eventos</p>
+            <div class="bg-gray-50 dark:bg-slate-800 px-8 py-4 text-center">
+                <p class="text-xs text-gray-500 dark:text-slate-400">© 2025 7event - Sistema de Gestão de Eventos</p>
             </div>
         </div>
     </div>

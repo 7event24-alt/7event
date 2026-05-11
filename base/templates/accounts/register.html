@@ -5,9 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}7event - Cadastro{% endblock %}</title>
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (storedTheme === 'dark' || (!storedTheme && systemDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'selector',
             theme: {
                 extend: {
                     colors: {
@@ -35,13 +47,32 @@
             background-attachment: fixed;
             filter: none;
         }
+
+        .dark .text-gray-900 { color: rgb(241 245 249) !important; }
+        .dark .text-gray-800 { color: rgb(226 232 240) !important; }
+        .dark .text-gray-700 { color: rgb(203 213 225) !important; }
+        .dark .text-gray-600 { color: rgb(148 163 184) !important; }
+        .dark .text-gray-500 { color: rgb(148 163 184) !important; }
+        .dark .bg-white { background-color: rgb(15 23 42) !important; }
+        .dark .bg-gray-50 { background-color: rgb(30 41 59) !important; }
+        .dark .border-gray-200,
+        .dark .border-gray-300 { border-color: rgb(71 85 105) !important; }
+        .dark input,
+        .dark select,
+        .dark textarea {
+            background-color: rgb(30 41 59) !important;
+            border-color: rgb(71 85 105) !important;
+            color: rgb(241 245 249) !important;
+        }
+        .dark input::placeholder,
+        .dark textarea::placeholder { color: rgb(148 163 184) !important; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative">
+<body class="min-h-screen flex items-center justify-center p-4 relative text-gray-900 dark:text-slate-100">
     <div class="bg-wrapper"></div>
     <div class="absolute inset-0 bg-primary/80 backdrop-blur-md"></div>
     <div class="w-full max-w-md relative z-10">
-        <div class="bg-white rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.4)] border border-transparent dark:border-slate-700">
             <div class="bg-primary p-8 text-center rounded-t-2xl">
                 <img src="{% static 'img/logo7eventbranco.png' %}" alt="7event" class="h-12 mx-auto mb-2">
                 <p class="text-white/80 text-sm">Sistema de Gestão de Eventos</p>
