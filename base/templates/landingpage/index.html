@@ -226,6 +226,12 @@
             }
         }
 
+        @media (max-width: 371px) {
+            .lp-upgrade-btn {
+                display: none !important;
+            }
+        }
+
         .dark .bg-white { background-color: rgb(15 23 42) !important; }
         .dark .bg-gray-50 { background-color: rgb(2 6 23) !important; }
         .dark .bg-gray-100 { background-color: rgb(30 41 59) !important; }
@@ -267,7 +273,7 @@
                         <button onclick="toggleLpThemeMenu()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title="Tema">
                             <i id="lpThemeIcon" class="fas fa-desktop text-gray-600 dark:text-slate-300"></i>
                         </button>
-                        <div id="lpThemeMenu" class="hidden absolute right-0 top-11 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 z-50 overflow-hidden">
+                        <div id="lpThemeMenu" class="hidden fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-44 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 z-50 overflow-hidden">
                             <button onclick="setLpTheme('light')" class="lp-theme-option w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800" data-theme="light"><i class="fas fa-sun w-5 text-amber-500"></i> Claro</button>
                             <button onclick="setLpTheme('dark')" class="lp-theme-option w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800" data-theme="dark"><i class="fas fa-moon w-5 text-indigo-400"></i> Escuro</button>
                             <button onclick="setLpTheme('auto')" class="lp-theme-option w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800" data-theme="auto"><i class="fas fa-desktop w-5 text-gray-500"></i> Automático</button>
@@ -275,11 +281,11 @@
                     </div>
                     {% if user.is_authenticated %}
                         {% if user.get_plan.type == 'free' and user.get_plan.can_upgrade %}
-                            <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                            <a href="{{ user.get_plan.get_upgrade_link }}" class="lp-upgrade-btn bg-gold hover:bg-gold-light text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
                                 <i class="fas fa-level-up mr-2"></i>{{ user.get_plan.get_upgrade_text }}
                             </a>
                         {% elif user.get_plan.type == 'pro' and user.get_plan.can_upgrade %}
-                            <a href="{{ user.get_plan.get_upgrade_link }}" class="bg-gold hover:bg-gold-light text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
+                            <a href="{{ user.get_plan.get_upgrade_link }}" class="lp-upgrade-btn bg-gold hover:bg-gold-light text-gray-800 px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
                                 <i class="fas fa-level-up mr-2"></i>{{ user.get_plan.get_upgrade_text }}
                             </a>
                         {% endif %}
@@ -287,12 +293,13 @@
                             Meu Dashboard
                         </a>
                     {% else %}
-                        <a href="/app/accounts/login/" class="text-gray-600 dark:text-slate-300 hover:text-primary font-medium transition-colors">
+                        <a href="/app/accounts/login/" class="hidden sm:inline text-gray-600 dark:text-slate-300 hover:text-primary font-medium transition-colors">
                             Entrar
                         </a>
-                        <span class="text-gray-300 dark:text-slate-600">|</span>
+                        <span class="hidden sm:inline text-gray-300 dark:text-slate-600">|</span>
                         <a href="/app/accounts/register/" class="bg-primary hover:bg-secondary text-white px-5 py-2.5 rounded-lg font-semibold transition-all btn-shine">
-                            Criar conta grátis
+                            <span class="hidden sm:inline">Criar conta grátis</span>
+                            <span class="sm:hidden">Criar conta</span>
                         </a>
                     {% endif %}
                 </div>
