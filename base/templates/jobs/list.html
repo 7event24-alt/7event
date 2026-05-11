@@ -72,6 +72,7 @@
 
                     <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
                         <p class="truncate"><i class="far fa-user mr-1.5 text-gray-400"></i><a href="{% url 'clients:detail' job.client.pk %}" class="text-primary hover:text-secondary">{{ job.client.name }}</a></p>
+                        <p><i class="fas fa-tag mr-1.5 text-gray-400"></i>{{ job.get_event_type_display|default:"Tipo não informado" }}</p>
                         <p><i class="far fa-calendar mr-1.5 text-gray-400"></i>{{ job.start_date|date:"d/m/Y" }}{% if job.end_date and job.end_date != job.start_date %} - {{ job.end_date|date:"d/m/Y" }}{% endif %}</p>
                         <p class="truncate"><i class="fas fa-map-marker-alt mr-1.5 text-gray-400"></i>{{ job.location|default:"Local não informado" }}</p>
                         <p><i class="fas fa-wallet mr-1.5 text-gray-400"></i>{{ job.display_cache|default:"0"|brl }}</p>

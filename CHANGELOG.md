@@ -21,6 +21,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Planos ganharam novos limites granulares: `max_quotes`, `max_personal_tasks` e `max_personal_agenda_events` (mantendo semântica `0 = sem limite`).
 - Testes automatizados de limite de plano foram adicionados para validar bloqueio e fluxo de liberação quando o limite é infinito.
 - Listas de Trabalhos, Orçamentos, Clientes, Tarefas e Despesas foram padronizadas no layout em cards (estilo Agenda Pessoal), com melhor leitura, ações consistentes e badges no formato "rótulo: valor".
+- Sistema de tema com modos Claro, Escuro e Automático foi adicionado no Dashboard e na Landing Page, com persistência em `localStorage` e aplicação antecipada no `<head>` para evitar flash de tema.
 
 ### Fix
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
@@ -32,6 +33,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Página de agenda do dia passou a exibir Agenda Pessoal com organização por blocos (Trabalhos, Agenda Pessoal, Visitas Técnicas e Tarefas) e ações rápidas de criação.
 - Botões de adicionar despesa em Trabalho e Orçamento passaram a abrir modal na própria tela, sem redirecionar para formulário externo.
 - Lista de mensagens de suporte foi redesenhada em cards para melhor leitura e o bug de exibir múltiplos popups ao abrir a lista foi corrigido.
+- FAQ da landing page voltou a funcionar com correção do script de abas/acordeão e ajustes no bloco de instalação PWA.
 
 ## [1.5.0] - 2026-04-21
 

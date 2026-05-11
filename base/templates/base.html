@@ -23,9 +23,21 @@
     <!-- Windows -->
     <meta name="msapplication-TileImage" content="https://www.7event.com.br/static/img/logo7event.png">
     <meta name="msapplication-TileColor" content="#1e3a5f">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (storedTheme === 'dark' || (!storedTheme && systemDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'selector',
             theme: {
                 extend: {
                     colors: {
@@ -44,6 +56,62 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+
+        .dark .bg-white { background-color: rgb(15 23 42) !important; }
+        .dark .bg-gray-50 { background-color: rgb(15 30 51) !important; }
+        .dark .bg-gray-100 { background-color: rgb(30 41 59) !important; }
+        .dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.22) !important; }
+        .dark .bg-green-50 { background-color: rgba(22, 101, 52, 0.2) !important; }
+        .dark .bg-red-50 { background-color: rgba(127, 29, 29, 0.2) !important; }
+
+        .dark .text-gray-900 { color: rgb(241 245 249) !important; }
+        .dark .text-gray-800 { color: rgb(226 232 240) !important; }
+        .dark .text-gray-700 { color: rgb(203 213 225) !important; }
+        .dark .text-gray-600 { color: rgb(148 163 184) !important; }
+        .dark .text-gray-500 { color: rgb(148 163 184) !important; }
+        .dark .text-gray-400 { color: rgb(100 116 139) !important; }
+
+        .dark .text-primary { color: rgb(241 245 249) !important; }
+        .dark .hover\:text-primary:hover { color: rgb(241 245 249) !important; }
+        .dark .text-secondary { color: rgb(203 213 225) !important; }
+        .dark .hover\:text-secondary:hover { color: rgb(241 245 249) !important; }
+
+        .dark .border-gray-50,
+        .dark .border-gray-100,
+        .dark .border-gray-200,
+        .dark .border-gray-300 { border-color: rgb(51 65 85) !important; }
+
+        .dark .shadow-sm,
+        .dark .shadow,
+        .dark .shadow-lg,
+        .dark .shadow-xl {
+            box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45) !important;
+        }
+
+        .dark input,
+        .dark select,
+        .dark textarea {
+            background-color: rgb(30 41 59) !important;
+            border-color: rgb(71 85 105) !important;
+            color: rgb(241 245 249) !important;
+        }
+
+        .dark input::placeholder,
+        .dark textarea::placeholder {
+            color: rgb(148 163 184) !important;
+        }
+
+        .dark table thead,
+        .dark tfoot {
+            background-color: rgb(30 41 59) !important;
+        }
+
+        .dark table tbody tr:hover {
+            background-color: rgb(15 23 42) !important;
+        }
+
+        .dark .hover\:bg-gray-50:hover { background-color: rgb(30 41 59) !important; }
+        .dark .hover\:bg-gray-100:hover { background-color: rgb(51 65 85) !important; }
     </style>
     <script>
         // Initialize input masks - only if Inputmask is available
@@ -72,35 +140,35 @@
         }
     </script>
 </head>
-<body>
+<body class="bg-gray-50 dark:bg-[rgb(15,30,51)] text-gray-900 dark:text-slate-100 transition-colors">
     {% block body %}
         {% if user.is_authenticated %}
             <div class="flex flex-col h-screen">
                 <div class="flex flex-1 overflow-hidden">
                     <!-- Desktop sidebar: always visible on lg -->
-                    <aside class="hidden lg:block w-64 flex-shrink-0 bg-primary text-white">
+                    <aside class="hidden lg:block w-64 flex-shrink-0 bg-primary text-white dark:bg-[rgb(15,30,51)] dark:border-r dark:border-slate-700">
                         {% include 'partials/sidebar_content.html' %}
                     </aside>
                     
                     <!-- Mobile sidebar: slides in -->
-                    <aside id="sidebar-mobile" class="fixed inset-y-0 left-0 z-50 w-64 bg-primary text-white -translate-x-full transition-transform duration-300 lg:hidden">
+                    <aside id="sidebar-mobile" class="fixed inset-y-0 left-0 z-50 w-64 bg-primary text-white dark:bg-[rgb(15,30,51)] dark:border-r dark:border-slate-700 -translate-x-full transition-transform duration-300 lg:hidden">
                         {% include 'partials/sidebar_content.html' %}
                     </aside>
                     
                     <div class="flex flex-col flex-1 overflow-hidden">
                         <!-- Header -->
-                        <header class="bg-white shadow-sm border-b border-gray-200">
+                        <header class="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-700">
                             <div class="flex items-center justify-between px-4 py-3 lg:px-6">
                             <div class="flex items-center gap-4">
-                                <button class="lg:hidden p-2 rounded-md hover:bg-gray-100" onclick="toggleSidebar()">
-                                    <i class="fas fa-bars text-gray-600 text-lg"></i>
+                                <button class="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800" onclick="toggleSidebar()">
+                                    <i class="fas fa-bars text-gray-600 dark:text-slate-300 text-lg"></i>
                                 </button>
                                 
                                 <!-- Logo 7event (global) -->
                                 <a href="{% url 'landingpage:index' %}" class="flex items-center gap-3 hover:opacity-80 transition">
                                     <img src="{% static 'img/logo7event.png' %}" alt="7event" class="h-10">
                                 </a>
-                                <div class="hidden lg:flex items-center gap-2 text-sm text-gray-500">
+                                <div class="hidden lg:flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                                     <i class="far fa-calendar-alt"></i>
                                     <span>{% now "d/m/Y" %}</span>
                                     <i class="far fa-clock ml-1"></i>
@@ -114,13 +182,13 @@
                                     <input type="text" 
                                            name="q"
                                            placeholder="Buscar trabalhos, clientes..." 
-                                           class="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                                           class="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                                     >
-                                    <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary">
+                                    <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 hover:text-primary">
                                         <i class="fas fa-search"></i>
                                     </button>
                                     {% if request.GET.q %}
-                                    <a href="{% url 'dashboard:search' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <a href="{% url 'dashboard:search' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200">
                                         <i class="fas fa-times"></i>
                                     </a>
                                     {% endif %}
@@ -129,27 +197,37 @@
 
                             <!-- Right Side -->
                             <div class="flex items-center gap-2">
+                                <div class="relative" id="themeDropdown">
+                                    <button onclick="toggleThemeMenu()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" title="Tema">
+                                        <i id="themeIcon" class="fas fa-desktop text-gray-600 dark:text-slate-300 text-lg"></i>
+                                    </button>
+                                    <div id="themeMenu" class="hidden absolute right-0 top-12 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 z-50 overflow-hidden">
+                                        <button onclick="setTheme('light')" class="theme-option w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800" data-theme="light"><i class="fas fa-sun w-5 text-amber-500"></i> Claro</button>
+                                        <button onclick="setTheme('dark')" class="theme-option w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800" data-theme="dark"><i class="fas fa-moon w-5 text-indigo-400"></i> Escuro</button>
+                                        <button onclick="setTheme('auto')" class="theme-option w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800" data-theme="auto"><i class="fas fa-desktop w-5 text-gray-500"></i> Automático</button>
+                                    </div>
+                                </div>
                                 <!-- Notifications Dropdown -->
                                 <div class="relative" id="notificationsDropdown">
-                                    <button onclick="toggleNotifications()" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-bell text-gray-600 text-lg"></i>
+                                    <button onclick="toggleNotifications()" class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                                        <i class="fas fa-bell text-gray-600 dark:text-slate-300 text-lg"></i>
                                         <span id="notificationBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">0</span>
                                     </button>
                                     
-                                    <div id="notificationsMenu" class="hidden absolute right-0 top-12 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
-                                        <div class="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                                            <span class="font-semibold text-gray-800 text-sm">Notificações</span>
+                                    <div id="notificationsMenu" class="hidden absolute right-0 top-12 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 z-50 max-h-96 overflow-hidden">
+                                        <div class="p-3 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-800">
+                                            <span class="font-semibold text-gray-800 dark:text-slate-100 text-sm">Notificações</span>
                                             <a href="{% url 'accounts:notifications' %}" class="text-xs text-primary hover:underline">Ver todas</a>
                                         </div>
                                         <div id="notificationsList" class="max-h-80 overflow-y-auto">
-                                            <div class="p-4 text-center text-gray-500 text-sm">Carregando...</div>
+                                            <div class="p-4 text-center text-gray-500 dark:text-slate-400 text-sm">Carregando...</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- User Menu -->
                                 <div class="relative group">
-                                    <button class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <button class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
                                         {% if user.photo %}
                                             <img src="{{ user.photo.url }}?v={{ user.updated_at|date:'U' }}" data-user-photo="1" alt="Foto" class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-200">
                                         {% else %}
@@ -158,8 +236,8 @@
                                             </div>
                                         {% endif %}
                                         <div class="hidden sm:block text-left">
-                                            <p class="text-sm font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</p>
-                                            <p class="text-xs text-gray-500">
+                                            <p class="text-sm font-medium text-gray-800 dark:text-slate-100">{{ user.get_full_name|default:user.username }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400">
                                                 {{ user.role|default:"Admin" }}
                                                 {% if user_plan_badge %}
                                                 <span class="ml-2 px-2 py-0.5 rounded text-xs font-semibold
@@ -171,17 +249,17 @@
                                                 {% endif %}
                                             </p>
                                         </div>
-                                        <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                        <i class="fas fa-chevron-down text-gray-400 dark:text-slate-400 text-xs"></i>
                                     </button>
                                     
                                     <!-- Dropdown -->
-                                    <div class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                        <div class="px-4 py-3 border-b border-gray-100">
-                                            <p class="text-sm font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</p>
-                                            <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                    <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                                            <p class="text-sm font-medium text-gray-800 dark:text-slate-100">{{ user.get_full_name|default:user.username }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400">{{ user.email }}</p>
                                         </div>
-                                        <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors">
-                                            <i class="fas fa-user-circle text-gray-400 w-5"></i>
+                                        <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                            <i class="fas fa-user-circle text-gray-400 dark:text-slate-400 w-5"></i>
                                             <span class="text-sm">Meu Perfil</span>
                                         </a>
                                         <!-- Configurações removido temporarily
@@ -190,11 +268,11 @@
                                             <span class="text-sm">Configurações</span>
                                         </a>
                                         -->
-                                        <a href="{% url 'accounts:password_change' %}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors">
-                                            <i class="fas fa-lock text-gray-400 w-5"></i>
+                                        <a href="{% url 'accounts:password_change' %}" class="flex items-center gap-3 px-4 py-2.5 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                            <i class="fas fa-lock text-gray-400 dark:text-slate-400 w-5"></i>
                                             <span class="text-sm">Alterar Senha</span>
                                         </a>
-                                        <div class="border-t border-gray-100 mt-2 pt-2">
+                                        <div class="border-t border-gray-100 dark:border-slate-700 mt-2 pt-2">
                                             <a href="{% url 'accounts:logout_simple' %}" class="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors">
                                                 <i class="fas fa-sign-out-alt w-5"></i>
                                                 <span class="text-sm">Sair</span>
@@ -210,24 +288,24 @@
                     {% block breadcrumb %}{% endblock %}
                     
                     <!-- Page Title -->
-                    <div class="bg-white px-4 lg:px-6 py-4 border-b border-gray-200">
+                    <div class="bg-white dark:bg-slate-900 px-4 lg:px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
                                 {% block header_pre_actions %}{% endblock %}
-                                <h2 class="text-xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h2>
+                                <h2 class="text-xl font-bold text-gray-800 dark:text-slate-100">{% block page_title %}Dashboard{% endblock %}</h2>
                             </div>
                             {% block header_actions %}{% endblock %}
                         </div>
                     </div>
                     
-                    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6">
+                    <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-[rgb(15,30,51)] p-4 lg:p-6">
                         {% block content %}{% endblock %}
                     </main>
                     
                     <!-- Footer -->
-                    <footer class="bg-white border-t border-gray-200 py-3 px-4">
+                    <footer class="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 py-3 px-4">
                         <div class="max-w-7xl mx-auto text-center">
-                            <p class="text-gray-500 text-sm">© 2026 7Event - Sistema de Gestão de Eventos v{% app_version %}</p>
+                            <p class="text-gray-500 dark:text-slate-400 text-sm">© 2026 7Event - Sistema de Gestão de Eventos v{% app_version %}</p>
                         </div>
                     </footer>
                 </div>
@@ -240,6 +318,54 @@
     {% block scripts %}{% endblock %}
     
     <script>
+    function getActiveTheme() {
+        const stored = localStorage.getItem('theme');
+        return stored || 'auto';
+    }
+
+    function applyTheme(theme) {
+        const root = document.documentElement;
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const shouldDark = theme === 'dark' || (theme === 'auto' && systemDark);
+        root.classList.toggle('dark', shouldDark);
+        updateThemeUi(theme);
+    }
+
+    function updateThemeUi(theme) {
+        const icon = document.getElementById('themeIcon');
+        if (icon) {
+            icon.className = 'text-lg '; 
+            if (theme === 'light') {
+                icon.className = 'fas fa-sun text-amber-500 text-lg';
+            } else if (theme === 'dark') {
+                icon.className = 'fas fa-moon text-indigo-400 text-lg';
+            } else {
+                icon.className = 'fas fa-desktop text-gray-600 dark:text-slate-300 text-lg';
+            }
+        }
+
+        document.querySelectorAll('.theme-option').forEach((btn) => {
+            btn.classList.remove('bg-gray-100', 'dark:bg-slate-800', 'font-semibold');
+            if (btn.dataset.theme === theme) {
+                btn.classList.add('bg-gray-100', 'dark:bg-slate-800', 'font-semibold');
+            }
+        });
+    }
+
+    function setTheme(theme) {
+        if (theme === 'auto') {
+            localStorage.removeItem('theme');
+        } else {
+            localStorage.setItem('theme', theme);
+        }
+        applyTheme(theme);
+        document.getElementById('themeMenu')?.classList.add('hidden');
+    }
+
+    function toggleThemeMenu() {
+        document.getElementById('themeMenu')?.classList.toggle('hidden');
+    }
+
     function toggleSidebar() {
         document.getElementById('sidebar-mobile').classList.toggle('-translate-x-full');
         document.getElementById('sidebarOverlay').classList.toggle('hidden');
@@ -269,7 +395,14 @@
     
     // Carregar contagem ao carregar a página
     document.addEventListener('DOMContentLoaded', function() {
+        applyTheme(getActiveTheme());
         loadUnreadCount();
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        if (!localStorage.getItem('theme')) {
+            applyTheme('auto');
+        }
     });
     
     function loadNotifications() {
@@ -287,15 +420,15 @@
                         const textClass = getNotificationText(n.notification_type);
                         
                         // Store notification data in data attributes
-                        html += '<div class="notification-item p-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer ' + (n.is_read ? '' : ' bg-blue-50') + '" data-id="' + n.id + '" data-url="' + n.action_url + '">' +
+                        html += '<div class="notification-item p-3 hover:bg-gray-50 dark:hover:bg-slate-800 border-b border-gray-100 dark:border-slate-700 cursor-pointer ' + (n.is_read ? '' : ' bg-blue-50 dark:bg-blue-900/30') + '" data-id="' + n.id + '" data-url="' + n.action_url + '">' +
                             '<div class="flex items-start gap-3">' +
                             '<span class="w-8 h-8 rounded-full flex items-center justify-center text-xs ' + bgClass + ' ' + textClass + '">' +
                             '<i class="fas fa-' + icon + '"></i>' +
                             '</span>' +
                             '<div class="flex-1 min-w-0">' +
-                            '<p class="text-sm font-medium text-gray-800 truncate">' + n.title + '</p>' +
-                            '<p class="text-xs text-gray-500 truncate">' + n.message + '</p>' +
-                            '<p class="text-xs text-gray-400 mt-1">' + n.timesince + '</p>' +
+                            '<p class="text-sm font-medium text-gray-800 dark:text-slate-100 truncate">' + n.title + '</p>' +
+                            '<p class="text-xs text-gray-500 dark:text-slate-400 truncate">' + n.message + '</p>' +
+                            '<p class="text-xs text-gray-400 dark:text-slate-500 mt-1">' + n.timesince + '</p>' +
                             '</div>' +
                             '<div class="flex items-center gap-2">' +
                             (n.is_read ? '' : '<span class="w-2 h-2 bg-blue-500 rounded-full"></span>') +
@@ -324,7 +457,7 @@
                         console.log('Click no list!', e.target);
                     };
                 } else {
-                    list.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Nenhuma notificação</div>';
+                    list.innerHTML = '<div class="p-4 text-center text-gray-500 dark:text-slate-400 text-sm">Nenhuma notificação</div>';
                 }
                 
                 // Atualizar badge
@@ -336,7 +469,7 @@
                 }
             })
             .catch(error => {
-                document.getElementById('notificationsList').innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Erro ao carregar</div>';
+                document.getElementById('notificationsList').innerHTML = '<div class="p-4 text-center text-gray-500 dark:text-slate-400 text-sm">Erro ao carregar</div>';
             });
     }
     
@@ -450,6 +583,8 @@ function getCookie(name) {
     document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('notificationsDropdown');
         const menu = document.getElementById('notificationsMenu');
+        const themeDropdown = document.getElementById('themeDropdown');
+        const themeMenu = document.getElementById('themeMenu');
         
         // Don't close if clicking on a notification item (it will redirect)
         if (e.target.closest('.notification-item')) {
@@ -458,6 +593,10 @@ function getCookie(name) {
         
         if (!dropdown.contains(e.target)) {
             menu.classList.add('hidden');
+        }
+
+        if (themeDropdown && themeMenu && !themeDropdown.contains(e.target)) {
+            themeMenu.classList.add('hidden');
         }
     });
     </script>

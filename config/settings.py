@@ -315,6 +315,8 @@ JAZZMIN_SETTINGS = {
         "landingpage.LandingPageConfig": "fas fa-home",
     },
     "default_theme": "default",
+    "dark_mode_theme": "darkly",
+    "show_ui_builder": True,
     "user_avatar": "avatar",
     "default_icon_avatar": "fas fa-user",
 }
@@ -327,7 +329,7 @@ JAZZMIN_UI_TWEAKS = {
     "accent_color": "accent-blue",
     "max_navbar_items": 25,
     "sidebar_small_text": False,
-    "card_dark_mode": False,
+    "card_dark_mode": True,
 }
 
 # Custom error pages

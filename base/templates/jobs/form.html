@@ -123,25 +123,25 @@
                 </div>
                 
                 <!-- Visita Técnica -->
-                <div class="mb-6 p-5 bg-blue-50 rounded-xl border border-blue-200">
-                    <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                <div class="mb-6 p-5 bg-blue-50 dark:bg-slate-900/70 rounded-xl border border-blue-200 dark:border-slate-700">
+                    <h4 class="text-sm font-semibold text-blue-700 dark:text-sky-300 uppercase tracking-wide mb-4 flex items-center gap-2">
                         <i class="fas fa-tools"></i> Visita Técnica
                     </h4>
                     
                     <div class="mb-4">
                         <label class="flex items-center gap-2 cursor-pointer">
                             {{ form.has_technical_visit }}
-                            <span class="text-sm text-gray-700">O trabalho requer visita técnica?</span>
+                            <span class="text-sm text-gray-700 dark:text-slate-200">O trabalho requer visita técnica?</span>
                         </label>
                     </div>
                     
                     <div id="technical_visit_fields" style="display: none;" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.technical_visit_date.label }}</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">{{ form.technical_visit_date.label }}</label>
                             {{ form.technical_visit_date }}
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.technical_visit_time.label }}</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">{{ form.technical_visit_time.label }}</label>
                             {{ form.technical_visit_time }}
                         </div>
                     </div>
