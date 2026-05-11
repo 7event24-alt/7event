@@ -376,6 +376,7 @@
             --fc-page-bg-color: #0f172a;
             --fc-neutral-bg-color: #1e293b;
             --fc-list-event-hover-bg-color: #1e293b;
+            --fc-today-bg-color: rgba(37, 99, 235, 0.14);
             color: #e2e8f0;
         }
 
@@ -410,6 +411,41 @@
         .dark .fc .fc-day-today {
             background: rgba(59, 130, 246, 0.16) !important;
             box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35) !important;
+        }
+
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col-bg .fc-day-today,
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col.fc-day-today {
+            background: rgb(1 15 33 / 65%) !important;
+            background-color: rgb(1 15 33 / 65%) !important;
+            background-image: none !important;
+        }
+
+        .dark .fc .fc-timeGridWeek-view .fc-day-today {
+            box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.22) !important;
+        }
+
+        .dark .fc .fc-timeGridWeek-view td.fc-day-today,
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col.fc-day-today,
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col-bg .fc-day-today {
+            background-color: rgb(1 15 33 / 65%) !important;
+        }
+
+        .dark .fc .fc-timeGridWeek-view .fc-daygrid-day.fc-day-today,
+        .dark .fc .fc-timeGridWeek-view .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame,
+        .dark .fc .fc-timeGridWeek-view .fc-daygrid-day.fc-day-today .fc-daygrid-day-bg {
+            background-color: rgb(1 15 33 / 65%) !important;
+            background-image: none !important;
+        }
+
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col.fc-day-today .fc-timegrid-slot-lane {
+            background-color: transparent !important;
+        }
+
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col.fc-day-today .fc-timegrid-col-frame,
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col.fc-day-today .fc-timegrid-col-events,
+        .dark .fc .fc-timeGridWeek-view .fc-timegrid-col.fc-day-today .fc-timegrid-col-bg {
+            background-color: rgb(1 15 33 / 65%) !important;
+            background-image: none !important;
         }
 
         .dark .fc .fc-timegrid-col:nth-child(even) {
