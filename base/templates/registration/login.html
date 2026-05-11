@@ -47,6 +47,31 @@
             background-attachment: fixed;
             filter: none;
         }
+
+        .dark input,
+        .dark select,
+        .dark textarea {
+            background-color: rgb(30 41 59) !important;
+            border-color: rgb(71 85 105) !important;
+            color: rgb(241 245 249) !important;
+        }
+
+        .dark input[readonly],
+        .dark input:disabled,
+        .dark select:disabled,
+        .dark textarea:disabled {
+            background-color: rgb(51 65 85) !important;
+            color: rgb(226 232 240) !important;
+            opacity: 1 !important;
+        }
+
+        .dark input:-webkit-autofill,
+        .dark input:-webkit-autofill:hover,
+        .dark input:-webkit-autofill:focus {
+            -webkit-text-fill-color: rgb(241 245 249) !important;
+            -webkit-box-shadow: 0 0 0px 1000px rgb(30 41 59) inset !important;
+            transition: background-color 9999s ease-in-out 0s;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 relative text-gray-900 dark:text-slate-100">
