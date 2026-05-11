@@ -30,6 +30,28 @@ def _matches_recurrence_on_date(event, target_date):
     return False
 
 
+def _expand_personal_agenda_occurrences(events, start_date, end_date, limit=10):
+    items = []
+    current = start_date
+    while current <= end_date:
+        for event in events:
+            if _matches_recurrence_on_date(event, current):
+                items.append(
+                    {
+                        "kind": "agenda",
+                        "title": event.title,
+                        "date": current,
+                        "start_time": event.start_time,
+                        "end_time": event.end_time,
+                        "location": event.location,
+                    }
+                )
+        current += timedelta(days=1)
+
+    items.sort(key=lambda item: (item["date"], item["start_time"] or datetime.min.time()))
+    return items[:limit]
+
+
 class AgendaView(LoginRequiredMixin, View):
     template_name = "agenda/home.html"
 
@@ -173,12 +195,20 @@ class AgendaView(LoginRequiredMixin, View):
             is_completed=False,
         ).order_by("date", "time")[:10]
 
-        upcoming_personal_agenda = PersonalAgendaEvent.objects.filter(
+        personal_agenda_base = PersonalAgendaEvent.objects.filter(
             user=user,
-            date__gte=range_start,
-            date__lte=month_end,
             status=PersonalAgendaStatus.PENDING,
-        ).order_by("date", "start_time")[:10]
+            date__lte=month_end,
+        ).order_by("date", "start_time")
+
+        upcoming_personal_agenda = [
+            event
+            for event in personal_agenda_base
+            if (
+                (event.recurrence == "none" and range_start <= event.date <= month_end)
+                or (event.recurrence != "none" and (not event.recurrence_until or event.recurrence_until >= range_start))
+            )
+        ]
 
         upcoming_personal_items = []
         for task in upcoming_tasks:
@@ -190,16 +220,14 @@ class AgendaView(LoginRequiredMixin, View):
                     "start_time": task.time,
                 }
             )
-        for event in upcoming_personal_agenda:
-            upcoming_personal_items.append(
-                {
-                    "kind": "agenda",
-                    "title": event.title,
-                    "date": event.date,
-                    "start_time": event.start_time,
-                    "end_time": event.end_time,
-                }
+        upcoming_personal_items.extend(
+            _expand_personal_agenda_occurrences(
+                upcoming_personal_agenda,
+                range_start,
+                month_end,
+                limit=50,
             )
+        )
 
         upcoming_personal_items.sort(key=lambda item: (item["date"], item["start_time"] or datetime.min.time()))
         upcoming_personal_items = upcoming_personal_items[:10]
@@ -295,12 +323,20 @@ class AgendaSidebarDataView(LoginRequiredMixin, View):
             is_completed=False,
         ).order_by("date", "time")[:10]
 
-        upcoming_personal_agenda = PersonalAgendaEvent.objects.filter(
+        personal_agenda_base = PersonalAgendaEvent.objects.filter(
             user=user,
-            date__gte=range_start,
-            date__lte=last_day,
             status=PersonalAgendaStatus.PENDING,
-        ).order_by("date", "start_time")[:10]
+            date__lte=last_day,
+        ).order_by("date", "start_time")
+
+        upcoming_personal_agenda = [
+            event
+            for event in personal_agenda_base
+            if (
+                (event.recurrence == "none" and range_start <= event.date <= last_day)
+                or (event.recurrence != "none" and (not event.recurrence_until or event.recurrence_until >= range_start))
+            )
+        ]
 
         personal_items = []
         for task in upcoming_tasks:
@@ -312,17 +348,14 @@ class AgendaSidebarDataView(LoginRequiredMixin, View):
                     "start_time": task.time,
                 }
             )
-        for event in upcoming_personal_agenda:
-            personal_items.append(
-                {
-                    "kind": "agenda",
-                    "title": event.title,
-                    "date": event.date,
-                    "start_time": event.start_time,
-                    "end_time": event.end_time,
-                    "location": event.location,
-                }
+        personal_items.extend(
+            _expand_personal_agenda_occurrences(
+                upcoming_personal_agenda,
+                range_start,
+                last_day,
+                limit=50,
             )
+        )
 
         personal_items.sort(key=lambda item: (item["date"], item["start_time"] or datetime.min.time()))
         personal_items = personal_items[:10]
