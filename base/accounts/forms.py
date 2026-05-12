@@ -215,7 +215,7 @@ class RegisterForm(UserCreationForm):
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(
                 "Este email já está cadastrado em outra conta. "
-                "Entre em contato com o suporte para recuperar seu acesso."
+                "Entre em contato com o suporte pelo WhatsApp +55 11 94347-9664 para recuperar seu acesso."
             )
         return email
 
@@ -241,7 +241,7 @@ class RegisterForm(UserCreationForm):
                 if user_phone_normalized == phone_normalized:
                     raise forms.ValidationError(
                         "Este telefone já está cadastrado em outra conta. "
-                        "Entre em contato com o suporte para recuperar seu acesso."
+                        "Entre em contato com o suporte pelo WhatsApp +55 11 94347-9664 para recuperar seu acesso."
                     )
         return phone
 

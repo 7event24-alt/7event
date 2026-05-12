@@ -24,6 +24,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Sistema de tema com modos Claro, Escuro e Automático foi adicionado no Dashboard e na Landing Page, com persistência em `localStorage` e aplicação antecipada no `<head>` para evitar flash de tema.
 
 ### Fix
+- Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.
 - Fluxo de orçamento passou a usar status padrão **Criado** (em vez de rascunho), com campo de status visível apenas na edição.

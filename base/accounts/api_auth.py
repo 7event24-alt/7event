@@ -56,7 +56,7 @@ class AuthViewSet(viewsets.ViewSet):
 
         if not user.is_active:
             return Response(
-                {"error": "Usuário inativo. Entre em contato com o suporte."},
+                {"error": "Usuário inativo. Entre em contato com o suporte pelo WhatsApp +55 11 94347-9664."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
@@ -120,7 +120,7 @@ class AuthViewSet(viewsets.ViewSet):
                     if user_phone_normalized == phone_normalized:
                         return Response(
                             {
-                                "error": "Este telefone já está cadastrado em outra conta. Entre em contato com o suporte para recuperar seu acesso."
+                                "error": "Este telefone já está cadastrado em outra conta. Entre em contato com o suporte pelo WhatsApp +55 11 94347-9664 para recuperar seu acesso."
                             },
                             status=status.HTTP_400_BAD_REQUEST,
                         )

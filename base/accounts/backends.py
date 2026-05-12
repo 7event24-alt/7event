@@ -69,7 +69,7 @@ class PhoneEmailUsernameBackend(ModelBackend):
             return None, "Usuário não encontrado."
 
         if not user.is_active:
-            return None, "Sua conta está inativa. Entre em contato com o suporte."
+            return None, "Sua conta está inativa. Entre em contato com o suporte pelo WhatsApp +55 11 94347-9664."
 
         if user.check_password(password):
             return user, None
