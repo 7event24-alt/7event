@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "base.quote",
     "base.services",
     "base.plans",
+    "base.payments",
     "base.landingpage",
     "base.support",
 ]
@@ -340,3 +341,13 @@ handler500 = "base.core.error_views.server_error"
 
 # Email for error reports
 ERROR_REPORT_EMAIL = os.environ.get("ERROR_REPORT_EMAIL", "contato@7event.com.br")
+
+# Mercado Pago
+MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "")
+MP_PUBLIC_KEY = os.environ.get("MP_PUBLIC_KEY", "")
+MP_WEBHOOK_SECRET = os.environ.get("MP_WEBHOOK_SECRET", "")
+MP_NOTIFICATION_URL = os.environ.get("MP_NOTIFICATION_URL", "")
+MP_CURRENCY = os.environ.get("MP_CURRENCY", "BRL")
+MP_BILLING_DUE_DAY = int(os.environ.get("MP_BILLING_DUE_DAY", "8"))
+MP_BILLING_CUTOFF_DAY = int(os.environ.get("MP_BILLING_CUTOFF_DAY", "15"))
+APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "").strip().rstrip("/")

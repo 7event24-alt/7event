@@ -5,6 +5,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 ## [Unreleased]
 
 ### Feat
+- Novo domínio de pagamentos (`base/payments`) com rastreio ponta a ponta para Checkout Pro: criação de transações mensais, referência externa única por usuário/plano/mês, webhook Mercado Pago e atualização automática de assinatura/plano.
 - Perfil do usuário agora possui campo de **Chave PIX** com exibição e edição na tela de perfil.
 - Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.
 - Orçamentos aceitos agora permitem criar trabalho pré-preenchido com dados do orçamento (`cache` usando total do orçamento).
@@ -24,6 +25,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Sistema de tema com modos Claro, Escuro e Automático foi adicionado no Dashboard e na Landing Page, com persistência em `localStorage` e aplicação antecipada no `<head>` para evitar flash de tema.
 
 ### Fix
+- Fluxo de planos pagos deixou de depender de aprovação manual de suporte e passou a usar checkout dinâmico por transação, com páginas de retorno (`success`, `pending`, `failure`) e processamento idempotente de webhook para evitar duplicidade.
 - Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.

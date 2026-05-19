@@ -7,6 +7,10 @@ from django.core.mail import send_mail
 from django.contrib import messages
 
 from base.accounts.models import Plan, PlanType, User
+from base.payments.services.billing import (
+    ensure_checkout_for_transaction,
+    get_or_create_monthly_transaction,
+)
 from base.support.models import SupportMessage, SupportSubject
 
 
@@ -27,7 +31,7 @@ class PlanListView(LoginRequiredMixin, View):
         )
 
     def post(self, request):
-        """Handle plan selection - redirect to waiting or payment"""
+        """Handle plan selection - redirect to checkout"""
         plan_id = request.POST.get("plan_id")
 
         if not plan_id:
@@ -40,13 +44,13 @@ class PlanListView(LoginRequiredMixin, View):
 
         request.session["requested_plan_id"] = plan.id
         request.session["requested_plan_name"] = plan.name
-        request.session["payment_link"] = plan.payment_link or ""
 
         if plan.price_monthly == 0:
             return HttpResponseRedirect(reverse("plans:activate_free"))
 
-        self.notify_superuser(request.user, plan)
-        self.create_upgrade_support_message(request.user, plan)
+        transaction_obj = get_or_create_monthly_transaction(request.user, plan)
+        transaction_obj = ensure_checkout_for_transaction(transaction_obj, request)
+        request.session["payment_link"] = transaction_obj.checkout_url
 
         return HttpResponseRedirect(reverse("plans:waiting"))
 
@@ -158,5 +162,35 @@ class WaitingConfirmationView(LoginRequiredMixin, View):
         )
 
 
+class PaymentReturnView(LoginRequiredMixin, View):
+    template_name = "plans/payment_return.html"
+    flow_status = "pending"
+
+    def get(self, request):
+        context = {
+            "flow_status": self.flow_status,
+            "payment_id": request.GET.get("payment_id") or request.GET.get("collection_id") or "",
+            "external_reference": request.GET.get("external_reference", ""),
+            "status": request.GET.get("status") or request.GET.get("collection_status") or "",
+            "merchant_order_id": request.GET.get("merchant_order_id", ""),
+        }
+        return render(request, self.template_name, context)
+
+
+class PaymentSuccessView(PaymentReturnView):
+    flow_status = "success"
+
+
+class PaymentPendingView(PaymentReturnView):
+    flow_status = "pending"
+
+
+class PaymentFailureView(PaymentReturnView):
+    flow_status = "failure"
+
+
 activate_free = ActivateFreeView.as_view()
 waiting_confirmation = WaitingConfirmationView.as_view()
+payment_success = PaymentSuccessView.as_view()
+payment_pending = PaymentPendingView.as_view()
+payment_failure = PaymentFailureView.as_view()

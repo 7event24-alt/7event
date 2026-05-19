@@ -47,9 +47,9 @@ urlpatterns = [
     path("api/v1/", include("base.quote.api_urls")),
     path("api/v1/", include("base.services.api_urls")),
     path("api/v1/", include("base.dashboard.api_urls")),
+    path("api/v1/", include("base.payments.urls")),
     path("auth/", include("base.core.auth_urls")),
     path("", include("base.landingpage.urls")),  # LP na raiz
-    path("app/", include("base.dashboard.urls")),
     path("app/accounts/", include("base.accounts.urls")),
     path("app/planos/", include("base.plans.urls")),
     path("app/clientes/", include("base.clients.urls")),
@@ -61,6 +61,7 @@ urlpatterns = [
     path("app/servicos/", include("base.services.urls")),
     path("app/admin-panel/", include("base.admin_panel.urls")),
     path("app/suporte/", include("base.support.urls")),
+    path("app/", include("base.dashboard.urls")),
 ]
 
 if settings.DEBUG:
