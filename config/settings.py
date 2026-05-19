@@ -351,3 +351,7 @@ MP_CURRENCY = os.environ.get("MP_CURRENCY", "BRL")
 MP_BILLING_DUE_DAY = int(os.environ.get("MP_BILLING_DUE_DAY", "8"))
 MP_BILLING_CUTOFF_DAY = int(os.environ.get("MP_BILLING_CUTOFF_DAY", "15"))
 APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "").strip().rstrip("/")
+
+# n8n webhooks (outbound)
+N8N_WHATSAPP_WEBHOOK_URL = os.environ.get("N8N_WHATSAPP_WEBHOOK_URL", "").strip()
+N8N_WHATSAPP_WEBHOOK_TOKEN = os.environ.get("N8N_WHATSAPP_WEBHOOK_TOKEN", "").strip()

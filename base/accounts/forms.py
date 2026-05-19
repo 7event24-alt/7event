@@ -645,6 +645,16 @@ class PersonalInfoForm(forms.ModelForm):
         model = User
         fields = ("first_name", "last_name", "email", "phone", "cpf", "rg", "pix_key")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cpf = getattr(self.instance, "cpf", "") or ""
+        if cpf:
+            import re
+
+            digits = re.sub(r"\D", "", cpf)
+            if len(digits) == 11:
+                self.initial["cpf"] = f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+
     def clean_email(self):
         email = self.cleaned_data.get("email", "").strip().lower()
         if not email:
@@ -674,6 +684,11 @@ class PersonalInfoForm(forms.ModelForm):
         if not phone_normalized:
             return phone
 
+        # Aceita envio local (DDD + numero) e normaliza para E.164 BR sem +
+        # Ex.: 21991986769 -> 5521991986769
+        if len(phone_normalized) in (10, 11):
+            phone_normalized = "55" + phone_normalized
+
         if not phone_normalized.startswith("55"):
             raise forms.ValidationError(
                 "Telefone deve iniciar com 55 (DDI do Brasil). Ex: 5521991986769."
@@ -702,6 +717,19 @@ class PersonalInfoForm(forms.ModelForm):
 
         self.cleaned_data["phone"] = phone_normalized
         return phone_normalized
+
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get("cpf", "").strip()
+        if not cpf:
+            return ""
+
+        import re
+
+        digits = re.sub(r"\D", "", cpf)
+        if len(digits) != 11:
+            raise forms.ValidationError("CPF inválido. Use o formato 000.000.000-00.")
+
+        return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
 
     def save(self, commit=True):
         instance = super().save(commit=False)

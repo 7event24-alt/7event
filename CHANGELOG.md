@@ -6,6 +6,9 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
 ### Feat
 - Novo domínio de pagamentos (`base/payments`) com rastreio ponta a ponta para Checkout Pro: criação de transações mensais, referência externa única por usuário/plano/mês, webhook Mercado Pago e atualização automática de assinatura/plano.
+- Integração base com n8n para disparo de mensagens WhatsApp via webhook, com helper reutilizável (`base/core/n8n.py`) e variáveis de ambiente dedicadas.
+- Catálogo central de mensagens WhatsApp por motivo/evento (`base/core/whatsapp_messages.py`), com templates para cadastro, ativação e status de pagamento.
+- Helper de n8n expandido para aceitar payload extra e simulação de evento real (`send_whatsapp_event`) com metadados (`event_id`, `event`, `source`, `sent_at`, `context`).
 - Perfil do usuário agora possui campo de **Chave PIX** com exibição e edição na tela de perfil.
 - Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.
 - Orçamentos aceitos agora permitem criar trabalho pré-preenchido com dados do orçamento (`cache` usando total do orçamento).
@@ -26,6 +29,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 
 ### Fix
 - Fluxo de planos pagos deixou de depender de aprovação manual de suporte e passou a usar checkout dinâmico por transação, com páginas de retorno (`success`, `pending`, `failure`) e processamento idempotente de webhook para evitar duplicidade.
+- Perfil agora normaliza telefone para salvar no padrão `55DDDNÚMERO`, exibe telefone formatado (`+55 (DD) 9XXXX-XXXX`) e mantém CPF persistido/formatado no formulário e na visualização.
 - Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.

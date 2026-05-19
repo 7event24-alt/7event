@@ -1,0 +1,90 @@
+import json
+import logging
+import uuid
+from datetime import UTC, datetime
+from urllib import error, request
+
+from django.conf import settings
+
+
+logger = logging.getLogger(__name__)
+
+
+def _post_n8n_payload(payload, timeout=10):
+    """Send JSON payload to configured n8n webhook URL."""
+    url = (getattr(settings, "N8N_WHATSAPP_WEBHOOK_URL", "") or "").strip()
+    token = (getattr(settings, "N8N_WHATSAPP_WEBHOOK_TOKEN", "") or "").strip()
+
+    if not url:
+        logger.warning("N8N WhatsApp webhook URL not configured")
+        return False, "N8N webhook URL not configured"
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    req = request.Request(
+        url=url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+
+    try:
+        with request.urlopen(req, timeout=timeout) as response:
+            status_code = response.getcode()
+            body = response.read().decode("utf-8", errors="replace")
+            if 200 <= status_code < 300:
+                return True, body
+            return False, body
+    except error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        logger.warning("N8N webhook HTTP error %s: %s", exc.code, body)
+        return False, body
+    except Exception as exc:
+        logger.exception("Error sending payload to n8n webhook")
+        return False, str(exc)
+
+
+def send_whatsapp_message(phone, message, timeout=10, extra_payload=None):
+    """Send a simple WhatsApp payload to n8n webhook.
+
+    Payload base:
+    {
+        "numero": "5521991986769",
+        "mensagem": "..."
+    }
+    """
+    payload = {
+        "numero": str(phone or "").strip(),
+        "mensagem": str(message or "").strip(),
+    }
+    if extra_payload and isinstance(extra_payload, dict):
+        payload.update(extra_payload)
+    return _post_n8n_payload(payload=payload, timeout=timeout)
+
+
+def send_whatsapp_event(reason, phone, message, timeout=10, **context):
+    """Send an event-like payload for realistic n8n flow tests.
+
+    Example payload fields:
+    - event_id
+    - source
+    - event
+    - sent_at
+    - numero
+    - mensagem
+    - context
+    """
+    payload = {
+        "event_id": str(uuid.uuid4()),
+        "source": "7event",
+        "event": str(reason or "").strip(),
+        "sent_at": datetime.now(UTC).isoformat(),
+        "numero": str(phone or "").strip(),
+        "mensagem": str(message or "").strip(),
+        "context": context or {},
+    }
+    return _post_n8n_payload(payload=payload, timeout=timeout)
