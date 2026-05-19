@@ -594,15 +594,14 @@ class PersonalInfoForm(forms.ModelForm):
         ),
     )
     phone = forms.CharField(
-        max_length=15,
+        max_length=20,
         required=False,
         label="Telefone",
         widget=forms.TextInput(
             attrs={
                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm",
-                "placeholder": "(00) 00000-0000",
-                "data-mask": "phone",
-                "maxlength": "15",
+                "placeholder": "5521991986769",
+                "maxlength": "20",
             }
         ),
     )
@@ -674,6 +673,16 @@ class PersonalInfoForm(forms.ModelForm):
 
         if not phone_normalized:
             return phone
+
+        if not phone_normalized.startswith("55"):
+            raise forms.ValidationError(
+                "Telefone deve iniciar com 55 (DDI do Brasil). Ex: 5521991986769."
+            )
+
+        if len(phone_normalized) < 12 or len(phone_normalized) > 13:
+            raise forms.ValidationError(
+                "Telefone inválido. Use o formato 55DDDNÚMERO, ex: 5521991986769."
+            )
 
         from django.contrib.auth import get_user_model
 
