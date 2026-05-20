@@ -781,19 +781,7 @@ class PersonalTasksView(LoginRequiredMixin, View):
     
     def get(self, request):
         from .models import PersonalTask
-        
-        # Filtros
-        filter_status = request.GET.get("status", "pending")  # pending, completed, all
-        
-        # Base query - APENAS tarefas do usuário logado
-        tasks = PersonalTask.objects.filter(user=request.user)
-        
-        # Aplicar filtro de status
-        if filter_status == "pending":
-            tasks = tasks.filter(is_completed=False)
-        elif filter_status == "completed":
-            tasks = tasks.filter(is_completed=True)
-        
+        tasks = PersonalTask.objects.filter(user=request.user, is_completed=False)
         tasks = tasks.order_by("-date", "is_completed", "time")
         
         # Tarefas de hoje (para exibição rápida)
@@ -809,9 +797,7 @@ class PersonalTasksView(LoginRequiredMixin, View):
             "tasks": tasks,
             "today_tasks": today_tasks,
             "today": today,
-            "filter_status": filter_status,
             "pending_count": PersonalTask.objects.filter(user=request.user, is_completed=False).count(),
-            "completed_count": PersonalTask.objects.filter(user=request.user, is_completed=True).count(),
         }
         return render(request, self.template_name, context)
     

@@ -591,6 +591,37 @@ class PersonalTask(models.Model):
         return f"{self.title} - {self.user.username}"
 
 
+class PersonalTaskReminderType(models.TextChoices):
+    ONE_HOUR_BEFORE = "1h_before", _("1 hora antes")
+
+
+class PersonalTaskReminderDispatch(models.Model):
+    task = models.ForeignKey(
+        PersonalTask,
+        on_delete=models.CASCADE,
+        related_name="reminder_dispatches",
+        verbose_name=_("Tarefa"),
+    )
+    reminder_type = models.CharField(
+        max_length=20,
+        choices=PersonalTaskReminderType.choices,
+        default=PersonalTaskReminderType.ONE_HOUR_BEFORE,
+        verbose_name=_("Tipo de Lembrete"),
+    )
+    sent_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Enviado em"))
+
+    class Meta:
+        db_table = "personal_task_reminder_dispatches"
+        verbose_name = _("Disparo de Lembrete de Tarefa")
+        verbose_name_plural = _("Disparos de Lembrete de Tarefa")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["task", "reminder_type"],
+                name="uniq_task_reminder_type",
+            )
+        ]
+
+
 class PersonalAgendaStatus(models.TextChoices):
     PENDING = "pending", _("Pendente")
     COMPLETED = "completed", _("Concluída")

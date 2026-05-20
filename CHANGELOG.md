@@ -8,6 +8,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Novo domínio de pagamentos (`base/payments`) com rastreio ponta a ponta para Checkout Pro: criação de transações mensais, referência externa única por usuário/plano/mês, webhook Mercado Pago e atualização automática de assinatura/plano.
 - Integração base com n8n para disparo de mensagens WhatsApp via webhook, com helper reutilizável (`base/core/n8n.py`) e variáveis de ambiente dedicadas.
 - Catálogo central de mensagens WhatsApp por motivo/evento (`base/core/whatsapp_messages.py`), com templates para cadastro, ativação e status de pagamento.
+- Agendamento de lembrete de tarefa pessoal via comando (`send_task_reminders`) para disparo por webhook 1 hora antes do horário da tarefa, com controle de idempotência por tarefa/tipo de lembrete.
 - Helper de n8n expandido para aceitar payload extra e simulação de evento real (`send_whatsapp_event`) com metadados (`event_id`, `event`, `source`, `sent_at`, `context`).
 - Perfil do usuário agora possui campo de **Chave PIX** com exibição e edição na tela de perfil.
 - Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.
@@ -35,6 +36,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Checkout Pro agora envia `payer` enriquecido (email, nome, sobrenome, CPF e telefone quando disponíveis) e salva request/response da preferência no `raw_payload` para facilitar diagnóstico de casos com login obrigatório no Mercado Pago.
 - Fluxo de assinatura passou a forçar geração de nova preferência do Mercado Pago a cada clique em "Assinar Agora", evitando reuso de `checkout_url` antigo que podia manter comportamento incorreto de autenticação.
 - Telefones foram padronizados para salvar no formato `55DDDNÚMERO` em formulários de cadastro/edição, aceitando entrada local sem DDI; envio de WhatsApp normaliza o número antes de disparar em todos os fluxos.
+- Tela de tarefas pessoais simplificada para foco em pendentes: remoção de referências de concluídas, confirmação antes de concluir via checkbox e atualização da página após conclusão.
 - Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.

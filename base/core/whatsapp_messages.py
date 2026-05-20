@@ -36,6 +36,14 @@ WHATSAPP_MESSAGE_TEMPLATES = {
         "Sua conta foi ativada com sucesso. 🚀\n"
         "Bem-vindo(a) ao *7event*!"
     ),
+    "task_reminder_1h": Template(
+        "Oi, *$nome*!\n\n"
+        "*_Lembrete_*:\n"
+        "Tarefa *$titulo*\n"
+        "Data: $data\n"
+        "Horário: $hora\n\n"
+        "*_7event_*"
+    ),
     # "plan_downgraded_cutoff": Template(
     #     "Oi, *$nome*!\n\n"
     #     "Seu plano foi ajustado para FREE por falta de pagamento até o dia 15. ⚠️\n"

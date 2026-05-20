@@ -11,6 +11,7 @@ from .models import (
     BillingPeriod,
     SubscriptionStatus,
     PrivacyTerm,
+    PersonalTaskReminderDispatch,
 )
 
 
@@ -155,3 +156,11 @@ class PrivacyTermAdmin(admin.ModelAdmin):
         ("Conteúdo", {"fields": ("content",)}),
     )
     readonly_fields = ["created_at"]
+
+
+@admin.register(PersonalTaskReminderDispatch)
+class PersonalTaskReminderDispatchAdmin(admin.ModelAdmin):
+    list_display = ["task", "reminder_type", "sent_at"]
+    list_filter = ["reminder_type", "sent_at"]
+    search_fields = ["task__title", "task__user__email", "task__user__username"]
+    readonly_fields = ["task", "reminder_type", "sent_at"]
