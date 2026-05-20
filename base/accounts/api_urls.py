@@ -1,12 +1,15 @@
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.routers import DefaultRouter
+from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import api_auth
 import json
 import os
+from base.accounts.services.task_reminders import run_task_reminders
 
 router = DefaultRouter()
 router.register(r"auth", api_auth.AuthViewSet, basename="auth-api")
@@ -236,4 +239,36 @@ urlpatterns = [
     path("fcm/token/", save_fcm_token, name="fcm_save_token"),
     path("fcm/send/", send_fcm_notification, name="fcm_send"),
     path("fcm/test/", send_fcm_test, name="fcm_test"),
+]
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def run_task_reminders_webhook(request):
+    configured = (getattr(settings, "TASK_REMINDERS_WEBHOOK_TOKEN", "") or "").strip()
+    incoming = (
+        request.headers.get("X-Webhook-Token", "")
+        or request.headers.get("Authorization", "").replace("Bearer ", "")
+    ).strip()
+
+    if not configured:
+        return Response({"success": False, "error": "webhook_not_configured"}, status=503)
+
+    if incoming != configured:
+        return Response({"success": False, "error": "unauthorized"}, status=401)
+
+    lead_minutes = request.data.get("lead_minutes", 60)
+    tolerance_minutes = request.data.get("tolerance_minutes", 5)
+
+    result = run_task_reminders(
+        lead_minutes=lead_minutes,
+        tolerance_minutes=tolerance_minutes,
+    )
+
+    return Response({"success": True, "result": result}, status=200)
+
+
+urlpatterns += [
+    path("webhooks/task-reminders/run/", run_task_reminders_webhook, name="task_reminders_webhook_run"),
 ]

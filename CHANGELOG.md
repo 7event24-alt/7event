@@ -9,6 +9,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Integração base com n8n para disparo de mensagens WhatsApp via webhook, com helper reutilizável (`base/core/n8n.py`) e variáveis de ambiente dedicadas.
 - Catálogo central de mensagens WhatsApp por motivo/evento (`base/core/whatsapp_messages.py`), com templates para cadastro, ativação e status de pagamento.
 - Agendamento de lembrete de tarefa pessoal via comando (`send_task_reminders`) para disparo por webhook 1 hora antes do horário da tarefa, com controle de idempotência por tarefa/tipo de lembrete.
+- Novo webhook interno para execução remota da rotina de lembretes de tarefa (`POST /api/v1/webhooks/task-reminders/run/`) com autenticação por token, permitindo agendamento externo (ex.: n8n Schedule).
 - Helper de n8n expandido para aceitar payload extra e simulação de evento real (`send_whatsapp_event`) com metadados (`event_id`, `event`, `source`, `sent_at`, `context`).
 - Perfil do usuário agora possui campo de **Chave PIX** com exibição e edição na tela de perfil.
 - Lista de **Minha Agenda Pessoal** passou a reutilizar o mesmo modal para criar e editar itens.

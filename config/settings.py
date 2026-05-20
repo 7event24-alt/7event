@@ -355,3 +355,6 @@ APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "").strip().rstrip("/")
 # n8n webhooks (outbound)
 N8N_WHATSAPP_WEBHOOK_URL = os.environ.get("N8N_WHATSAPP_WEBHOOK_URL", "").strip()
 N8N_WHATSAPP_WEBHOOK_TOKEN = os.environ.get("N8N_WHATSAPP_WEBHOOK_TOKEN", "").strip()
+
+# inbound webhook para disparar rotina de lembretes
+TASK_REMINDERS_WEBHOOK_TOKEN = os.environ.get("TASK_REMINDERS_WEBHOOK_TOKEN", "").strip()
