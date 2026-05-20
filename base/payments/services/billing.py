@@ -120,6 +120,13 @@ def ensure_checkout_for_transaction(transaction_obj, request):
                 "pending": pending_url,
             },
             "auto_return": "approved",
+            "payment_methods": {
+                # Mantem checkout aberto para cartao/PIX/boleto sem forcar wallet login.
+                "excluded_payment_types": [],
+                "excluded_payment_methods": [],
+                "installments": 12,
+                "default_installments": 1,
+            },
         }
     )
 
