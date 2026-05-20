@@ -28,6 +28,35 @@ def _month_day_safe(year, month, day):
     return date(year, month, min(day, last_day))
 
 
+def _build_mp_payer_payload(user):
+    payer = {
+        "email": (user.email or "").strip(),
+    }
+
+    first_name = (user.first_name or "").strip()
+    last_name = (user.last_name or "").strip()
+    if first_name:
+        payer["name"] = first_name
+    if last_name:
+        payer["surname"] = last_name
+
+    cpf = "".join(c for c in str(getattr(user, "cpf", "") or "") if c.isdigit())
+    if len(cpf) == 11:
+        payer["identification"] = {
+            "type": "CPF",
+            "number": cpf,
+        }
+
+    phone = "".join(c for c in str(getattr(user, "phone", "") or "") if c.isdigit())
+    if phone.startswith("55") and len(phone) in (12, 13):
+        payer["phone"] = {
+            "area_code": phone[2:4],
+            "number": phone[4:],
+        }
+
+    return payer
+
+
 def get_or_create_monthly_transaction(user, plan, billing_period=BillingPeriod.MONTHLY):
     billing_month = month_start()
     reference = build_external_reference(user.id, plan.id, billing_month)
@@ -85,9 +114,13 @@ def get_or_create_monthly_transaction(user, plan, billing_period=BillingPeriod.M
     return tx
 
 
-def ensure_checkout_for_transaction(transaction_obj, request):
-    if transaction_obj.checkout_url:
+def ensure_checkout_for_transaction(transaction_obj, request, force_new=False):
+    if transaction_obj.checkout_url and not force_new:
         return transaction_obj
+
+    if force_new:
+        transaction_obj.provider_preference_id = ""
+        transaction_obj.checkout_url = ""
 
     base_url = settings.APP_PUBLIC_URL or request.build_absolute_uri("/").rstrip("/")
     if base_url.startswith("http://"):
@@ -98,42 +131,46 @@ def ensure_checkout_for_transaction(transaction_obj, request):
     pending_url = f"{base_url}{reverse('plans:payment_pending')}"
     notification_url = (settings.MP_NOTIFICATION_URL or "").strip() or f"{base_url}{reverse('payments:webhook_mercadopago')}"
 
-    preference = create_preference(
-        {
-            "items": [
-                {
-                    "title": f"Plano {transaction_obj.plan.name} - {transaction_obj.billing_month.strftime('%m/%Y')}",
-                    "quantity": 1,
-                    "currency_id": transaction_obj.currency,
-                    "unit_price": float(transaction_obj.amount),
-                }
-            ],
-            "external_reference": transaction_obj.external_reference,
-            "notification_url": notification_url,
-            "metadata": {
-                "user_id": transaction_obj.user_id,
-                "plan_id": transaction_obj.plan_id,
-                "billing_month": transaction_obj.billing_month.strftime("%Y-%m"),
-            },
-            "back_urls": {
-                "success": success_url,
-                "failure": failure_url,
-                "pending": pending_url,
-            },
-            "auto_return": "approved",
-            "payment_methods": {
-                # Mantem checkout aberto para cartao/PIX/boleto sem forcar wallet login.
-                "excluded_payment_types": [],
-                "excluded_payment_methods": [],
-                "installments": 12,
-                "default_installments": 1,
-            },
-        }
-    )
+    preference_payload = {
+        "items": [
+            {
+                "title": f"Plano {transaction_obj.plan.name} - {transaction_obj.billing_month.strftime('%m/%Y')}",
+                "quantity": 1,
+                "currency_id": transaction_obj.currency,
+                "unit_price": float(transaction_obj.amount),
+            }
+        ],
+        "external_reference": transaction_obj.external_reference,
+        "notification_url": notification_url,
+        "metadata": {
+            "user_id": transaction_obj.user_id,
+            "plan_id": transaction_obj.plan_id,
+            "billing_month": transaction_obj.billing_month.strftime("%Y-%m"),
+        },
+        "back_urls": {
+            "success": success_url,
+            "failure": failure_url,
+            "pending": pending_url,
+        },
+        "auto_return": "approved",
+        "payer": _build_mp_payer_payload(transaction_obj.user),
+        "payment_methods": {
+            # Mantem checkout aberto para cartao/PIX/boleto sem forcar wallet login.
+            "excluded_payment_types": [],
+            "excluded_payment_methods": [],
+            "installments": 12,
+            "default_installments": 1,
+        },
+    }
+
+    preference = create_preference(preference_payload)
 
     transaction_obj.provider_preference_id = preference.get("id", "")
     transaction_obj.checkout_url = preference.get("init_point", "")
-    transaction_obj.raw_payload = preference
+    transaction_obj.raw_payload = {
+        "preference_request": preference_payload,
+        "preference_response": preference,
+    }
     transaction_obj.save(update_fields=["provider_preference_id", "checkout_url", "raw_payload", "updated_at"])
     return transaction_obj
 

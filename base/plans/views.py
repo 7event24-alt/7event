@@ -49,7 +49,8 @@ class PlanListView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse("plans:activate_free"))
 
         transaction_obj = get_or_create_monthly_transaction(request.user, plan)
-        transaction_obj = ensure_checkout_for_transaction(transaction_obj, request)
+        # Sempre gera preferencia nova para evitar reuso de link antigo/cache de checkout.
+        transaction_obj = ensure_checkout_for_transaction(transaction_obj, request, force_new=True)
         request.session["payment_link"] = transaction_obj.checkout_url
 
         return HttpResponseRedirect(reverse("plans:waiting"))

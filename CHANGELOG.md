@@ -32,6 +32,8 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Perfil agora normaliza telefone para salvar no padrão `55DDDNÚMERO`, exibe telefone formatado (`+55 (DD) 9XXXX-XXXX`) e mantém CPF persistido/formatado no formulário e na visualização.
 - Preferência do Mercado Pago passou a enviar `payment_methods` explícitos (parcelamento até 12x, sem exclusões) para manter checkout aberto e reduzir chance de fluxo wallet-only.
 - Disparo de WhatsApp por motivo agora valida se existe template antes de enviar; sem template, a requisição para n8n é ignorada. Fluxos conectados: cadastro, ativação, pagamento aprovado e downgrade por cutoff.
+- Checkout Pro agora envia `payer` enriquecido (email, nome, sobrenome, CPF e telefone quando disponíveis) e salva request/response da preferência no `raw_payload` para facilitar diagnóstico de casos com login obrigatório no Mercado Pago.
+- Fluxo de assinatura passou a forçar geração de nova preferência do Mercado Pago a cada clique em "Assinar Agora", evitando reuso de `checkout_url` antigo que podia manter comportamento incorreto de autenticação.
 - Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.
