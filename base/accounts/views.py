@@ -294,6 +294,20 @@ class RegisterView(View):
                 request,
                 "Cadastro realizado! Verifique seu email para ativar sua conta.",
             )
+
+            # Disparo opcional de WhatsApp via n8n (nao bloqueia cadastro)
+            try:
+                from base.core.n8n import send_whatsapp_by_reason
+
+                if user.phone:
+                    send_whatsapp_by_reason(
+                        phone=user.phone,
+                        reason="user_registered",
+                        nome=(user.first_name or user.full_name or user.username or ""),
+                    )
+            except Exception:
+                logger.exception("Falha ao disparar WhatsApp de cadastro")
+
             return render(
                 request, "accounts/registration_success.html", {"email": user.email}
             )
@@ -327,6 +341,23 @@ class ActivateAccountView(View):
             user.is_active = True
             user.verification_token = ""
             user.save()
+
+            # Disparo opcional de WhatsApp via n8n (nao bloqueia ativacao)
+            try:
+                from base.core.n8n import send_whatsapp_by_reason
+
+                if user.phone:
+                    send_whatsapp_by_reason(
+                        phone=user.phone,
+                        reason="user_activated",
+                        nome=(user.first_name or user.full_name or user.username or ""),
+                    )
+            except Exception:
+                import logging
+
+                logging.getLogger(__name__).exception(
+                    "Falha ao disparar WhatsApp de ativacao"
+                )
 
             return render(request, self.template_name)
 

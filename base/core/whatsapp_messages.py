@@ -50,6 +50,11 @@ def get_whatsapp_message_template_keys():
     return sorted(WHATSAPP_MESSAGE_TEMPLATES.keys())
 
 
+def has_whatsapp_message_template(reason):
+    """Informa se existe template para o motivo informado."""
+    return reason in WHATSAPP_MESSAGE_TEMPLATES
+
+
 def build_whatsapp_message(reason, **context):
     """Monta mensagem a partir do motivo e contexto.
 

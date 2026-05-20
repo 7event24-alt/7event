@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from base.accounts.models import BillingPeriod, Plan, PlanType, Subscription, SubscriptionStatus
 from base.payments.models import PaymentStatus, PaymentTransaction
+from base.core.n8n import send_whatsapp_by_reason
 
 from .mercadopago_client import create_preference
 
@@ -169,6 +170,14 @@ def apply_approved_payment(transaction_obj, payment_payload):
 
     tx.user.plan = tx.plan
     tx.user.save(update_fields=["plan", "updated_at"])
+
+    if tx.user.phone:
+        send_whatsapp_by_reason(
+            phone=tx.user.phone,
+            reason="payment_approved",
+            nome=(tx.user.first_name or tx.user.full_name or tx.user.username or ""),
+            plano=(tx.plan.name if tx.plan else ""),
+        )
     return tx
 
 
@@ -218,4 +227,11 @@ def downgrade_to_free_if_overdue(today=None):
             user.plan = free_plan
             user.save(update_fields=["plan", "updated_at"])
             updated += 1
+
+        if user.phone:
+            send_whatsapp_by_reason(
+                phone=user.phone,
+                reason="plan_downgraded_cutoff",
+                nome=(user.first_name or user.full_name or user.username or ""),
+            )
     return updated

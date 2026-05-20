@@ -66,6 +66,24 @@ def send_whatsapp_message(phone, message, timeout=10, extra_payload=None):
     return _post_n8n_payload(payload=payload, timeout=timeout)
 
 
+def send_whatsapp_by_reason(phone, reason, timeout=10, **context):
+    """Monta mensagem por motivo e envia ao n8n.
+
+    Se nao houver template para o motivo, nao faz requisicao.
+    """
+    from base.core.whatsapp_messages import (
+        build_whatsapp_message,
+        has_whatsapp_message_template,
+    )
+
+    if not has_whatsapp_message_template(reason):
+        logger.info("WhatsApp template ausente para motivo '%s'; envio ignorado", reason)
+        return False, "template_not_found"
+
+    message = build_whatsapp_message(reason, **context)
+    return send_whatsapp_message(phone=phone, message=message, timeout=timeout)
+
+
 def send_whatsapp_event(reason, phone, message, timeout=10, **context):
     """Send an event-like payload for realistic n8n flow tests.
 
