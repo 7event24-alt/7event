@@ -10,6 +10,15 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+def _normalize_br_phone(phone):
+    digits = "".join(c for c in str(phone or "") if c.isdigit())
+    if not digits:
+        return ""
+    if len(digits) in (10, 11):
+        digits = "55" + digits
+    return digits
+
+
 def _post_n8n_payload(payload, timeout=10):
     """Send JSON payload to configured n8n webhook URL."""
     url = (getattr(settings, "N8N_WHATSAPP_WEBHOOK_URL", "") or "").strip()
@@ -58,7 +67,7 @@ def send_whatsapp_message(phone, message, timeout=10, extra_payload=None):
     }
     """
     payload = {
-        "numero": str(phone or "").strip(),
+        "numero": _normalize_br_phone(phone),
         "mensagem": str(message or "").strip(),
     }
     if extra_payload and isinstance(extra_payload, dict):
@@ -101,7 +110,7 @@ def send_whatsapp_event(reason, phone, message, timeout=10, **context):
         "source": "7event",
         "event": str(reason or "").strip(),
         "sent_at": datetime.now(UTC).isoformat(),
-        "numero": str(phone or "").strip(),
+        "numero": _normalize_br_phone(phone),
         "mensagem": str(message or "").strip(),
         "context": context or {},
     }

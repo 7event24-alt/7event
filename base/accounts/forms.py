@@ -15,6 +15,20 @@ def add_widget_classes(field, error_class=""):
     return base_classes
 
 
+def normalize_br_phone(phone):
+    import re
+
+    digits = re.sub(r"\D", "", str(phone or ""))
+    if not digits:
+        return ""
+
+    # Entrada local: DDD + numero (10/11) -> adiciona DDI 55
+    if len(digits) in (10, 11):
+        digits = "55" + digits
+
+    return digits
+
+
 class RegisterForm(UserCreationForm):
     first_name = forms.CharField(
         max_length=30,
@@ -49,7 +63,7 @@ class RegisterForm(UserCreationForm):
         ),
     )
     phone = forms.CharField(
-        max_length=15,
+        max_length=20,
         required=True,
         label="Telefone",
         widget=forms.TextInput(
@@ -57,7 +71,7 @@ class RegisterForm(UserCreationForm):
                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm",
                 "placeholder": "(00) 00000-0000",
                 "data-mask": "phone",
-                "maxlength": "15",
+                "maxlength": "20",
             }
         ),
     )
@@ -224,12 +238,15 @@ class RegisterForm(UserCreationForm):
         if not phone:
             return phone
 
-        import re
-
-        phone_normalized = re.sub(r"\D", "", phone)
+        phone_normalized = normalize_br_phone(phone)
 
         if not phone_normalized:
             return phone
+
+        if not phone_normalized.startswith("55") or len(phone_normalized) not in (12, 13):
+            raise forms.ValidationError(
+                "Telefone invalido. Use DDD + numero, ex: (21) 99199-6769."
+            )
 
         from django.contrib.auth import get_user_model
 
@@ -237,13 +254,13 @@ class RegisterForm(UserCreationForm):
 
         for user in User.objects.filter(phone__isnull=False).exclude(phone=""):
             if user.phone:
-                user_phone_normalized = re.sub(r"\D", "", user.phone)
+                user_phone_normalized = normalize_br_phone(user.phone)
                 if user_phone_normalized == phone_normalized:
                     raise forms.ValidationError(
                         "Este telefone já está cadastrado em outra conta. "
                         "Entre em contato com o suporte pelo WhatsApp +55 11 94347-9664 para recuperar seu acesso."
                     )
-        return phone
+        return phone_normalized
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -259,11 +276,9 @@ class RegisterForm(UserCreationForm):
 
     def save(self, commit=True):
         import secrets
-        import re
-
         user = super().save(commit=False)
 
-        user.phone = re.sub(r"\D", "", user.phone) if user.phone else ""
+        user.phone = normalize_br_phone(user.phone)
 
         user.is_active = False
         user.verification_token = secrets.token_urlsafe(32)
@@ -533,12 +548,15 @@ class UserProfileForm(forms.ModelForm):
         if not phone:
             return phone
 
-        import re
-
-        phone_normalized = re.sub(r"\D", "", phone)
+        phone_normalized = normalize_br_phone(phone)
 
         if not phone_normalized:
             return phone
+
+        if not phone_normalized.startswith("55") or len(phone_normalized) not in (12, 13):
+            raise forms.ValidationError(
+                "Telefone invalido. Use DDD + numero, ex: (21) 99199-6769."
+            )
 
         from django.contrib.auth import get_user_model
 
@@ -550,7 +568,7 @@ class UserProfileForm(forms.ModelForm):
             .exclude(pk=self.instance.pk)
         ):
             if user.phone:
-                user_phone_normalized = re.sub(r"\D", "", user.phone)
+                user_phone_normalized = normalize_br_phone(user.phone)
                 if user_phone_normalized == phone_normalized:
                     raise forms.ValidationError(
                         "Este telefone já está cadastrado em outra conta."
@@ -600,7 +618,7 @@ class PersonalInfoForm(forms.ModelForm):
         widget=forms.TextInput(
             attrs={
                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm",
-                "placeholder": "5521991986769",
+                "placeholder": "(21) 99199-6769",
                 "maxlength": "20",
             }
         ),
@@ -677,26 +695,14 @@ class PersonalInfoForm(forms.ModelForm):
         if not phone:
             return phone
 
-        import re
-
-        phone_normalized = re.sub(r"\D", "", phone)
+        phone_normalized = normalize_br_phone(phone)
 
         if not phone_normalized:
             return phone
 
-        # Aceita envio local (DDD + numero) e normaliza para E.164 BR sem +
-        # Ex.: 21991986769 -> 5521991986769
-        if len(phone_normalized) in (10, 11):
-            phone_normalized = "55" + phone_normalized
-
-        if not phone_normalized.startswith("55"):
+        if not phone_normalized.startswith("55") or len(phone_normalized) not in (12, 13):
             raise forms.ValidationError(
-                "Telefone deve iniciar com 55 (DDI do Brasil). Ex: 5521991986769."
-            )
-
-        if len(phone_normalized) < 12 or len(phone_normalized) > 13:
-            raise forms.ValidationError(
-                "Telefone inválido. Use o formato 55DDDNÚMERO, ex: 5521991986769."
+                "Telefone invalido. Use DDD + numero, ex: (21) 99199-6769."
             )
 
         from django.contrib.auth import get_user_model
@@ -709,7 +715,7 @@ class PersonalInfoForm(forms.ModelForm):
             .exclude(pk=self.instance.pk)
         ):
             if user.phone:
-                user_phone_normalized = re.sub(r"\D", "", user.phone)
+                user_phone_normalized = normalize_br_phone(user.phone)
                 if user_phone_normalized == phone_normalized:
                     raise forms.ValidationError(
                         "Este telefone já está cadastrado em outra conta."
