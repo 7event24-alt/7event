@@ -693,3 +693,37 @@ class PersonalAgendaEvent(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.username} ({self.date})"
+
+
+class SystemReminderEntityType(models.TextChoices):
+    TASK = "task", _("Tarefa")
+    AGENDA_EVENT = "agenda_event", _("Evento de Agenda")
+    JOB = "job", _("Trabalho")
+
+
+class SystemReminderDispatch(models.Model):
+    entity_type = models.CharField(
+        max_length=20,
+        choices=SystemReminderEntityType.choices,
+        verbose_name=_("Tipo de Entidade"),
+    )
+    entity_id = models.PositiveIntegerField(verbose_name=_("ID da Entidade"))
+    reminder_type = models.CharField(max_length=40, verbose_name=_("Tipo de Lembrete"))
+    slot_date = models.DateField(verbose_name=_("Data de Referência"))
+    slot_label = models.CharField(max_length=20, default="exact", verbose_name=_("Slot"))
+    sent_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Enviado em"))
+
+    class Meta:
+        db_table = "system_reminder_dispatches"
+        verbose_name = _("Disparo de Lembrete")
+        verbose_name_plural = _("Disparos de Lembrete")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["entity_type", "entity_id", "reminder_type", "slot_date", "slot_label"],
+                name="uniq_system_reminder_dispatch",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["entity_type", "entity_id"]),
+            models.Index(fields=["slot_date", "reminder_type"]),
+        ]

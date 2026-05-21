@@ -9,7 +9,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import api_auth
 import json
 import os
-from base.accounts.services.task_reminders import run_task_reminders
+from base.accounts.services.reminders import run_system_reminders
 
 router = DefaultRouter()
 router.register(r"auth", api_auth.AuthViewSet, basename="auth-api")
@@ -245,7 +245,7 @@ urlpatterns = [
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
-def run_task_reminders_webhook(request):
+def run_system_reminders_webhook(request):
     configured = (getattr(settings, "TASK_REMINDERS_WEBHOOK_TOKEN", "") or "").strip()
     incoming = (
         request.headers.get("X-Webhook-Token", "")
@@ -258,17 +258,25 @@ def run_task_reminders_webhook(request):
     if incoming != configured:
         return Response({"success": False, "error": "unauthorized"}, status=401)
 
-    lead_minutes = request.data.get("lead_minutes", 60)
-    tolerance_minutes = request.data.get("tolerance_minutes", 5)
+    task_lead_minutes = request.data.get("task_lead_minutes", 60)
+    event_lead_minutes = request.data.get("event_lead_minutes", 1440)
+    job_lead_minutes = request.data.get("job_lead_minutes", 1440)
+    time_tolerance_minutes = request.data.get("time_tolerance_minutes", 5)
+    slot_tolerance_minutes = request.data.get("slot_tolerance_minutes", 10)
 
-    result = run_task_reminders(
-        lead_minutes=lead_minutes,
-        tolerance_minutes=tolerance_minutes,
+    result = run_system_reminders(
+        task_lead_minutes=task_lead_minutes,
+        event_lead_minutes=event_lead_minutes,
+        job_lead_minutes=job_lead_minutes,
+        time_tolerance_minutes=time_tolerance_minutes,
+        slot_tolerance_minutes=slot_tolerance_minutes,
     )
 
     return Response({"success": True, "result": result}, status=200)
 
 
 urlpatterns += [
-    path("webhooks/task-reminders/run/", run_task_reminders_webhook, name="task_reminders_webhook_run"),
+    path("webhooks/system-reminders/run/", run_system_reminders_webhook, name="system_reminders_webhook_run"),
+    # compatibilidade temporaria
+    path("webhooks/task-reminders/run/", run_system_reminders_webhook, name="task_reminders_webhook_run"),
 ]

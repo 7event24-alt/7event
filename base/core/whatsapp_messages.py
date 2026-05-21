@@ -34,14 +34,32 @@ WHATSAPP_MESSAGE_TEMPLATES = {
     "user_activated": Template(
         "Parabéns, *$nome*!\n\n"
         "Sua conta foi ativada com sucesso. 🚀\n"
-        "Bem-vindo(a) ao *7event*!"
+        "Bem-vindo(a) ao *_7event_*!"
     ),
     "task_reminder_1h": Template(
         "Oi, *$nome*!\n\n"
-        "*_Lembrete_*:\n"
-        "Tarefa *$titulo*\n"
+        "*_Lembrete de Tarefa_*:\n"
+        "*$titulo*\n"
         "Data: $data\n"
         "Horário: $hora\n\n"
+        "*_7event_*"
+    ),
+    "event_reminder_1d": Template(
+        "Oi, *$nome*!\n\n"
+        "*_Lembrete de Agenda Pessoal_*:\n"
+        "*$titulo*\n"
+        "Data: $data\n"
+        "Horário: $hora\n"
+        "Local: $local\n\n"
+        "*_7event_*"
+    ),
+    "job_reminder_1d": Template(
+        "Oi, *$nome*!\n\n"
+        "*_Lembrete de Trabalho_*:\n"
+        "*$titulo*\n"
+        "Data: $data\n"
+        "Horário: $hora\n"
+        "Local: $local\n\n"
         "*_7event_*"
     ),
     # "plan_downgraded_cutoff": Template(

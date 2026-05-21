@@ -12,6 +12,7 @@ from .models import (
     SubscriptionStatus,
     PrivacyTerm,
     PersonalTaskReminderDispatch,
+    SystemReminderDispatch,
 )
 
 
@@ -164,3 +165,11 @@ class PersonalTaskReminderDispatchAdmin(admin.ModelAdmin):
     list_filter = ["reminder_type", "sent_at"]
     search_fields = ["task__title", "task__user__email", "task__user__username"]
     readonly_fields = ["task", "reminder_type", "sent_at"]
+
+
+@admin.register(SystemReminderDispatch)
+class SystemReminderDispatchAdmin(admin.ModelAdmin):
+    list_display = ["entity_type", "entity_id", "reminder_type", "slot_date", "slot_label", "sent_at"]
+    list_filter = ["entity_type", "reminder_type", "slot_label", "slot_date"]
+    search_fields = ["entity_type", "entity_id", "reminder_type"]
+    readonly_fields = ["entity_type", "entity_id", "reminder_type", "slot_date", "slot_label", "sent_at"]
