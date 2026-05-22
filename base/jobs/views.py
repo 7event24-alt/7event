@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.views import View
 from django.contrib import messages
@@ -487,7 +487,6 @@ class ClientQuickCreateView(LoginRequiredMixin, View):
             )
 
 
-from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -687,4 +686,47 @@ class JobStaffStatusUpdateView(LoginRequiredMixin, View):
         
         job_staff.status = new_status
         job_staff.save()
+        return JsonResponse({"success": True})
+
+
+class JobExpenseUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk, expense_pk):
+        job = get_object_or_404(Job, pk=pk, is_active=True)
+        is_owner = job.created_by == request.user
+        if not (is_owner or request.user.is_superuser):
+            return JsonResponse({"success": False, "error": "Sem permissão"}, status=403)
+
+        from base.expenses.models import Expense
+        from base.expenses.views import ExpenseForm
+
+        expense = get_object_or_404(Expense, pk=expense_pk, job=job, is_active=True)
+        data = request.POST.copy()
+        data["job"] = str(job.pk)
+        form = ExpenseForm(data, instance=expense, user=request.user)
+        if form.is_valid():
+            updated = form.save(commit=False)
+            if not updated.performed_by_id:
+                updated.performed_by = request.user
+            updated.save()
+            return JsonResponse({"success": True})
+
+        first_error = "Não foi possível atualizar a despesa."
+        if form.errors:
+            first_field = next(iter(form.errors))
+            first_error = form.errors[first_field][0]
+        return JsonResponse({"success": False, "error": first_error}, status=400)
+
+
+class JobExpenseDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk, expense_pk):
+        job = get_object_or_404(Job, pk=pk, is_active=True)
+        is_owner = job.created_by == request.user
+        if not (is_owner or request.user.is_superuser):
+            return JsonResponse({"success": False, "error": "Sem permissão"}, status=403)
+
+        from base.expenses.models import Expense
+
+        expense = get_object_or_404(Expense, pk=expense_pk, job=job, is_active=True)
+        expense.is_active = False
+        expense.save(update_fields=["is_active"])
         return JsonResponse({"success": True})

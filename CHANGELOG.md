@@ -39,6 +39,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Telefones foram padronizados para salvar no formato `55DDDNÚMERO` em formulários de cadastro/edição, aceitando entrada local sem DDI; envio de WhatsApp normaliza o número antes de disparar em todos os fluxos.
 - Tela de tarefas pessoais simplificada para foco em pendentes: remoção de referências de concluídas, confirmação antes de concluir via checkbox e atualização da página após conclusão.
 - Lembretes sem horário definido agora usam janela em slots de 10h e 16h (sem reenviar no mesmo dia quando já disparado de manhã), com fallback textual "Não Definido" para horário/local quando ausentes.
+- Detalhe do trabalho agora permite editar e excluir despesas diretamente na listagem de despesas (modal + ações inline), sem sair da tela do trabalho.
 - Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.

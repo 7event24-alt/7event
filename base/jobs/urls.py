@@ -21,6 +21,8 @@ from .views import (
     JobRemoveStaffView,
     JobStaffStatusUpdateView,
     ProfessionalSearchView,
+    JobExpenseUpdateView,
+    JobExpenseDeleteView,
 )
 
 app_name = "jobs"
@@ -47,6 +49,8 @@ urlpatterns = [
     path("<int:pk>/staff/<int:staff_pk>/atualizar/", JobUpdateStaffView.as_view(), name="update_staff"),
     path("<int:pk>/staff/<int:staff_pk>/remover/", JobRemoveStaffView.as_view(), name="remove_staff"),
     path("<int:pk>/staff/<int:staff_pk>/status/", JobStaffStatusUpdateView.as_view(), name="update_staff_status"),
+    path("<int:pk>/despesas/<int:expense_pk>/atualizar/", JobExpenseUpdateView.as_view(), name="update_expense"),
+    path("<int:pk>/despesas/<int:expense_pk>/remover/", JobExpenseDeleteView.as_view(), name="delete_expense"),
     path("buscar-profissionais/", ProfessionalSearchView.as_view(), name="search_professionals"),
     path("api/", include(router.urls)),
 ]

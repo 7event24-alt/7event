@@ -209,13 +209,35 @@
                             <tr class="bg-gray-50 text-left text-sm text-gray-600">
                                 <th class="px-4 py-3">Descrição</th>
                                 <th class="px-4 py-3">Valor</th>
+                                <th class="px-4 py-3 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             {% for expense in expenses %}
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50" id="expense-row-{{ expense.id }}">
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ expense.description|default:"-" }}</td>
                                 <td class="px-4 py-3 text-sm font-medium text-gray-800">{{ expense.value|brl }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                                data-expense-id="{{ expense.id }}"
+                                                data-expense-category="{{ expense.category }}"
+                                                data-expense-value="{{ expense.value|stringformat:'s' }}"
+                                                data-expense-date="{{ expense.date|date:'Y-m-d' }}"
+                                                data-expense-description="{{ expense.description|default:''|escape }}"
+                                                onclick="openEditExpenseModal(this)"
+                                                class="text-primary hover:text-secondary p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                                title="Editar despesa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button"
+                                                onclick="deleteExpense({{ expense.id }})"
+                                                class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                                title="Excluir despesa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -855,6 +877,11 @@
         const form = document.getElementById('quickExpenseForm');
         if (!form) return;
 
+        const valueInput = form.querySelector('input[name="value"]');
+        if (valueInput) {
+            valueInput.value = normalizeMoneyValue(valueInput.value);
+        }
+
         const formData = new FormData(form);
 
         fetch('{% url "expenses:create" %}', {
@@ -877,6 +904,96 @@
         .catch(() => {
             alert('Erro ao adicionar despesa');
         });
+    }
+
+    function openEditExpenseModal(button) {
+        const modal = document.getElementById('editExpenseModal');
+        if (!modal) return;
+
+        const data = button ? button.dataset : {};
+        document.getElementById('editExpenseId').value = data.expenseId || '';
+        document.getElementById('editExpenseCategory').value = data.expenseCategory || '';
+        document.getElementById('editExpenseValue').value = data.expenseValue || '';
+        document.getElementById('editExpenseDate').value = data.expenseDate || '';
+        document.getElementById('editExpenseDescription').value = data.expenseDescription || '';
+        modal.classList.remove('hidden');
+    }
+
+    function closeEditExpenseModal() {
+        const modal = document.getElementById('editExpenseModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+    }
+
+    function submitEditExpenseForm() {
+        const expenseId = document.getElementById('editExpenseId').value;
+        const form = document.getElementById('editExpenseForm');
+        if (!expenseId || !form) return;
+
+        const valueInput = form.querySelector('input[name="value"]');
+        if (valueInput) {
+            valueInput.value = normalizeMoneyValue(valueInput.value);
+        }
+
+        const formData = new FormData(form);
+        fetch(`/app/trabalhos/{{ job.pk }}/despesas/${expenseId}/atualizar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': jobCsrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeEditExpenseModal();
+                location.reload();
+            } else {
+                alert(data.error || 'Erro ao atualizar despesa');
+            }
+        })
+        .catch(() => {
+            alert('Erro ao atualizar despesa');
+        });
+    }
+
+    function deleteExpense(expenseId) {
+        if (!confirm('Tem certeza que deseja excluir esta despesa?')) return;
+
+        const formData = new FormData();
+        fetch(`/app/trabalhos/{{ job.pk }}/despesas/${expenseId}/remover/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': jobCsrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Erro ao excluir despesa');
+            }
+        })
+        .catch(() => {
+            alert('Erro ao excluir despesa');
+        });
+    }
+
+    function normalizeMoneyValue(raw) {
+        const value = (raw || '').toString().trim();
+        if (!value) return '';
+        // Aceita sugestoes com virgula (pt-BR) e normaliza para formato decimal do backend.
+        if (value.includes(',') && value.includes('.')) {
+            return value.replace(/\./g, '').replace(',', '.');
+        }
+        if (value.includes(',')) {
+            return value.replace(',', '.');
+        }
+        return value;
     }
     </script>
     
@@ -978,7 +1095,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
-                        <input type="number" name="value" step="0.01" min="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm" placeholder="0,00">
+                        <input type="text" name="value" inputmode="decimal" required autocomplete="on" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm" placeholder="0,00">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
@@ -993,6 +1110,57 @@
 
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeExpenseModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editExpenseModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Editar Despesa</h3>
+                <button type="button" onclick="closeEditExpenseModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="editExpenseForm" onsubmit="event.preventDefault(); submitEditExpenseForm();" class="space-y-4">
+                <input type="hidden" id="editExpenseId" value="">
+                <input type="hidden" name="job" value="{{ job.pk }}">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                    <select id="editExpenseCategory" name="category" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm">
+                        <option value="">Selecione...</option>
+                        {% for value, label in expense_categories %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                        <input id="editExpenseValue" type="text" name="value" inputmode="decimal" required autocomplete="on" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                        <input id="editExpenseDate" type="date" name="date" required autocomplete="on" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea id="editExpenseDescription" name="description" rows="3" autocomplete="on" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm" placeholder="Descreva a despesa"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeEditExpenseModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         Cancelar
                     </button>
                     <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">

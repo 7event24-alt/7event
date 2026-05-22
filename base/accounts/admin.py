@@ -166,6 +166,16 @@ class PersonalTaskReminderDispatchAdmin(admin.ModelAdmin):
     search_fields = ["task__title", "task__user__email", "task__user__username"]
     readonly_fields = ["task", "reminder_type", "sent_at"]
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # Permite apenas visualizacao, sem edicao manual
+        return request.user.is_active and request.user.is_staff
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(SystemReminderDispatch)
 class SystemReminderDispatchAdmin(admin.ModelAdmin):
@@ -173,3 +183,13 @@ class SystemReminderDispatchAdmin(admin.ModelAdmin):
     list_filter = ["entity_type", "reminder_type", "slot_label", "slot_date"]
     search_fields = ["entity_type", "entity_id", "reminder_type"]
     readonly_fields = ["entity_type", "entity_id", "reminder_type", "slot_date", "slot_label", "sent_at"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # Permite apenas visualizacao, sem edicao manual
+        return request.user.is_active and request.user.is_staff
+
+    def has_delete_permission(self, request, obj=None):
+        return False
