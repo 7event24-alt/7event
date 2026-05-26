@@ -9,12 +9,14 @@ from django.conf import settings
 
 from base.accounts.models import Plan, PlanType, User
 from base.payments.services.billing import (
+    apply_preapproval_status,
     create_or_update_recurring_subscription,
     ensure_checkout_for_transaction,
     get_or_create_monthly_transaction,
     schedule_subscription_cancel_at_period_end,
 )
 from base.payments.services.mercadopago_client import MercadoPagoIntegrationError
+from base.payments.services.mercadopago_client import get_preapproval
 from base.support.models import SupportMessage, SupportSubject
 
 
@@ -31,6 +33,7 @@ class PlanListView(LoginRequiredMixin, View):
             self.template_name,
             {
                 "plans": plans,
+                "current_plan": current_plan,
                 "current_plan_id": current_plan.id if current_plan else None,
                 "subscription": subscription,
                 "subscriptions_recurring_enabled": getattr(
@@ -216,12 +219,44 @@ class PaymentReturnView(LoginRequiredMixin, View):
     flow_status = "pending"
 
     def get(self, request):
+        preapproval_id = request.GET.get("preapproval_id") or request.GET.get("subscription_id") or ""
+        if self.flow_status == "success" and preapproval_id:
+            try:
+                subscription = getattr(request.user, "subscription", None)
+                if subscription and subscription.mp_subscription_id == preapproval_id:
+                    payload = get_preapproval(preapproval_id)
+                    apply_preapproval_status(subscription, payload)
+            except Exception:
+                # Webhook/reconciliacao continua sendo a fonte oficial;
+                # esta sincronizacao no callback apenas acelera o refresh do plano.
+                pass
+
+        payment_id = (
+            request.GET.get("payment_id")
+            or request.GET.get("collection_id")
+            or request.GET.get("preapproval_id")
+            or request.GET.get("subscription_id")
+            or ""
+        )
+        status = (
+            request.GET.get("status")
+            or request.GET.get("collection_status")
+            or request.GET.get("preapproval_status")
+            or ""
+        )
+        external_reference = request.GET.get("external_reference", "") or request.session.get(
+            "requested_plan_name",
+            "",
+        )
+
         context = {
             "flow_status": self.flow_status,
-            "payment_id": request.GET.get("payment_id") or request.GET.get("collection_id") or "",
-            "external_reference": request.GET.get("external_reference", ""),
-            "status": request.GET.get("status") or request.GET.get("collection_status") or "",
-            "merchant_order_id": request.GET.get("merchant_order_id", ""),
+            "payment_id": payment_id,
+            "external_reference": external_reference,
+            "status": status,
+            "merchant_order_id": request.GET.get("merchant_order_id")
+            or request.GET.get("preapproval_plan_id")
+            or "",
         }
         return render(request, self.template_name, context)
 

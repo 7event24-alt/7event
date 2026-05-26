@@ -311,6 +311,9 @@ def apply_preapproval_status(subscription, preapproval_payload):
         subscription.payment_status = PaymentStatus.APPROVED
         subscription.last_payment_date = timezone.localdate()
         subscription.past_due_since = None
+        if subscription.plan_id and subscription.user and subscription.user.plan_id != subscription.plan_id:
+            subscription.user.plan_id = subscription.plan_id
+            subscription.user.save(update_fields=["plan", "updated_at"])
     elif mapped == SubscriptionFinancialStatus.CANCELADO:
         subscription.status = SubscriptionStatus.CANCELLED
         subscription.payment_status = PaymentStatus.CANCELLED
