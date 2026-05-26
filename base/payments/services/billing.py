@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -7,11 +7,18 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from base.accounts.models import BillingPeriod, Plan, PlanType, Subscription, SubscriptionStatus
+from base.accounts.models import (
+    BillingPeriod,
+    Plan,
+    PlanType,
+    Subscription,
+    SubscriptionFinancialStatus,
+    SubscriptionStatus,
+)
 from base.payments.models import PaymentStatus, PaymentTransaction
 from base.core.n8n import send_whatsapp_by_reason
 
-from .mercadopago_client import create_preference
+from .mercadopago_client import create_preapproval, create_preference, update_preapproval
 
 
 def month_start(ref_date=None):
@@ -175,6 +182,152 @@ def ensure_checkout_for_transaction(transaction_obj, request, force_new=False):
     return transaction_obj
 
 
+def _mp_base_url(request):
+    base_url = settings.APP_PUBLIC_URL or request.build_absolute_uri("/").rstrip("/")
+    if base_url.startswith("http://"):
+        base_url = "https://" + base_url[len("http://") :]
+    return base_url
+
+
+def _build_preapproval_payload(user, plan, request):
+    base_url = _mp_base_url(request)
+    amount = Decimal(plan.price_monthly)
+    user_email = (user.email or "").strip()
+    payer_email = user_email
+
+    test_mode = bool(getattr(settings, "MP_TEST_MODE", False))
+    fallback_test_email = (getattr(settings, "MP_TEST_PAYER_EMAIL", "") or "").strip()
+    if test_mode and fallback_test_email:
+        payer_email = fallback_test_email
+    elif test_mode and not fallback_test_email and "test" not in user_email.lower():
+        raise ValueError(
+            "Modo de teste ativo no Mercado Pago, mas nao foi definido MP_TEST_PAYER_EMAIL. "
+            "Configure um comprador de teste ou acesse com usuario tester."
+        )
+
+    return {
+        "reason": f"Assinatura {plan.name} - 7event",
+        "external_reference": f"sub-u{user.id}-p{plan.id}",
+        "payer_email": payer_email,
+        "auto_recurring": {
+            "frequency": 1,
+            "frequency_type": "months",
+            "transaction_amount": float(amount),
+            "currency_id": settings.MP_CURRENCY,
+        },
+        "notification_url": (settings.MP_NOTIFICATION_URL or "").strip()
+        or f"{base_url}{reverse('payments:webhook_mercadopago')}",
+        "back_url": f"{base_url}{reverse('plans:payment_success')}",
+        "metadata": {
+            "user_id": user.id,
+            "plan_id": plan.id,
+            "billing_period": BillingPeriod.MONTHLY,
+        },
+    }
+
+
+@transaction.atomic
+def create_or_update_recurring_subscription(user, plan, request):
+    subscription, _ = Subscription.objects.select_for_update().get_or_create(user=user)
+    preapproval_payload = _build_preapproval_payload(user, plan, request)
+    response = create_preapproval(preapproval_payload)
+
+    mp_subscription_id = str(response.get("id") or "").strip()
+    init_point = (response.get("init_point") or response.get("sandbox_init_point") or "").strip()
+    now = timezone.localdate()
+
+    subscription.plan = plan
+    subscription.status = SubscriptionStatus.ACTIVE
+    subscription.billing_period = BillingPeriod.MONTHLY
+    subscription.price = Decimal(plan.price_monthly)
+    subscription.mp_subscription_id = mp_subscription_id
+    subscription.financial_status = SubscriptionFinancialStatus.REGULAR
+    subscription.billing_anchor_date = subscription.billing_anchor_date or now
+    subscription.current_period_start = now
+    subscription.current_period_end = subscription.current_period_end or _month_day_safe(
+        now.year,
+        now.month,
+        min(now.day, settings.MP_BILLING_CUTOFF_DAY),
+    )
+    subscription.next_billing_date = _month_day_safe(
+        now.year + (1 if now.month == 12 else 0),
+        1 if now.month == 12 else now.month + 1,
+        min(now.day, settings.MP_BILLING_DUE_DAY),
+    )
+    subscription.cancel_at_period_end = False
+    subscription.cancelled_at = None
+    subscription.past_due_since = None
+    subscription.payment_status = PaymentStatus.PENDING
+    subscription.save()
+
+    tx = get_or_create_monthly_transaction(user, plan, billing_period=BillingPeriod.MONTHLY)
+    tx.raw_payload = {
+        "preapproval_request": preapproval_payload,
+        "preapproval_response": response,
+    }
+    tx.checkout_url = init_point
+    tx.save(update_fields=["raw_payload", "checkout_url", "updated_at"])
+
+    return subscription, tx, init_point
+
+
+@transaction.atomic
+def schedule_subscription_cancel_at_period_end(subscription):
+    if not subscription.mp_subscription_id:
+        subscription.cancel_at_period_end = True
+        subscription.financial_status = SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO
+        subscription.save(update_fields=["cancel_at_period_end", "financial_status", "updated_at"])
+        return subscription
+
+    update_preapproval(subscription.mp_subscription_id, {"status": "cancelled"})
+    subscription.cancel_at_period_end = True
+    subscription.financial_status = SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO
+    subscription.cancelled_at = None
+    subscription.save(
+        update_fields=["cancel_at_period_end", "financial_status", "cancelled_at", "updated_at"]
+    )
+    return subscription
+
+
+def map_mp_subscription_status(mp_status):
+    status = (mp_status or "").strip().lower()
+    if status in {"authorized", "active"}:
+        return SubscriptionFinancialStatus.REGULAR
+    if status in {"paused", "pending", "payment_required"}:
+        return SubscriptionFinancialStatus.INADIMPLENTE
+    if status in {"cancelled", "canceled"}:
+        return SubscriptionFinancialStatus.CANCELADO
+    return SubscriptionFinancialStatus.INADIMPLENTE
+
+
+@transaction.atomic
+def apply_preapproval_status(subscription, preapproval_payload):
+    previous = subscription.financial_status
+    mapped = map_mp_subscription_status(preapproval_payload.get("status"))
+    subscription.financial_status = mapped
+
+    if mapped == SubscriptionFinancialStatus.REGULAR:
+        subscription.status = SubscriptionStatus.ACTIVE
+        subscription.payment_status = PaymentStatus.APPROVED
+        subscription.last_payment_date = timezone.localdate()
+        subscription.past_due_since = None
+    elif mapped == SubscriptionFinancialStatus.CANCELADO:
+        subscription.status = SubscriptionStatus.CANCELLED
+        subscription.payment_status = PaymentStatus.CANCELLED
+        subscription.cancelled_at = timezone.now()
+    else:
+        subscription.payment_status = PaymentStatus.PENDING
+        if not subscription.past_due_since:
+            subscription.past_due_since = timezone.localdate()
+
+    if previous == SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO and mapped == SubscriptionFinancialStatus.CANCELADO:
+        subscription.status = SubscriptionStatus.CANCELLED
+        subscription.cancelled_at = timezone.now()
+
+    subscription.save()
+    return subscription
+
+
 @transaction.atomic
 def apply_approved_payment(transaction_obj, payment_payload):
     tx = PaymentTransaction.objects.select_for_update().get(pk=transaction_obj.pk)
@@ -203,6 +356,12 @@ def apply_approved_payment(transaction_obj, payment_payload):
         1 if tx.billing_month.month == 12 else tx.billing_month.month + 1,
         settings.MP_BILLING_DUE_DAY,
     )
+    subscription.financial_status = SubscriptionFinancialStatus.REGULAR
+    subscription.current_period_start = tx.billing_month
+    subscription.current_period_end = subscription.end_date
+    subscription.billing_anchor_date = subscription.billing_anchor_date or tx.billing_month
+    subscription.past_due_since = None
+    subscription.cancel_at_period_end = False
     subscription.save()
 
     tx.user.plan = tx.plan
@@ -235,6 +394,14 @@ def apply_non_approved_status(transaction_obj, payment_payload):
     tx.provider_payment_id = str(payment_payload.get("id") or tx.provider_payment_id)
     tx.raw_payload = payment_payload
     tx.save(update_fields=["status", "provider_payment_id", "raw_payload", "updated_at"])
+
+    subscription, _ = Subscription.objects.get_or_create(user=tx.user)
+    subscription.payment_status = tx.status
+    if subscription.financial_status == SubscriptionFinancialStatus.REGULAR:
+        subscription.financial_status = SubscriptionFinancialStatus.INADIMPLENTE
+    if not subscription.past_due_since:
+        subscription.past_due_since = timezone.localdate()
+    subscription.save(update_fields=["payment_status", "financial_status", "past_due_since", "updated_at"])
     return tx
 
 
@@ -255,9 +422,21 @@ def downgrade_to_free_if_overdue(today=None):
     for tx in overdue_transactions:
         user = tx.user
         subscription, _ = Subscription.objects.get_or_create(user=user)
+        if not subscription.past_due_since:
+            subscription.past_due_since = tx.grace_limit_date
+
+        tolerance_days = int(getattr(settings, "SUBSCRIPTIONS_PAST_DUE_TOLERANCE_DAYS", 5) or 5)
+        tolerance_deadline = subscription.past_due_since + timedelta(days=tolerance_days)
+        if check_date <= tolerance_deadline:
+            if subscription.financial_status != SubscriptionFinancialStatus.INADIMPLENTE:
+                subscription.financial_status = SubscriptionFinancialStatus.INADIMPLENTE
+                subscription.save(update_fields=["financial_status", "past_due_since", "updated_at"])
+            continue
+
         subscription.status = SubscriptionStatus.EXPIRED
         subscription.payment_status = tx.status
         subscription.plan = free_plan
+        subscription.financial_status = SubscriptionFinancialStatus.SUSPENSO
         subscription.save()
 
         if user.plan_id != free_plan.id:

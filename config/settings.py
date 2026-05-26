@@ -347,10 +347,18 @@ MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "")
 MP_PUBLIC_KEY = os.environ.get("MP_PUBLIC_KEY", "")
 MP_WEBHOOK_SECRET = os.environ.get("MP_WEBHOOK_SECRET", "")
 MP_NOTIFICATION_URL = os.environ.get("MP_NOTIFICATION_URL", "")
+MP_TEST_PAYER_EMAIL = os.environ.get("MP_TEST_PAYER_EMAIL", "").strip()
+MP_TEST_MODE = os.environ.get("MP_TEST_MODE", "false").lower() == "true"
 MP_CURRENCY = os.environ.get("MP_CURRENCY", "BRL")
 MP_BILLING_DUE_DAY = int(os.environ.get("MP_BILLING_DUE_DAY", "8"))
 MP_BILLING_CUTOFF_DAY = int(os.environ.get("MP_BILLING_CUTOFF_DAY", "15"))
 APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "").strip().rstrip("/")
+SUBSCRIPTIONS_RECURRING_ENABLED = os.environ.get("SUBSCRIPTIONS_RECURRING_ENABLED", "true").lower() == "true"
+SUBSCRIPTIONS_ENFORCEMENT_ENABLED = os.environ.get("SUBSCRIPTIONS_ENFORCEMENT_ENABLED", "false").lower() == "true"
+SUBSCRIPTIONS_CANCEL_AT_PERIOD_END_ENABLED = (
+    os.environ.get("SUBSCRIPTIONS_CANCEL_AT_PERIOD_END_ENABLED", "true").lower() == "true"
+)
+SUBSCRIPTIONS_PAST_DUE_TOLERANCE_DAYS = int(os.environ.get("SUBSCRIPTIONS_PAST_DUE_TOLERANCE_DAYS", "5"))
 
 # n8n webhooks (outbound)
 N8N_WHATSAPP_WEBHOOK_URL = os.environ.get("N8N_WHATSAPP_WEBHOOK_URL", "").strip()

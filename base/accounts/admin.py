@@ -57,8 +57,16 @@ class PlanAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ["user", "plan", "status", "billing_period", "price", "end_date"]
-    list_filter = ["status", "billing_period"]
+    list_display = [
+        "user",
+        "plan",
+        "status",
+        "financial_status",
+        "billing_period",
+        "price",
+        "end_date",
+    ]
+    list_filter = ["status", "financial_status", "billing_period"]
     fieldsets = (
         (None, {"fields": ("user", "plan")}),
         (
@@ -66,11 +74,19 @@ class SubscriptionAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "status",
+                    "financial_status",
                     "billing_period",
                     "price",
                     "start_date",
                     "end_date",
                     "next_billing_date",
+                    "billing_anchor_date",
+                    "current_period_start",
+                    "current_period_end",
+                    "mp_subscription_id",
+                    "past_due_since",
+                    "cancel_at_period_end",
+                    "cancelled_at",
                 )
             },
         ),

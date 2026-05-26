@@ -94,6 +94,14 @@ class SubscriptionStatus(models.TextChoices):
     CANCELLED = "cancelled", _("Cancelado")
 
 
+class SubscriptionFinancialStatus(models.TextChoices):
+    REGULAR = "regular", _("Regular")
+    INADIMPLENTE = "inadimplente", _("Inadimplente")
+    SUSPENSO = "suspenso", _("Suspenso")
+    CANCELAMENTO_AGENDADO = "cancelamento_agendado", _("Cancelamento agendado")
+    CANCELADO = "cancelado", _("Cancelado")
+
+
 class Feature(models.Model):
     key = models.CharField(max_length=50, unique=True, verbose_name=_("Chave"))
     name = models.CharField(max_length=100, verbose_name=_("Nome"))
@@ -275,6 +283,46 @@ class Subscription(models.Model):
     last_payment_date = models.DateField(
         null=True, blank=True, verbose_name=_("Último Pagamento")
     )
+    financial_status = models.CharField(
+        max_length=30,
+        choices=SubscriptionFinancialStatus.choices,
+        default=SubscriptionFinancialStatus.REGULAR,
+        verbose_name=_("Status Financeiro"),
+    )
+    billing_anchor_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Data âncora da cobrança"),
+    )
+    current_period_start = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Início do período atual"),
+    )
+    current_period_end = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Fim do período atual"),
+    )
+    mp_subscription_id = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name=_("ID assinatura Mercado Pago"),
+    )
+    past_due_since = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Inadimplente desde"),
+    )
+    cancel_at_period_end = models.BooleanField(
+        default=False,
+        verbose_name=_("Cancelar no fim do período"),
+    )
+    cancelled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Cancelado em"),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -283,12 +331,24 @@ class Subscription(models.Model):
         db_table = "subscriptions"
         verbose_name = _("Assinatura")
         verbose_name_plural = _("Assinaturas")
+        indexes = [
+            models.Index(fields=["financial_status"], name="sub_fin_status_idx"),
+            models.Index(fields=["next_billing_date"], name="sub_next_billing_idx"),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.plan.name if self.plan else 'Sem plano'}"
 
     def is_active(self):
-        return self.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]
+        return (
+            self.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]
+            and self.financial_status
+            in [
+                SubscriptionFinancialStatus.REGULAR,
+                SubscriptionFinancialStatus.INADIMPLENTE,
+                SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO,
+            ]
+        )
 
     def is_expired(self):
         from django.utils import timezone

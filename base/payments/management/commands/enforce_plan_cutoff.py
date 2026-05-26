@@ -4,7 +4,7 @@ from base.payments.services.billing import downgrade_to_free_if_overdue
 
 
 class Command(BaseCommand):
-    help = "Aplica downgrade para plano FREE quando a cobranca passou do corte sem aprovacao."
+    help = "Aplica tolerancia de inadimplencia e downgrade para FREE apos 5 dias."
 
     def handle(self, *args, **options):
         updated = downgrade_to_free_if_overdue()

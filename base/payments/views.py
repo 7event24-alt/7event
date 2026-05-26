@@ -4,9 +4,15 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from base.accounts.models import Subscription
+
 from .models import PaymentStatus, PaymentTransaction, PaymentWebhookEvent, WebhookProcessingStatus
-from .services.billing import apply_approved_payment, apply_non_approved_status
-from .services.mercadopago_client import get_payment
+from .services.billing import (
+    apply_approved_payment,
+    apply_non_approved_status,
+    apply_preapproval_status,
+)
+from .services.mercadopago_client import get_payment, get_preapproval
 
 
 def _extract_event_data(request, payload):
@@ -59,6 +65,25 @@ def mercadopago_webhook(request):
         return JsonResponse({"received": True, "ignored": True}, status=200)
 
     try:
+        topic_normalized = topic.lower()
+        is_preapproval = "preapproval" in topic_normalized or "subscription" in topic_normalized
+
+        if is_preapproval:
+            preapproval = get_preapproval(resource_id)
+            subscription = Subscription.objects.filter(mp_subscription_id=resource_id).first()
+            if not subscription:
+                event.processing_status = WebhookProcessingStatus.IGNORED
+                event.error_message = f"assinatura nao encontrada para {resource_id}"
+                event.processed_at = timezone.now()
+                event.save(update_fields=["processing_status", "error_message", "processed_at"])
+                return JsonResponse({"received": True, "ignored": True}, status=200)
+
+            apply_preapproval_status(subscription, preapproval)
+            event.processing_status = WebhookProcessingStatus.PROCESSED
+            event.processed_at = timezone.now()
+            event.save(update_fields=["processing_status", "processed_at"])
+            return JsonResponse({"received": True, "processed": True, "kind": "preapproval"}, status=200)
+
         payment = get_payment(resource_id)
         external_reference = (payment.get("external_reference") or "").strip()
         if not external_reference:

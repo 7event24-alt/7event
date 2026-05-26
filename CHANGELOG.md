@@ -28,6 +28,11 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Testes automatizados de limite de plano foram adicionados para validar bloqueio e fluxo de liberação quando o limite é infinito.
 - Listas de Trabalhos, Orçamentos, Clientes, Tarefas e Despesas foram padronizadas no layout em cards (estilo Agenda Pessoal), com melhor leitura, ações consistentes e badges no formato "rótulo: valor".
 - Sistema de tema com modos Claro, Escuro e Automático foi adicionado no Dashboard e na Landing Page, com persistência em `localStorage` e aplicação antecipada no `<head>` para evitar flash de tema.
+- Documentado plano completo de rollout da assinatura recorrente, com estrategia nao destrutiva, feature flags, rollout gradual, testes pos implementacao e limpeza de legado pos go-live em `docs/subscriptions-rollout-plan.md`.
+- Estrutura inicial de assinatura recorrente adicionada no domínio de `Subscription` com status financeiro, campos de ciclo individual, cancelamento no fim do período e rastreio de inadimplência para tolerância global.
+- Fluxo de planos agora suporta criação de assinatura recorrente no Mercado Pago (preapproval), persistindo `mp_subscription_id` e link de checkout por usuário/plano.
+- Nova ação de produto para cancelar assinatura no app com comportamento de cancelamento agendado até o fim do ciclo atual.
+- Novo comando operacional `reconcile_subscriptions` para reconciliação periódica de assinaturas recorrentes no Mercado Pago.
 
 ### Fix
 - Fluxo de planos pagos deixou de depender de aprovação manual de suporte e passou a usar checkout dinâmico por transação, com páginas de retorno (`success`, `pending`, `failure`) e processamento idempotente de webhook para evitar duplicidade.
@@ -43,6 +48,8 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Menções de suporte no sistema foram padronizadas para direcionar contato via WhatsApp no número **+55 11 94347-9664** (landing page, suporte, login, FAQ, mensagens de validação e email de boas-vindas).
 - Edição de item da agenda pessoal deixou de usar `prompt` e passou para formulário estruturado, mantendo o mesmo fluxo de validação e envio.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.
+- Rotina de cutoff de pagamentos passou a respeitar tolerância de 5 dias por assinatura antes de suspender e aplicar downgrade para plano FREE.
+- Webhook Mercado Pago passou a processar também eventos de assinatura recorrente (`preapproval/subscription`), aplicando transição de status financeiro no domínio interno.
 - Fluxo de orçamento passou a usar status padrão **Criado** (em vez de rascunho), com campo de status visível apenas na edição.
 - Template de email e detalhe de orçamento corrigidos para nomenclatura de diária e formatação monetária brasileira.
 - Botão de envio de orçamento no detalhe permanece visível e vira **Reenviar por email** após envio.

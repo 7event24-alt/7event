@@ -63,3 +63,4 @@ Thumbs.db
 
 # Firebase Service Account
 event-b2848-firebase-adminsdk-fbsvc-96ece007ee.json
+.env

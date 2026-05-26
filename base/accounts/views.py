@@ -888,15 +888,9 @@ class PersonalAgendaView(LoginRequiredMixin, View):
     def get(self, request):
         from .models import PersonalAgendaEvent, PersonalAgendaStatus
 
-        filter_status = request.GET.get("status", "all")
+        # Regra de UX: Agenda Pessoal sempre abre em "Todos" por padrao.
+        filter_status = "all"
         events = PersonalAgendaEvent.objects.filter(user=request.user)
-
-        if filter_status in {
-            PersonalAgendaStatus.PENDING,
-            PersonalAgendaStatus.COMPLETED,
-            PersonalAgendaStatus.CANCELLED,
-        }:
-            events = events.filter(status=filter_status)
 
         events = events.order_by("date", "start_time")
 

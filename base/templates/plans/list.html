@@ -13,6 +13,32 @@
         </p>
     </div>
 
+    {% if subscription and subscription.plan and subscription.plan.price_monthly > 0 %}
+    <div class="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-5">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-sm text-amber-800 font-semibold">Assinatura atual</p>
+                <p class="text-sm text-amber-700">
+                    Status financeiro: <strong>{{ subscription.get_financial_status_display|default:"Regular" }}</strong>
+                    {% if subscription.current_period_end %} | Acesso ate: <strong>{{ subscription.current_period_end|date:"d/m/Y" }}</strong>{% endif %}
+                </p>
+            </div>
+            {% if not subscription.cancel_at_period_end %}
+            <form method="post" action="{% url 'plans:cancel_subscription' %}">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
+                    Cancelar assinatura
+                </button>
+            </form>
+            {% else %}
+            <span class="inline-flex items-center rounded-lg bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
+                Cancelamento agendado para o fim do ciclo
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="flex flex-wrap justify-center gap-8">
         {% for plan in plans %}
         <div class="w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.4rem)] max-w-md bg-white rounded-2xl shadow-lg border-2 {% if plan.id == current_plan_id %}border-green-500 ring-2 ring-green-200{% elif plan.highlight %}border-primary scale-105{% else %}border-gray-200{% endif %} overflow-hidden">
@@ -98,7 +124,7 @@
                     </button>
                     {% elif plan.price_monthly > 0 %}
                     <button type="submit" class="w-full py-3 px-6 rounded-lg font-semibold transition-colors {% if plan.highlight %}bg-primary hover:bg-secondary text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-900{% endif %}">
-                        Assinar Agora
+                        {% if subscriptions_recurring_enabled %}Assinar Agora (recorrente){% else %}Assinar Agora{% endif %}
                     </button>
                     {% else %}
                     <button type="submit" formaction="{% url 'plans:activate_free' %}" class="w-full py-3 px-6 rounded-lg font-semibold transition-colors bg-green-600 hover:bg-green-700 text-white">

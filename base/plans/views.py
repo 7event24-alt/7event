@@ -5,12 +5,16 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.core.mail import send_mail
 from django.contrib import messages
+from django.conf import settings
 
 from base.accounts.models import Plan, PlanType, User
 from base.payments.services.billing import (
+    create_or_update_recurring_subscription,
     ensure_checkout_for_transaction,
     get_or_create_monthly_transaction,
+    schedule_subscription_cancel_at_period_end,
 )
+from base.payments.services.mercadopago_client import MercadoPagoIntegrationError
 from base.support.models import SupportMessage, SupportSubject
 
 
@@ -20,6 +24,7 @@ class PlanListView(LoginRequiredMixin, View):
     def get(self, request):
         plans = Plan.objects.filter(is_visible=True, is_active=True).order_by("price_monthly")
         current_plan = request.user.get_plan() if request.user.is_authenticated else None
+        subscription = getattr(request.user, "subscription", None)
 
         return render(
             request,
@@ -27,6 +32,12 @@ class PlanListView(LoginRequiredMixin, View):
             {
                 "plans": plans,
                 "current_plan_id": current_plan.id if current_plan else None,
+                "subscription": subscription,
+                "subscriptions_recurring_enabled": getattr(
+                    settings,
+                    "SUBSCRIPTIONS_RECURRING_ENABLED",
+                    False,
+                ),
             },
         )
 
@@ -47,6 +58,18 @@ class PlanListView(LoginRequiredMixin, View):
 
         if plan.price_monthly == 0:
             return HttpResponseRedirect(reverse("plans:activate_free"))
+
+        if getattr(settings, "SUBSCRIPTIONS_RECURRING_ENABLED", False):
+            try:
+                _, _, checkout_url = create_or_update_recurring_subscription(request.user, plan, request)
+                request.session["payment_link"] = checkout_url
+                return HttpResponseRedirect(reverse("plans:waiting"))
+            except MercadoPagoIntegrationError as exc:
+                messages.error(request, str(exc))
+                return HttpResponseRedirect(reverse("plans:list"))
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return HttpResponseRedirect(reverse("plans:list"))
 
         transaction_obj = get_or_create_monthly_transaction(request.user, plan)
         # Sempre gera preferencia nova para evitar reuso de link antigo/cache de checkout.
@@ -148,6 +171,31 @@ class ActivateFreeView(LoginRequiredMixin, View):
         return HttpResponseRedirect(reverse("dashboard:home"))
 
 
+class CancelSubscriptionView(LoginRequiredMixin, View):
+    def post(self, request):
+        if not getattr(settings, "SUBSCRIPTIONS_CANCEL_AT_PERIOD_END_ENABLED", True):
+            messages.error(request, "Cancelamento de assinatura indisponivel no momento.")
+            return HttpResponseRedirect(reverse("plans:list"))
+
+        subscription = getattr(request.user, "subscription", None)
+        if not subscription:
+            messages.error(request, "Nenhuma assinatura ativa encontrada.")
+            return HttpResponseRedirect(reverse("plans:list"))
+
+        try:
+            schedule_subscription_cancel_at_period_end(subscription)
+            messages.success(
+                request,
+                "Cancelamento agendado com sucesso. Seu acesso segue ativo ate o fim do ciclo pago.",
+            )
+        except Exception:
+            messages.error(
+                request,
+                "Nao foi possivel agendar o cancelamento agora. Tente novamente em instantes.",
+            )
+        return HttpResponseRedirect(reverse("plans:list"))
+
+
 class WaitingConfirmationView(LoginRequiredMixin, View):
     """Página de aguardando confirmação do pagamento"""
 
@@ -195,3 +243,4 @@ waiting_confirmation = WaitingConfirmationView.as_view()
 payment_success = PaymentSuccessView.as_view()
 payment_pending = PaymentPendingView.as_view()
 payment_failure = PaymentFailureView.as_view()
+cancel_subscription = CancelSubscriptionView.as_view()
