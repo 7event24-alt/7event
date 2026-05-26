@@ -586,6 +586,13 @@ class ProfileView(LoginRequiredMixin, View):
                     "skills_list": [s.strip() for s in (request.user.skills or "").split(",") if s.strip()]
                 })
 
+        elif form_type == 'notifications':
+            request.user.notify_via_whatsapp = bool(request.POST.get("notify_via_whatsapp"))
+            request.user.notify_via_email = bool(request.POST.get("notify_via_email"))
+            request.user.save(update_fields=["notify_via_whatsapp", "notify_via_email", "updated_at"])
+            messages.success(request, "Preferencias de notificacao atualizadas com sucesso!")
+            return redirect("accounts:profile")
+
         return redirect("accounts:profile")
 
 

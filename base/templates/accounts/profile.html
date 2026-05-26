@@ -363,6 +363,41 @@
                         <span>{{ user.get_plan.get_upgrade_text }}</span>
                     </a>
                     {% endif %}
+                    {% if user.subscription and user.get_plan.price_monthly > 0 %}
+                        {% if user.subscription.cancel_at_period_end %}
+                        <form method="post" action="{% url 'plans:resume_subscription' %}" class="mb-3">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition text-sm font-semibold">
+                                <i class="fas fa-rotate-left"></i>
+                                <span>Retomar cobrança</span>
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{% url 'plans:cancel_subscription' %}" class="mb-3">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 transition text-sm font-semibold">
+                                <i class="fas fa-ban"></i>
+                                <span>Cancelar assinatura</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                    <form method="post" class="mb-4 rounded-lg border border-gray-200 p-3 bg-gray-50">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="notifications">
+                        <p class="text-xs font-semibold text-gray-700 mb-2">Canal de notificacoes</p>
+                        <label class="flex items-center gap-2 text-sm text-gray-700 mb-2">
+                            <input type="checkbox" name="notify_via_whatsapp" class="rounded border-gray-300 text-primary focus:ring-primary" {% if user.notify_via_whatsapp %}checked{% endif %}>
+                            WhatsApp
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                            <input type="checkbox" name="notify_via_email" class="rounded border-gray-300 text-primary focus:ring-primary" {% if user.notify_via_email %}checked{% endif %}>
+                            Email
+                        </label>
+                        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-white hover:bg-secondary transition text-xs font-semibold">
+                            Salvar notificacoes
+                        </button>
+                    </form>
                     <div class="grid grid-cols-2 gap-3">
                         <a href="{% url 'clients:list' %}" class="flex flex-col items-center p-3 bg-gray-50 rounded-lg text-primary hover:bg-primary hover:text-white transition">
                             <i class="fas fa-users text-lg mb-1"></i>

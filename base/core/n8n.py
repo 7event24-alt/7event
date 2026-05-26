@@ -75,7 +75,7 @@ def send_whatsapp_message(phone, message, timeout=10, extra_payload=None):
     return _post_n8n_payload(payload=payload, timeout=timeout)
 
 
-def send_whatsapp_by_reason(phone, reason, timeout=10, **context):
+def send_whatsapp_by_reason(phone, reason, timeout=10, user=None, **context):
     """Monta mensagem por motivo e envia ao n8n.
 
     Se nao houver template para o motivo, nao faz requisicao.
@@ -88,6 +88,14 @@ def send_whatsapp_by_reason(phone, reason, timeout=10, **context):
     if not has_whatsapp_message_template(reason):
         logger.info("WhatsApp template ausente para motivo '%s'; envio ignorado", reason)
         return False, "template_not_found"
+
+    if user is not None and not getattr(user, "notify_via_whatsapp", True):
+        logger.info(
+            "WhatsApp desabilitado pelo usuario %s; envio ignorado para '%s'",
+            getattr(user, "id", "n/a"),
+            reason,
+        )
+        return False, "user_opted_out_whatsapp"
 
     message = build_whatsapp_message(reason, **context)
     return send_whatsapp_message(phone=phone, message=message, timeout=timeout)

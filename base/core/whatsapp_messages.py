@@ -62,6 +62,18 @@ WHATSAPP_MESSAGE_TEMPLATES = {
         "Local: $local\n\n"
         "*_7event_*"
     ),
+    "subscription_activated": Template(
+        "Oi, *$nome*!\n\n"
+        "Sua assinatura do plano *$plano* foi ativada com sucesso. ✅\n"
+        "Seu acesso completo ja esta liberado.\n\n"
+        "*_7event_*"
+    ),
+    "subscription_overdue": Template(
+        "Oi, *$nome*!\n\n"
+        "Identificamos inadimplencia na assinatura do plano *$plano*. ⚠️\n"
+        "Voce possui uma tolerancia de 5 dias para regularizar antes da suspensao.\n\n"
+        "*_7event_*"
+    ),
     # "plan_downgraded_cutoff": Template(
     #     "Oi, *$nome*!\n\n"
     #     "Seu plano foi ajustado para FREE por falta de pagamento até o dia 15. ⚠️\n"

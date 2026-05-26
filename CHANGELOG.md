@@ -33,6 +33,8 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Fluxo de planos agora suporta criação de assinatura recorrente no Mercado Pago (preapproval), persistindo `mp_subscription_id` e link de checkout por usuário/plano.
 - Nova ação de produto para cancelar assinatura no app com comportamento de cancelamento agendado até o fim do ciclo atual.
 - Novo comando operacional `reconcile_subscriptions` para reconciliação periódica de assinaturas recorrentes no Mercado Pago.
+- Perfil do usuário ganhou preferências de canal de notificação (WhatsApp e Email), permitindo receber em um ou ambos os canais.
+- Perfil passou a exibir ações rápidas de assinatura para cancelar ou retomar cobrança recorrente.
 
 ### Fix
 - Fluxo de planos pagos deixou de depender de aprovação manual de suporte e passou a usar checkout dinâmico por transação, com páginas de retorno (`success`, `pending`, `failure`) e processamento idempotente de webhook para evitar duplicidade.
@@ -50,6 +52,8 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Email de redefinição de senha voltou ao template padrão do Django, mantendo domínio/protocolo do host atual.
 - Rotina de cutoff de pagamentos passou a respeitar tolerância de 5 dias por assinatura antes de suspender e aplicar downgrade para plano FREE.
 - Webhook Mercado Pago passou a processar também eventos de assinatura recorrente (`preapproval/subscription`), aplicando transição de status financeiro no domínio interno.
+- Fluxo de cancelamento de assinatura passou a agendar encerramento ao fim do ciclo pago, com opção de retomar cobrança sem criar nova assinatura.
+- Assinaturas agora disparam notificações de ativação e inadimplência por WhatsApp e Email conforme preferências do usuário.
 - Fluxo de orçamento passou a usar status padrão **Criado** (em vez de rascunho), com campo de status visível apenas na edição.
 - Template de email e detalhe de orçamento corrigidos para nomenclatura de diária e formatação monetária brasileira.
 - Botão de envio de orçamento no detalhe permanece visível e vira **Reenviar por email** após envio.

@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.mail import send_mail
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
@@ -19,6 +20,56 @@ from base.payments.models import PaymentStatus, PaymentTransaction
 from base.core.n8n import send_whatsapp_by_reason
 
 from .mercadopago_client import create_preapproval, create_preference, update_preapproval
+
+
+def _notify_subscription_event(user, reason, **context):
+    if not user:
+        return
+
+    if user.phone:
+        send_whatsapp_by_reason(
+            phone=user.phone,
+            reason=reason,
+            user=user,
+            **context,
+        )
+
+    if getattr(user, "notify_via_email", True) and user.email:
+        subject_map = {
+            "subscription_activated": "Sua assinatura foi ativada",
+            "subscription_overdue": "Assinatura com inadimplencia",
+            "plan_downgraded_cutoff": "Plano ajustado por inadimplencia",
+            "payment_approved": "Pagamento aprovado",
+        }
+        body_map = {
+            "subscription_activated": (
+                f"Ola, {context.get('nome') or user.username}!\n\n"
+                f"Sua assinatura do plano {context.get('plano') or ''} foi ativada com sucesso."
+            ),
+            "subscription_overdue": (
+                f"Ola, {context.get('nome') or user.username}!\n\n"
+                f"Identificamos inadimplencia na assinatura do plano {context.get('plano') or ''}. "
+                "Voce possui tolerancia de 5 dias para regularizar."
+            ),
+            "plan_downgraded_cutoff": (
+                f"Ola, {context.get('nome') or user.username}!\n\n"
+                "Seu plano foi ajustado para FREE por inadimplencia apos o periodo de tolerancia."
+            ),
+            "payment_approved": (
+                f"Ola, {context.get('nome') or user.username}!\n\n"
+                f"Seu pagamento foi aprovado e o plano {context.get('plano') or ''} esta ativo."
+            ),
+        }
+        try:
+            send_mail(
+                subject_map.get(reason, "Atualizacao de assinatura"),
+                body_map.get(reason, ""),
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
 
 
 def month_start(ref_date=None):
@@ -273,13 +324,8 @@ def create_or_update_recurring_subscription(user, plan, request):
 
 @transaction.atomic
 def schedule_subscription_cancel_at_period_end(subscription):
-    if not subscription.mp_subscription_id:
-        subscription.cancel_at_period_end = True
-        subscription.financial_status = SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO
-        subscription.save(update_fields=["cancel_at_period_end", "financial_status", "updated_at"])
-        return subscription
-
-    update_preapproval(subscription.mp_subscription_id, {"status": "cancelled"})
+    # Regra de negocio: cancelamento deve ocorrer ao fim do ciclo pago.
+    # Aqui apenas agenda internamente; a cobranca pode ser retomada sem gerar nova assinatura.
     subscription.cancel_at_period_end = True
     subscription.financial_status = SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO
     subscription.cancelled_at = None
@@ -298,6 +344,27 @@ def map_mp_subscription_status(mp_status):
     if status in {"cancelled", "canceled"}:
         return SubscriptionFinancialStatus.CANCELADO
     return SubscriptionFinancialStatus.INADIMPLENTE
+
+
+@transaction.atomic
+def resume_scheduled_subscription(subscription):
+    subscription.cancel_at_period_end = False
+    if subscription.financial_status == SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO:
+        subscription.financial_status = SubscriptionFinancialStatus.REGULAR
+    subscription.cancelled_at = None
+
+    # Quando houver assinatura MP existente, tenta reautorizar para manter a mesma cobranca.
+    if subscription.mp_subscription_id:
+        try:
+            update_preapproval(subscription.mp_subscription_id, {"status": "authorized"})
+        except Exception:
+            # Mantem retomada interna; reconciliacao ajusta eventual divergencia externa.
+            pass
+
+    subscription.save(
+        update_fields=["cancel_at_period_end", "financial_status", "cancelled_at", "updated_at"]
+    )
+    return subscription
 
 
 @transaction.atomic
@@ -322,12 +389,42 @@ def apply_preapproval_status(subscription, preapproval_payload):
         subscription.payment_status = PaymentStatus.PENDING
         if not subscription.past_due_since:
             subscription.past_due_since = timezone.localdate()
+            if subscription.user:
+                _notify_subscription_event(
+                    user=subscription.user,
+                    reason="subscription_overdue",
+                    nome=(
+                        subscription.user.first_name
+                        or subscription.user.full_name
+                        or subscription.user.username
+                        or ""
+                    ),
+                    plano=(subscription.plan.name if subscription.plan else ""),
+                )
 
     if previous == SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO and mapped == SubscriptionFinancialStatus.CANCELADO:
         subscription.status = SubscriptionStatus.CANCELLED
         subscription.cancelled_at = timezone.now()
 
     subscription.save()
+
+    if (
+        mapped == SubscriptionFinancialStatus.REGULAR
+        and previous != SubscriptionFinancialStatus.REGULAR
+        and subscription.user
+    ):
+        _notify_subscription_event(
+            user=subscription.user,
+            reason="subscription_activated",
+            nome=(
+                subscription.user.first_name
+                or subscription.user.full_name
+                or subscription.user.username
+                or ""
+            ),
+            plano=(subscription.plan.name if subscription.plan else ""),
+        )
+
     return subscription
 
 
@@ -370,13 +467,12 @@ def apply_approved_payment(transaction_obj, payment_payload):
     tx.user.plan = tx.plan
     tx.user.save(update_fields=["plan", "updated_at"])
 
-    if tx.user.phone:
-        send_whatsapp_by_reason(
-            phone=tx.user.phone,
-            reason="payment_approved",
-            nome=(tx.user.first_name or tx.user.full_name or tx.user.username or ""),
-            plano=(tx.plan.name if tx.plan else ""),
-        )
+    _notify_subscription_event(
+        user=tx.user,
+        reason="payment_approved",
+        nome=(tx.user.first_name or tx.user.full_name or tx.user.username or ""),
+        plano=(tx.plan.name if tx.plan else ""),
+    )
     return tx
 
 
@@ -447,10 +543,9 @@ def downgrade_to_free_if_overdue(today=None):
             user.save(update_fields=["plan", "updated_at"])
             updated += 1
 
-        if user.phone:
-            send_whatsapp_by_reason(
-                phone=user.phone,
-                reason="plan_downgraded_cutoff",
-                nome=(user.first_name or user.full_name or user.username or ""),
-            )
+        _notify_subscription_event(
+            user=user,
+            reason="plan_downgraded_cutoff",
+            nome=(user.first_name or user.full_name or user.username or ""),
+        )
     return updated

@@ -13,6 +13,7 @@ from base.payments.services.billing import (
     create_or_update_recurring_subscription,
     ensure_checkout_for_transaction,
     get_or_create_monthly_transaction,
+    resume_scheduled_subscription,
     schedule_subscription_cancel_at_period_end,
 )
 from base.payments.services.mercadopago_client import MercadoPagoIntegrationError
@@ -199,6 +200,27 @@ class CancelSubscriptionView(LoginRequiredMixin, View):
         return HttpResponseRedirect(reverse("plans:list"))
 
 
+class ResumeSubscriptionView(LoginRequiredMixin, View):
+    def post(self, request):
+        subscription = getattr(request.user, "subscription", None)
+        if not subscription:
+            messages.error(request, "Nenhuma assinatura encontrada para retomar.")
+            return HttpResponseRedirect(reverse("plans:list"))
+
+        try:
+            resume_scheduled_subscription(subscription)
+            messages.success(
+                request,
+                "Assinatura retomada com sucesso. A cobranca recorrente foi mantida.",
+            )
+        except Exception:
+            messages.error(
+                request,
+                "Nao foi possivel retomar a assinatura agora. Tente novamente em instantes.",
+            )
+        return HttpResponseRedirect(reverse("plans:list"))
+
+
 class WaitingConfirmationView(LoginRequiredMixin, View):
     """Página de aguardando confirmação do pagamento"""
 
@@ -279,3 +301,4 @@ payment_success = PaymentSuccessView.as_view()
 payment_pending = PaymentPendingView.as_view()
 payment_failure = PaymentFailureView.as_view()
 cancel_subscription = CancelSubscriptionView.as_view()
+resume_subscription = ResumeSubscriptionView.as_view()

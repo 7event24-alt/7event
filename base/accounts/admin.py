@@ -149,6 +149,8 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "is_active",
                     "is_blocked",
+                    "notify_via_whatsapp",
+                    "notify_via_email",
                     "blocked_reason",
                     "blocked_at",
                     "notes",

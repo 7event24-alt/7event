@@ -404,6 +404,14 @@ class User(AbstractUser):
     show_sensitive_data = models.BooleanField(
         default=False, verbose_name=_("Permitir visualização de dados sensíveis")
     )
+    notify_via_whatsapp = models.BooleanField(
+        default=True,
+        verbose_name=_("Receber notificações por WhatsApp"),
+    )
+    notify_via_email = models.BooleanField(
+        default=True,
+        verbose_name=_("Receber notificações por Email"),
+    )
     accepted_term = models.ForeignKey(
         "PrivacyTerm",
         on_delete=models.SET_NULL,

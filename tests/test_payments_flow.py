@@ -18,6 +18,7 @@ from base.payments.models import PaymentStatus, PaymentTransaction, PaymentWebho
 from base.payments.services.billing import (
     create_or_update_recurring_subscription,
     downgrade_to_free_if_overdue,
+    resume_scheduled_subscription,
     schedule_subscription_cancel_at_period_end,
 )
 
@@ -142,9 +143,7 @@ class PaymentsFlowTests(TestCase):
         self.assertEqual(checkout_url, "https://mp.local/checkout")
         self.assertEqual(tx.checkout_url, "https://mp.local/checkout")
 
-    @patch("base.payments.services.billing.update_preapproval")
-    def test_cancel_subscription_marks_as_scheduled(self, mock_update_preapproval):
-        mock_update_preapproval.return_value = {"id": "preapp-123", "status": "cancelled"}
+    def test_cancel_subscription_marks_as_scheduled(self):
         sub = Subscription.objects.create(
             user=self.user,
             plan=self.pro_plan,
@@ -156,6 +155,24 @@ class PaymentsFlowTests(TestCase):
         sub.refresh_from_db()
 
         self.assertTrue(sub.cancel_at_period_end)
+
+    @patch("base.payments.services.billing.update_preapproval")
+    def test_resume_subscription_unsets_scheduled_cancel(self, mock_update_preapproval):
+        mock_update_preapproval.return_value = {"id": "preapp-123", "status": "authorized"}
+        sub = Subscription.objects.create(
+            user=self.user,
+            plan=self.pro_plan,
+            status=SubscriptionStatus.ACTIVE,
+            financial_status=SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO,
+            cancel_at_period_end=True,
+            mp_subscription_id="preapp-123",
+        )
+
+        resume_scheduled_subscription(sub)
+        sub.refresh_from_db()
+
+        self.assertFalse(sub.cancel_at_period_end)
+        self.assertEqual(sub.financial_status, SubscriptionFinancialStatus.REGULAR)
 
     @patch("base.payments.views.get_preapproval")
     def test_webhook_preapproval_updates_subscription_status(self, mock_get_preapproval):

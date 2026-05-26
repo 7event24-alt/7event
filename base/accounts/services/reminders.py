@@ -117,6 +117,7 @@ def run_system_reminders(
         ok, _ = send_whatsapp_by_reason(
             phone=user.phone,
             reason="task_reminder_1h",
+            user=user,
             nome=_user_name(user),
             titulo=task.title,
             data=task.date.strftime("%d/%m/%Y"),
@@ -181,6 +182,7 @@ def run_system_reminders(
         ok, _ = send_whatsapp_by_reason(
             phone=user.phone,
             reason="event_reminder_1d",
+            user=user,
             nome=_user_name(user),
             titulo=event.title,
             data=event.date.strftime("%d/%m/%Y"),
@@ -246,6 +248,7 @@ def run_system_reminders(
         ok, _ = send_whatsapp_by_reason(
             phone=user.phone,
             reason="job_reminder_1d",
+            user=user,
             nome=_user_name(user),
             titulo=job.title,
             data=job.start_date.strftime("%d/%m/%Y"),
