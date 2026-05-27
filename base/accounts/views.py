@@ -901,9 +901,9 @@ class PersonalAgendaView(LoginRequiredMixin, View):
     def get(self, request):
         from .models import PersonalAgendaEvent, PersonalAgendaStatus
 
-        # Regra de UX: Agenda Pessoal abre em "Todos" por padrao,
+        # Regra de UX: Agenda Pessoal abre em "Pendentes" por padrao,
         # mas continua permitindo filtrar pelos botoes da tela.
-        filter_status = request.GET.get("status", "all")
+        filter_status = request.GET.get("status", PersonalAgendaStatus.PENDING)
         events = PersonalAgendaEvent.objects.filter(user=request.user)
 
         if filter_status in {

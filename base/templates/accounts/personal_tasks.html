@@ -26,31 +26,35 @@
         <div class="divide-y divide-gray-100">
             {% for task in tasks %}
             <div class="p-4 hover:bg-gray-50" id="task-{{ task.id }}">
-                <div class="flex items-start gap-4">
-                    <div class="w-2 self-stretch rounded-full bg-primary"></div>
+                <div class="flex items-start gap-3 sm:gap-4">
+                    <div class="w-1.5 sm:w-2 self-stretch rounded-full bg-primary"></div>
                     <input type="checkbox"
                            onchange="toggleComplete({{ task.id }}, this)"
                            class="mt-0.5 w-5 h-5 text-primary rounded focus:ring-primary">
-                    <div class="flex-1 text-gray-800">
-                        <p class="font-medium">{{ task.title }}</p>
-                        <p class="text-sm text-gray-500">
-                            {{ task.date|date:"d/m/Y" }}
-                            {% if task.time %} às {{ task.time|time:"H:i" }}{% endif %}
-                        </p>
-                        <div class="mt-2">
+                    <div class="flex-1 min-w-0 text-gray-800">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="font-semibold leading-snug break-words">{{ task.title }}</p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <span class="font-medium">{{ task.date|date:"d/m/Y" }}</span>
+                                    {% if task.time %}<span class="mx-1">•</span>{{ task.time|time:"H:i" }}{% endif %}
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-1 sm:gap-2 self-start">
+                                <button onclick="openTaskModal({{ task.id }}, '{{ task.title|escapejs }}', '{{ task.date|date:"Y-m-d" }}', '{% if task.time %}{{ task.time|time:"H:i" }}{% endif %}')" class="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-secondary rounded-full hover:bg-blue-50 transition-colors" title="Editar" aria-label="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteTask({{ task.id }})" class="inline-flex items-center justify-center w-8 h-8 text-red-500 hover:text-red-700 rounded-full hover:bg-red-50 transition-colors" title="Excluir" aria-label="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-2.5">
                             <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-100 text-blue-800">
                                 <span class="uppercase tracking-wide text-[10px] opacity-70">Status:</span>
                                 <span>Pendente</span>
                             </span>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-1 sm:gap-2">
-                        <button onclick="openTaskModal({{ task.id }}, '{{ task.title|escapejs }}', '{{ task.date|date:"Y-m-d" }}', '{% if task.time %}{{ task.time|time:"H:i" }}{% endif %}')" class="text-primary hover:text-secondary p-2 rounded-lg hover:bg-blue-50 transition-colors" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteTask({{ task.id }})" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Excluir">
-                            <i class="fas fa-trash"></i>
-                        </button>
                     </div>
                 </div>
             </div>

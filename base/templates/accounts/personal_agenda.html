@@ -29,51 +29,60 @@
         <div class="divide-y divide-gray-100">
             {% for event in events %}
             <div class="p-4 hover:bg-gray-50" id="event-{{ event.id }}">
-                <div class="flex items-start gap-4">
-                    <div class="w-2 self-stretch rounded-full {% if event.status == 'pending' %}bg-violet-500{% elif event.status == 'completed' %}bg-green-500{% else %}bg-gray-400{% endif %}"></div>
+                <div class="flex items-start gap-3 sm:gap-4">
+                    <div class="w-1.5 sm:w-2 self-stretch rounded-full {% if event.status == 'pending' %}bg-violet-500{% elif event.status == 'completed' %}bg-green-500{% else %}bg-gray-400{% endif %}"></div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-medium text-gray-800">{{ event.title }}</p>
-                        <p class="text-sm text-gray-500">
-                            {{ event.date|date:"d/m/Y" }} -
-                            {% if event.start_time|time:"H:i" == "00:00" and event.end_time|time:"H:i" == "23:59" %}
-                                Dia inteiro
-                            {% else %}
-                                {{ event.start_time|time:"H:i" }}h às {{ event.end_time|time:"H:i" }}h
-                            {% endif %}
-                        </p>
-                        {% if event.recurrence != 'none' %}<p class="text-xs text-violet-600">Recorrência: {{ event.get_recurrence_display }}{% if event.recurrence_until %} até {{ event.recurrence_until|date:"d/m/Y" }}{% endif %}</p>{% endif %}
-                        {% if event.location %}<p class="text-sm text-gray-500">{{ event.location }}</p>{% endif %}
-                        {% if event.description %}<p class="text-sm text-gray-600 mt-1">{{ event.description }}</p>{% endif %}
-                    </div>
-                    <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <div class="flex flex-col gap-3 sm:gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-gray-800 leading-snug break-words">{{ event.title }}</p>
+                                <p class="text-sm text-gray-500 mt-1 leading-relaxed">
+                                    <span class="font-medium">{{ event.date|date:"d/m/Y" }}</span>
+                                    <span class="mx-1">•</span>
+                                    {% if event.start_time|time:"H:i" == "00:00" and event.end_time|time:"H:i" == "23:59" %}
+                                        Dia inteiro
+                                    {% else %}
+                                        {{ event.start_time|time:"H:i" }} às {{ event.end_time|time:"H:i" }}
+                                    {% endif %}
+                                </p>
+                                {% if event.recurrence != 'none' %}<p class="text-xs text-violet-600 mt-1">Recorrência: {{ event.get_recurrence_display }}{% if event.recurrence_until %} até {{ event.recurrence_until|date:"d/m/Y" }}{% endif %}</p>{% endif %}
+                                {% if event.location %}<p class="text-sm text-gray-500 mt-1 break-words">{{ event.location }}</p>{% endif %}
+                                {% if event.description %}<p class="text-sm text-gray-600 mt-1.5 break-words leading-relaxed">{{ event.description }}</p>{% endif %}
+                            </div>
+                            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:justify-end">
                         {% if event.status == 'pending' %}
                         {% if event.recurrence == 'none' %}
-                        <button onclick="setStatus({{ event.id }}, 'completed')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition-colors shadow-sm">
+                        <button onclick="setStatus({{ event.id }}, 'completed')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition-colors shadow-sm whitespace-nowrap">
                             <i class="fas fa-check text-[10px]"></i> Concluir
                         </button>
                         {% endif %}
-                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors">
+                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap">
                             <i class="fas fa-ban text-[10px]"></i> Cancelar
                         </button>
                         {% elif event.status == 'completed' %}
-                        <button onclick="setStatus({{ event.id }}, 'pending')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition-colors shadow-sm">
+                        <button onclick="setStatus({{ event.id }}, 'pending')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap">
                             <i class="fas fa-rotate-left text-[10px]"></i> Reabrir
                         </button>
-                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors">
+                        <button onclick="setStatus({{ event.id }}, 'cancelled')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap">
                             <i class="fas fa-ban text-[10px]"></i> Cancelar
                         </button>
                         {% else %}
-                        <button onclick="setStatus({{ event.id }}, 'pending')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition-colors shadow-sm">
+                        <button onclick="setStatus({{ event.id }}, 'pending')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap">
                             <i class="fas fa-rotate-left text-[10px]"></i> Reabrir
                         </button>
                         {% if event.recurrence == 'none' %}
-                        <button onclick="setStatus({{ event.id }}, 'completed')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition-colors shadow-sm">
+                        <button onclick="setStatus({{ event.id }}, 'completed')" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-full hover:bg-green-700 transition-colors shadow-sm whitespace-nowrap">
                             <i class="fas fa-check text-[10px]"></i> Concluir
                         </button>
                         {% endif %}
                         {% endif %}
-                        <button onclick="openAgendaModal({{ event.id }}, '{{ event.title|escapejs }}', '{{ event.date|date:"Y-m-d" }}', '{{ event.start_time|time:"H:i" }}', '{{ event.end_time|time:"H:i" }}', '{{ event.location|escapejs }}', '{{ event.description|escapejs }}', '{{ event.recurrence }}', '{% if event.recurrence_until %}{{ event.recurrence_until|date:"Y-m-d" }}{% endif %}')" class="text-violet-600 hover:text-violet-800"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteEvent({{ event.id }})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        <button onclick="openAgendaModal({{ event.id }}, '{{ event.title|escapejs }}', '{{ event.date|date:"Y-m-d" }}', '{{ event.start_time|time:"H:i" }}', '{{ event.end_time|time:"H:i" }}', '{{ event.location|escapejs }}', '{{ event.description|escapejs }}', '{{ event.recurrence }}', '{% if event.recurrence_until %}{{ event.recurrence_until|date:"Y-m-d" }}{% endif %}')" class="inline-flex items-center justify-center w-8 h-8 rounded-full text-violet-600 hover:text-violet-800 hover:bg-violet-50 transition-colors" aria-label="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteEvent({{ event.id }})" class="inline-flex items-center justify-center w-8 h-8 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors" aria-label="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
