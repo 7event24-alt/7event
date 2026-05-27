@@ -35,6 +35,7 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Novo comando operacional `reconcile_subscriptions` para reconciliação periódica de assinaturas recorrentes no Mercado Pago.
 - Perfil do usuário ganhou preferências de canal de notificação (WhatsApp e Email), permitindo receber em um ou ambos os canais.
 - Perfil passou a exibir ações rápidas de assinatura para cancelar ou retomar cobrança recorrente.
+- Login social com Google (OAuth) adicionado com `django-allauth`, incluindo botão "Continuar com Google" na tela de login quando as credenciais estiverem configuradas.
 
 ### Fix
 - Fluxo de planos pagos deixou de depender de aprovação manual de suporte e passou a usar checkout dinâmico por transação, com páginas de retorno (`success`, `pending`, `failure`) e processamento idempotente de webhook para evitar duplicidade.

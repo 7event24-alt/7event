@@ -85,7 +85,8 @@
             </div>
             
             <div class="p-8">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-slate-100 text-center mb-6">Entrar</h2>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-slate-100 text-center mb-2">Entrar</h2>
+                <p class="text-sm text-gray-500 dark:text-slate-400 text-center mb-6">Use seu email, telefone ou usuário para acessar</p>
                 
                 {% if messages %}
                 {% for message in messages %}
@@ -112,10 +113,10 @@
                 {% endfor %}
                 {% endif %}
                 
-                <form method="post">
+                <form method="post" id="loginForm" novalidate>
                     {% csrf_token %}
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">E-mail ou Telefone</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Usuário, E-mail ou Telefone</label>
                         <input type="text" name="username" value="{{ username_value|default:'' }}" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none {% if form.username.errors or form.errors %}border-red-500 focus:ring-red-500{% endif %}" placeholder="seu@email.com ou (00) 00000-0000" required>
                         {% if form.username.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -132,6 +133,9 @@
                                 <i class="fas fa-eye" id="eyeIcon"></i>
                             </button>
                         </div>
+                        <p id="capsLockHint" class="hidden text-xs text-amber-600 mt-1 flex items-center gap-1">
+                            <i class="fas fa-exclamation-triangle"></i> Caps Lock ativado
+                        </p>
                         {% if form.password.errors %}
                         <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
                             <i class="fas fa-exclamation-circle"></i>
@@ -156,13 +160,29 @@
                     }
                     </script>
                     
-                    <button type="submit" class="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition font-medium flex items-center justify-center gap-2">
-                        <i class="fas fa-sign-in-alt"></i> Entrar
+                    <div class="flex items-center justify-between mb-5">
+                        <a href="{% url 'password_reset' %}" class="text-sm text-primary hover:underline">Esqueci minha senha</a>
+                    </div>
+
+                    <button type="submit" id="loginSubmitBtn" class="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span id="loginSubmitText">Entrar</span>
                     </button>
                 </form>
+
+                {% if google_login_enabled %}
+                <div class="my-5 flex items-center gap-3">
+                    <div class="h-px flex-1 bg-gray-200 dark:bg-slate-700"></div>
+                    <span class="text-xs uppercase tracking-wide text-gray-400 dark:text-slate-500">ou</span>
+                    <div class="h-px flex-1 bg-gray-200 dark:bg-slate-700"></div>
+                </div>
+                <a href="/auth/social/google/login/" class="w-full inline-flex items-center justify-center gap-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-100 py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition font-medium">
+                    <i class="fab fa-google text-red-500"></i>
+                    Continuar com Google
+                </a>
+                {% endif %}
                 
                 <div class="mt-6 text-center text-sm text-gray-600 dark:text-slate-300">
-                    <p><a href="{% url 'password_reset' %}" class="text-primary hover:underline">Esqueci minha senha</a></p>
                     <p class="mt-2">Não tem conta? <a href="{% url 'accounts:register' %}" class="text-primary hover:underline font-medium">Cadastre-se</a></p>
                 </div>
                 
@@ -186,6 +206,30 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('loginSubmitBtn');
+        const submitText = document.getElementById('loginSubmitText');
+        const passwordInput = document.getElementById('passwordInput');
+        const capsLockHint = document.getElementById('capsLockHint');
+
+        if (passwordInput && capsLockHint) {
+            passwordInput.addEventListener('keyup', function(e) {
+                const on = e.getModifierState && e.getModifierState('CapsLock');
+                capsLockHint.classList.toggle('hidden', !on);
+            });
+            passwordInput.addEventListener('blur', function() {
+                capsLockHint.classList.add('hidden');
+            });
+        }
+
+        if (form && submitBtn && submitText) {
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                submitText.textContent = 'Entrando...';
+            });
+        }
+
         const errorField = document.querySelector('.border-red-500, input.error');
         if (errorField) {
             errorField.focus();

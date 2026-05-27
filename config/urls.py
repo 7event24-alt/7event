@@ -49,6 +49,7 @@ urlpatterns = [
     path("api/v1/", include("base.dashboard.api_urls")),
     path("api/v1/", include("base.payments.urls")),
     path("auth/", include("base.core.auth_urls")),
+    path("auth/social/", include("allauth.urls")),
     path("", include("base.landingpage.urls")),  # LP na raiz
     path("app/accounts/", include("base.accounts.urls")),
     path("app/planos/", include("base.plans.urls")),

@@ -28,6 +28,12 @@ class CustomLoginView(LoginView):
         context = super().get_context_data(**kwargs)
         if self.request.POST.get("username"):
             context["username_value"] = self.request.POST.get("username")
+        google_enabled = bool(
+            getattr(settings, "GOOGLE_LOGIN_ENABLED", False)
+            and getattr(settings, "GOOGLE_CLIENT_ID", "")
+            and getattr(settings, "GOOGLE_CLIENT_SECRET", "")
+        )
+        context["google_login_enabled"] = google_enabled
         return context
 
     def form_invalid(self, form):
@@ -895,9 +901,17 @@ class PersonalAgendaView(LoginRequiredMixin, View):
     def get(self, request):
         from .models import PersonalAgendaEvent, PersonalAgendaStatus
 
-        # Regra de UX: Agenda Pessoal sempre abre em "Todos" por padrao.
-        filter_status = "all"
+        # Regra de UX: Agenda Pessoal abre em "Todos" por padrao,
+        # mas continua permitindo filtrar pelos botoes da tela.
+        filter_status = request.GET.get("status", "all")
         events = PersonalAgendaEvent.objects.filter(user=request.user)
+
+        if filter_status in {
+            PersonalAgendaStatus.PENDING,
+            PersonalAgendaStatus.COMPLETED,
+            PersonalAgendaStatus.CANCELLED,
+        }:
+            events = events.filter(status=filter_status)
 
         events = events.order_by("date", "start_time")
 
