@@ -184,6 +184,11 @@ LOGIN_URL = "/app/accounts/login/"
 LOGIN_REDIRECT_URL = "/app/"
 LOGOUT_REDIRECT_URL = "/app/accounts/login/"
 
+# Proxy/HTTPS settings (required for OAuth callbacks behind Nginx)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+
 GOOGLE_LOGIN_ENABLED = os.environ.get("GOOGLE_LOGIN_ENABLED", "false").lower() == "true"
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
