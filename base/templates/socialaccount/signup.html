@@ -1,0 +1,64 @@
+{% load i18n %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar cadastro - 7event</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
+        <div class="px-6 pt-6 pb-4 text-center border-b border-slate-700">
+            <img src="{% static 'img/logo7eventbranco.png' %}" alt="7event" class="h-10 mx-auto mb-3">
+            <h1 class="text-xl font-bold">Finalizar cadastro</h1>
+            <p class="text-sm text-slate-300 mt-1">Só mais um passo para entrar com Google</p>
+        </div>
+
+        <div class="p-6">
+            <p class="text-sm text-slate-300 mb-4">
+                {% blocktrans %}Você está prestes a usar sua conta Google no 7event. Confirme os dados abaixo:{% endblocktrans %}
+            </p>
+
+            <form method="post" action="{% url 'socialaccount_signup' %}" class="space-y-4">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <p class="text-xs text-red-400 mt-1">{{ field.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {{ redirect_field }}
+
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-white hover:opacity-90 transition">
+                    <i class="fas fa-circle-check"></i>
+                    {% trans "Continuar" %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        input, select, textarea {
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid rgb(71 85 105);
+            background: rgb(15 23 42);
+            color: rgb(241 245 249);
+            padding: 0.6rem 0.75rem;
+            outline: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: rgb(45 90 138);
+            box-shadow: 0 0 0 2px rgba(45,90,138,.35);
+        }
+        .bg-primary { background-color: #1e3a5f; }
+    </style>
+</body>
+</html>

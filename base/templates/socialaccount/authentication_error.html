@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falha no login social - 7event</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+    <div class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 shadow-xl overflow-hidden">
+        <div class="bg-primary px-6 py-5 text-center">
+            <img src="{% static 'img/logo7eventbranco.png' %}" alt="7event" class="h-10 mx-auto mb-2">
+            <p class="text-white/80 text-sm">Sistema de Gestão de Eventos</p>
+        </div>
+
+        <div class="p-6">
+            <div class="flex items-start gap-3 rounded-lg border border-amber-300/30 bg-amber-900/20 p-4 mb-5">
+                <i class="fas fa-triangle-exclamation text-amber-300 mt-0.5"></i>
+                <div>
+                    <h1 class="text-xl font-bold text-amber-200">Falha no login com Google</h1>
+                    <p class="text-sm text-amber-100/90 mt-1">Não conseguimos concluir sua autenticação nesta tentativa.</p>
+                </div>
+            </div>
+
+            <div class="text-sm text-slate-300 space-y-2">
+                <p>Isso pode acontecer quando:</p>
+                <ul class="list-disc pl-5 space-y-1 text-slate-400">
+                    <li>o acesso foi cancelado na tela do Google</li>
+                    <li>as permissões de conta não foram aceitas</li>
+                    <li>há ajuste pendente na configuração OAuth</li>
+                </ul>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a href="/app/accounts/login/" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-white hover:opacity-90 transition">
+                    <i class="fas fa-arrow-rotate-right"></i>
+                    Tentar novamente
+                </a>
+                <a href="/app/accounts/register/" class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-2.5 text-slate-200 hover:bg-slate-800 transition">
+                    <i class="fas fa-user-plus"></i>
+                    Criar conta
+                </a>
+            </div>
+
+            <p class="text-xs text-slate-500 mt-5">
+                Se o problema persistir, fale com o suporte: 
+                <a href="https://wa.me/5511943479664" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">+55 11 94347-9664</a>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .bg-primary { background-color: #1e3a5f; }
+    </style>
+</body>
+</html>
