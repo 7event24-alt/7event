@@ -78,9 +78,9 @@
                         <p class="md:col-span-2 truncate"><i class="far fa-note-sticky mr-1.5 text-gray-400"></i>{{ expense.description|default:"Sem descrição"|truncatechars:80 }}</p>
                     </div>
                     <div class="mt-3">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full {% if expense.category == 'equipment' %}bg-purple-100 text-purple-800{% elif expense.category == 'transport' %}bg-gray-100 text-gray-800{% elif expense.category == 'food' %}bg-orange-100 text-orange-800{% elif expense.category == 'accommodation' %}bg-cyan-100 text-cyan-800{% elif expense.category == 'marketing' %}bg-pink-100 text-pink-800{% elif expense.category == 'fee' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full {% if expense.category == 'equipment' %}bg-purple-100 text-purple-800{% elif expense.category == 'transport' %}bg-gray-100 text-gray-800{% elif expense.category == 'food' %}bg-orange-100 text-orange-800{% elif expense.category == 'accommodation' %}bg-cyan-100 text-cyan-800{% elif expense.category == 'equipe' %}bg-green-100 text-green-800{% elif expense.category == 'fee' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
                             <span class="uppercase tracking-wide text-[10px] opacity-70">Categoria:</span>
-                            <span>{% if expense.category == 'equipment' %}Equipamento{% elif expense.category == 'transport' %}Transporte{% elif expense.category == 'food' %}Alimentação{% elif expense.category == 'accommodation' %}Hospedagem{% elif expense.category == 'marketing' %}Marketing{% elif expense.category == 'fee' %}Taxa{% else %}Outro{% endif %}</span>
+                            <span>{% if expense.category == 'equipment' %}Equipamento{% elif expense.category == 'transport' %}Transporte{% elif expense.category == 'food' %}Alimentação{% elif expense.category == 'accommodation' %}Hospedagem{% elif expense.category == 'equipe' %}Equipe{% elif expense.category == 'fee' %}Taxa{% else %}{{ expense.get_category_display }}{% endif %}</span>
                         </span>
                     </div>
                 </div>

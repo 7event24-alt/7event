@@ -22,7 +22,7 @@ class ExpenseForm(forms.ModelForm):
             ),
             "category": forms.Select(
                 attrs={
-                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                    "class": "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm",
                 }
             ),
             "value": forms.NumberInput(
@@ -130,7 +130,7 @@ class ExpenseCreateView(LoginRequiredMixin, View):
             except Job.DoesNotExist:
                 pass
 
-        return render(request, self.template_name, {"form": form, "jobs": jobs, "preselected_job": preselected_job})
+        return render(request, self.template_name, {"form": form, "jobs": jobs, "preselected_job": preselected_job, "expense_categories": ExpenseCategory.choices})
 
     def post(self, request):
         wants_json = request.headers.get("x-requested-with") == "XMLHttpRequest"
@@ -177,7 +177,7 @@ class ExpenseUpdateView(LoginRequiredMixin, View):
     def get(self, request, pk):
         expense = get_object_or_404(Expense, pk=pk, performed_by=request.user, is_active=True)
         form = ExpenseForm(instance=expense, user=request.user)
-        return render(request, self.template_name, {"form": form, "object": expense})
+        return render(request, self.template_name, {"form": form, "object": expense, "expense_categories": ExpenseCategory.choices})
 
     def post(self, request, pk):
         expense = get_object_or_404(Expense, pk=pk, performed_by=request.user, is_active=True)

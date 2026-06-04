@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 class ProfessionalRole(models.TextChoices):
     DIRETOR_EVENTO = "diretor_evento", _("Diretor de Evento / Event Manager")
+    PRODUTOR = "produtor", _("Produtor")
     PRODUTOR_EXECUTIVO = "produtor_executivo", _("Produtor Executivo")
     COORDENADOR_GERAL = "coordenador_geral", _("Coordenador Geral")
     GERENTE_PROJETO = "gerente_projeto", _("Gerente de Projeto")

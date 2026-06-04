@@ -8,7 +8,7 @@ class ExpenseCategory(models.TextChoices):
     TRANSPORT = "transport", _("Transporte")
     FOOD = "food", _("Alimentação")
     ACCOMMODATION = "accommodation", _("Hospedagem")
-    MARKETING = "marketing", _("Marketing")
+    EQUIPE = "equipe", _("Equipe")
     FEE = "fee", _("Taxa/Imposto")
     OTHER = "other", _("Outro")
 

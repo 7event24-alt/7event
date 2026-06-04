@@ -38,6 +38,8 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Login social com Google (OAuth) adicionado com `django-allauth`, incluindo botão "Continuar com Google" na tela de login quando as credenciais estiverem configuradas.
 
 ### Changed
+- Categoria "Marketing" substituída por "Equipe" na lista de despesas; usuário agora pode digitar categoria personalizada (input + datalist).
+- Nova profissão "Produtor" adicionada ao cadastro (ProfessionalRole).
 - `payer.email` removido do payload do Checkout Pro para não travar o checkout quando o cliente usa conta MP com email diferente do cadastro.
 - Display de horário na lista de agenda pessoal e na sidebar do calendário agora respeita: se tem `start_time` mostra, se tem `end_time` também mostra ambos, se não tem nenhum horário mostra "Dia inteiro".
 - AgendaEventSerializer agora inclui `start_time`/`end_time` no campo `start`/`end` do FullCalendar quando existem, evitando que jobs com horário apareçam como "all-day" na visão lista.
