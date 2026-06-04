@@ -1,0 +1,13 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color:#1f2937; font-size:24px; margin:0 0 16px;">Assinatura com inadimplência</h2>
+<p style="color:#4b5563; font-size:15px; line-height:1.6; margin:0 0 14px;">Olá, <strong>{{ nome }}</strong>!</p>
+<p style="color:#4b5563; font-size:15px; line-height:1.6; margin:0 0 20px;">
+    Identificamos inadimplência na assinatura do plano <strong>{{ plano|default:"pago" }}</strong>.
+    Você possui tolerância de 5 dias para regularizar antes da suspensão.
+</p>
+<p style="margin:0 0 24px;">
+    <a href="{{ plan_url }}" style="display:inline-block; background:#b45309; color:#ffffff; text-decoration:none; padding:12px 18px; border-radius:8px; font-weight:600;">Regularizar assinatura</a>
+</p>
+{% endblock %}

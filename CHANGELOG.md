@@ -37,6 +37,11 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 - Perfil passou a exibir ações rápidas de assinatura para cancelar ou retomar cobrança recorrente.
 - Login social com Google (OAuth) adicionado com `django-allauth`, incluindo botão "Continuar com Google" na tela de login quando as credenciais estiverem configuradas.
 
+### Changed
+- `payer.email` removido do payload do Checkout Pro para não travar o checkout quando o cliente usa conta MP com email diferente do cadastro.
+- Display de horário na lista de agenda pessoal e na sidebar do calendário agora respeita: se tem `start_time` mostra, se tem `end_time` também mostra ambos, se não tem nenhum horário mostra "Dia inteiro".
+- AgendaEventSerializer agora inclui `start_time`/`end_time` no campo `start`/`end` do FullCalendar quando existem, evitando que jobs com horário apareçam como "all-day" na visão lista.
+
 ### Fix
 - Fluxo de planos pagos deixou de depender de aprovação manual de suporte e passou a usar checkout dinâmico por transação, com páginas de retorno (`success`, `pending`, `failure`) e processamento idempotente de webhook para evitar duplicidade.
 - Perfil agora normaliza telefone para salvar no padrão `55DDDNÚMERO`, exibe telefone formatado (`+55 (DD) 9XXXX-XXXX`) e mantém CPF persistido/formatado no formulário e na visualização.

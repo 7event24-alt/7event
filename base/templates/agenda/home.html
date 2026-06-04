@@ -138,7 +138,17 @@
                                 <div class="font-medium text-gray-800 truncate">{{ item.title }}</div>
                                 <div class="text-sm text-gray-500 truncate">
                                     {% if item.kind == 'agenda' %}
-                                        Agenda Pessoal - {{ item.start_time|time:"H:i" }}{% if item.end_time %} às {{ item.end_time|time:"H:i" }}{% endif %}
+                                        {% if item.start_time and item.end_time %}
+                                            {% if item.start_time|time:"H:i" == "00:00" and item.end_time|time:"H:i" == "23:59" %}
+                                                Agenda Pessoal - Dia inteiro
+                                            {% else %}
+                                                Agenda Pessoal - {{ item.start_time|time:"H:i" }} às {{ item.end_time|time:"H:i" }}
+                                            {% endif %}
+                                        {% elif item.start_time %}
+                                            Agenda Pessoal - {{ item.start_time|time:"H:i" }}
+                                        {% else %}
+                                            Agenda Pessoal - Dia inteiro
+                                        {% endif %}
                                     {% else %}
                                         Tarefas{% if item.start_time %} - {{ item.start_time|time:"H:i" }}{% endif %}
                                     {% endif %}
@@ -788,9 +798,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (tasksEl) {
                     tasksEl.innerHTML = (data.personal_items || []).length ? (data.personal_items || []).map(function(item) {
                         var dm = formatDayMonth(item.date);
-                        var subtitle = item.kind === 'agenda'
-                            ? ('Agenda Pessoal - ' + item.time + (item.end_time ? (' às ' + item.end_time) : ''))
-                            : ('Tarefas' + (item.time ? ' - ' + item.time : ''));
+                        var subtitle;
+                        if (item.kind === 'agenda') {
+                            if (item.time && item.end_time) {
+                                if (item.time === '00:00' && item.end_time === '23:59') {
+                                    subtitle = 'Agenda Pessoal - Dia inteiro';
+                                } else {
+                                    subtitle = 'Agenda Pessoal - ' + item.time + ' às ' + item.end_time;
+                                }
+                            } else if (item.time) {
+                                subtitle = 'Agenda Pessoal - ' + item.time;
+                            } else {
+                                subtitle = 'Agenda Pessoal - Dia inteiro';
+                            }
+                        } else {
+                            subtitle = 'Tarefas' + (item.time ? ' - ' + item.time : '');
+                        }
                         var cardClass = item.kind === 'agenda'
                             ? 'block p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 transition border-l-4 border-violet-400 dark:border-violet-500'
                             : 'block p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition border-l-4 border-blue-400 dark:border-blue-500';

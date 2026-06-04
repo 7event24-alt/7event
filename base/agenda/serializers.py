@@ -75,14 +75,18 @@ class AgendaEventSerializer(serializers.ModelSerializer):
         ]
 
     def get_start(self, obj):
-        if obj.start_date:
-            return str(obj.start_date)
-        return None
-    
+        if not obj.start_date:
+            return None
+        if obj.start_time:
+            return f"{obj.start_date.isoformat()}T{obj.start_time.strftime('%H:%M:%S')}"
+        return obj.start_date.isoformat()
+
     def get_end(self, obj):
-        if obj.end_date:
-            return str(obj.end_date + timedelta(days=1))
-        return None
+        if not obj.end_date:
+            return None
+        if obj.end_time:
+            return f"{obj.end_date.isoformat()}T{obj.end_time.strftime('%H:%M:%S')}"
+        return (obj.end_date + timedelta(days=1)).isoformat()
 
     def get_textColor(self, obj):
         return "#ffffff"
@@ -119,15 +123,17 @@ class AgendaEventsView(APIView):
             }
             all_events.append(job_event)
 
-            # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
+            # Se tem visita técnica, gerar evento separado
             if job.has_technical_visit and job.technical_visit_date:
-                visit_date = str(job.technical_visit_date)
+                visit_start = str(job.technical_visit_date)
+                if job.technical_visit_time:
+                    visit_start = f"{job.technical_visit_date.isoformat()}T{job.technical_visit_time.strftime('%H:%M:%S')}"
 
                 all_events.append({
                     "id": f"visit_{job.id}",
                     "title": f"VT: {job.title}",
-                    "start": visit_date,
-                    "end": visit_date,
+                    "start": visit_start,
+                    "end": visit_start,
                     "backgroundColor": "#fbbf24",  # yellow-400 (amarelinho)
                     "borderColor": "#f59e0b",      # yellow-500
                     "textColor": "#ffffff",
@@ -156,7 +162,10 @@ class AgendaEventsView(APIView):
             ).order_by("time")
 
             for task in tasks:
-                start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
+                if task.time:
+                    start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S')}"
+                else:
+                    start_dt = str(task.date)
                 all_events.append({
                     "id": f"task_{task.id}",
                     "title": task.title,
@@ -250,15 +259,17 @@ class AgendaViewSet(viewsets.ViewSet):
             }
             all_events.append(job_event)
 
-            # Se tem visita técnica, gerar evento separado (apenas data, sem hora)
+            # Se tem visita técnica, gerar evento separado
             if job.has_technical_visit and job.technical_visit_date:
-                visit_date = str(job.technical_visit_date)
+                visit_start = str(job.technical_visit_date)
+                if job.technical_visit_time:
+                    visit_start = f"{job.technical_visit_date.isoformat()}T{job.technical_visit_time.strftime('%H:%M:%S')}"
 
                 all_events.append({
                     "id": f"visit_{job.id}",
                     "title": f"VT: {job.title}",
-                    "start": visit_date,
-                    "end": visit_date,
+                    "start": visit_start,
+                    "end": visit_start,
                     "backgroundColor": "#fbbf24",  # yellow-400 (amarelinho)
                     "borderColor": "#f59e0b",      # yellow-500
                     "textColor": "#ffffff",
@@ -282,7 +293,10 @@ class AgendaViewSet(viewsets.ViewSet):
             ).order_by("time")
 
             for task in tasks:
-                start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S') if task.time else '00:00:00'}"
+                if task.time:
+                    start_dt = f"{task.date}T{task.time.strftime('%H:%M:%S')}"
+                else:
+                    start_dt = str(task.date)
                 all_events.append({
                     "id": f"task_{task.id}",
                     "title": task.title,

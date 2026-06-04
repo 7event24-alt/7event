@@ -38,10 +38,16 @@
                                 <p class="text-sm text-gray-500 mt-1 leading-relaxed">
                                     <span class="font-medium">{{ event.date|date:"d/m/Y" }}</span>
                                     <span class="mx-1">•</span>
-                                    {% if event.start_time|time:"H:i" == "00:00" and event.end_time|time:"H:i" == "23:59" %}
-                                        Dia inteiro
+                                    {% if event.start_time and event.end_time %}
+                                        {% if event.start_time|time:"H:i" == "00:00" and event.end_time|time:"H:i" == "23:59" %}
+                                            Dia inteiro
+                                        {% else %}
+                                            {{ event.start_time|time:"H:i" }} às {{ event.end_time|time:"H:i" }}
+                                        {% endif %}
+                                    {% elif event.start_time %}
+                                        {{ event.start_time|time:"H:i" }}
                                     {% else %}
-                                        {{ event.start_time|time:"H:i" }} às {{ event.end_time|time:"H:i" }}
+                                        Dia inteiro
                                     {% endif %}
                                 </p>
                                 {% if event.recurrence != 'none' %}<p class="text-xs text-violet-600 mt-1">Recorrência: {{ event.get_recurrence_display }}{% if event.recurrence_until %} até {{ event.recurrence_until|date:"d/m/Y" }}{% endif %}</p>{% endif %}

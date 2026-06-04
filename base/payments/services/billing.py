@@ -3,7 +3,9 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
@@ -37,37 +39,39 @@ def _notify_subscription_event(user, reason, **context):
     if getattr(user, "notify_via_email", True) and user.email:
         subject_map = {
             "subscription_activated": "Sua assinatura foi ativada",
-            "subscription_overdue": "Assinatura com inadimplencia",
-            "plan_downgraded_cutoff": "Plano ajustado por inadimplencia",
+            "subscription_overdue": "Assinatura com inadimplência",
+            "plan_downgraded_cutoff": "Plano ajustado por inadimplência",
             "payment_approved": "Pagamento aprovado",
         }
-        body_map = {
-            "subscription_activated": (
-                f"Ola, {context.get('nome') or user.username}!\n\n"
-                f"Sua assinatura do plano {context.get('plano') or ''} foi ativada com sucesso."
-            ),
-            "subscription_overdue": (
-                f"Ola, {context.get('nome') or user.username}!\n\n"
-                f"Identificamos inadimplencia na assinatura do plano {context.get('plano') or ''}. "
-                "Voce possui tolerancia de 5 dias para regularizar."
-            ),
-            "plan_downgraded_cutoff": (
-                f"Ola, {context.get('nome') or user.username}!\n\n"
-                "Seu plano foi ajustado para FREE por inadimplencia apos o periodo de tolerancia."
-            ),
-            "payment_approved": (
-                f"Ola, {context.get('nome') or user.username}!\n\n"
-                f"Seu pagamento foi aprovado e o plano {context.get('plano') or ''} esta ativo."
-            ),
+        template_map = {
+            "subscription_activated": "emails/subscription_activated.html",
+            "subscription_overdue": "emails/subscription_overdue.html",
+            "plan_downgraded_cutoff": "emails/plan_downgraded_cutoff.html",
+            "payment_approved": "emails/payment_approved.html",
         }
+
+        template_name = template_map.get(reason)
+        if not template_name:
+            return
+
+        email_context = {
+            "user": user,
+            "nome": context.get("nome") or user.first_name or user.username,
+            "plano": context.get("plano") or "",
+            "plan_url": (settings.APP_PUBLIC_URL or "https://7event.com.br").rstrip("/") + "/app/planos/",
+        }
+
         try:
-            send_mail(
-                subject_map.get(reason, "Atualizacao de assinatura"),
-                body_map.get(reason, ""),
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=True,
+            html_body = render_to_string(template_name, email_context)
+            text_body = strip_tags(html_body)
+            message = EmailMultiAlternatives(
+                subject=subject_map.get(reason, "Atualização de assinatura"),
+                body=text_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email],
             )
+            message.attach_alternative(html_body, "text/html")
+            message.send(fail_silently=True)
         except Exception:
             pass
 
@@ -87,9 +91,7 @@ def _month_day_safe(year, month, day):
 
 
 def _build_mp_payer_payload(user):
-    payer = {
-        "email": (user.email or "").strip(),
-    }
+    payer = {}
 
     first_name = (user.first_name or "").strip()
     last_name = (user.last_name or "").strip()
