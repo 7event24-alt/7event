@@ -33,7 +33,7 @@ class PaymentTransaction(models.Model):
         default=BillingPeriod.MONTHLY,
     )
     billing_month = models.DateField(help_text="Primeiro dia do mes da cobranca")
-    external_reference = models.CharField(max_length=200, unique=True)
+    external_reference = models.CharField(max_length=500, unique=True)
     status = models.CharField(
         max_length=20,
         choices=PaymentStatus.choices,
