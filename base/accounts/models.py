@@ -89,6 +89,7 @@ class BillingPeriod(models.TextChoices):
 
 class SubscriptionStatus(models.TextChoices):
     ACTIVE = "active", _("Ativo")
+    PENDING = "pending", _("Pendente")
     TRIAL = "trial", _("Trial")
     EXPIRED = "expired", _("Expirado")
     OVERDUE = "overdue", _("Atrasado")
@@ -101,6 +102,7 @@ class SubscriptionFinancialStatus(models.TextChoices):
     SUSPENSO = "suspenso", _("Suspenso")
     CANCELAMENTO_AGENDADO = "cancelamento_agendado", _("Cancelamento agendado")
     CANCELADO = "cancelado", _("Cancelado")
+    PENDING = "pending", _("Pendente")
 
 
 class Feature(models.Model):
@@ -170,6 +172,8 @@ class Plan(models.Model):
     )
 
     payment_link = models.URLField(blank=True, verbose_name=_("Link de Pagamento"))
+    stripe_product_id = models.CharField(max_length=120, blank=True, verbose_name=_("ID Produto Stripe"))
+    stripe_price_id = models.CharField(max_length=120, blank=True, verbose_name=_("ID Preço Stripe"))
     is_visible = models.BooleanField(default=True, verbose_name=_("Visível no Site"))
     highlight = models.BooleanField(
         default=False, verbose_name=_("Destaque (Recomendado)")
@@ -309,6 +313,16 @@ class Subscription(models.Model):
         max_length=120,
         blank=True,
         verbose_name=_("ID assinatura Mercado Pago"),
+    )
+    stripe_subscription_id = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name=_("ID assinatura Stripe"),
+    )
+    stripe_customer_id = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name=_("ID cliente Stripe"),
     )
     past_due_since = models.DateField(
         null=True,

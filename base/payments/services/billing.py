@@ -23,6 +23,14 @@ from base.core.n8n import send_whatsapp_by_reason
 
 from .mercadopago_client import create_preapproval, create_preference, update_preapproval
 
+from .stripe_client import (
+    configure as stripe_configure,
+    create_checkout_session,
+    cancel_at_period_end as stripe_cancel_at_period_end,
+    resume_cancel_at_period_end as stripe_resume_cancel,
+    retrieve_subscription as stripe_retrieve_subscription,
+)
+
 
 def _notify_subscription_event(user, reason, **context):
     if not user:
@@ -324,16 +332,251 @@ def create_or_update_recurring_subscription(user, plan, request):
     return subscription, tx, init_point
 
 
+def map_stripe_subscription_status(stripe_status):
+    status = (stripe_status or "").strip().lower()
+    if status in {"active", "trialing"}:
+        return SubscriptionFinancialStatus.REGULAR
+    if status in {"past_due", "incomplete"}:
+        return SubscriptionFinancialStatus.INADIMPLENTE
+    if status in {"canceled", "incomplete_expired"}:
+        return SubscriptionFinancialStatus.CANCELADO
+    if status == "unpaid":
+        return SubscriptionFinancialStatus.SUSPENSO
+    return SubscriptionFinancialStatus.INADIMPLENTE
+
+
+@transaction.atomic
+def create_or_update_recurring_subscription_stripe(user, plan, request):
+    subscription, _ = Subscription.objects.select_for_update().get_or_create(user=user)
+    session = create_checkout_session(user, plan, request)
+
+    now = timezone.localdate()
+    subscription.plan = plan
+    subscription.status = SubscriptionStatus.PENDING
+    subscription.billing_period = BillingPeriod.MONTHLY
+    subscription.price = Decimal(plan.price_monthly)
+    subscription.stripe_customer_id = session.customer or ""
+    subscription.financial_status = SubscriptionFinancialStatus.PENDING
+    subscription.billing_anchor_date = subscription.billing_anchor_date or now
+    subscription.past_due_since = None
+    subscription.payment_status = PaymentStatus.PENDING
+    subscription.save()
+
+    billing_month = month_start()
+    reference = f"stripe-session-{session.id}"
+    tx, created = PaymentTransaction.objects.get_or_create(
+        external_reference=reference,
+        defaults={
+            "user": user,
+            "plan": plan,
+            "billing_period": BillingPeriod.MONTHLY,
+            "billing_month": billing_month,
+            "amount": Decimal(plan.price_monthly),
+            "currency": settings.STRIPE_CURRENCY,
+            "checkout_url": session.url,
+            "provider_preference_id": session.id,
+            "due_date": billing_month.replace(day=28),
+            "grace_limit_date": billing_month.replace(day=15) + timedelta(days=31),
+        },
+    )
+    if not created:
+        tx.checkout_url = session.url
+        tx.provider_preference_id = session.id
+        tx.save(update_fields=["checkout_url", "provider_preference_id", "updated_at"])
+
+    return subscription, tx, session.url
+
+
+@transaction.atomic
+def schedule_subscription_cancel_at_period_end_stripe(subscription):
+    subscription.cancel_at_period_end = True
+    subscription.financial_status = SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO
+    subscription.cancelled_at = None
+    subscription.save(update_fields=["cancel_at_period_end", "financial_status", "cancelled_at", "updated_at"])
+
+    if subscription.stripe_subscription_id:
+        try:
+            stripe_cancel_at_period_end(subscription.stripe_subscription_id)
+        except Exception:
+            pass
+
+    return subscription
+
+
+@transaction.atomic
+def resume_scheduled_subscription_stripe(subscription):
+    subscription.cancel_at_period_end = False
+    if subscription.financial_status == SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO:
+        subscription.financial_status = SubscriptionFinancialStatus.REGULAR
+    subscription.cancelled_at = None
+    subscription.save(update_fields=["cancel_at_period_end", "financial_status", "cancelled_at", "updated_at"])
+
+    if subscription.stripe_subscription_id:
+        try:
+            stripe_resume_cancel(subscription.stripe_subscription_id)
+        except Exception:
+            pass
+
+    return subscription
+
+
+@transaction.atomic
+def handle_stripe_checkout_completed(session):
+    from base.accounts.models import User, Plan as PlanModel
+
+    metadata = session.get("metadata", {})
+    user_id = metadata.get("user_id")
+    plan_id = metadata.get("plan_id")
+    if not user_id or not plan_id:
+        return
+
+    user = User.objects.filter(id=user_id).first()
+    plan = PlanModel.objects.filter(id=plan_id).first()
+    if not user or not plan:
+        return
+
+    subscription_id = session.get("subscription")
+    customer_id = session.get("customer")
+
+    sub, _ = Subscription.objects.select_for_update().get_or_create(user=user)
+    sub.plan = plan
+    sub.status = SubscriptionStatus.ACTIVE
+    sub.financial_status = SubscriptionFinancialStatus.REGULAR
+    sub.stripe_subscription_id = subscription_id or sub.stripe_subscription_id
+    sub.stripe_customer_id = customer_id or sub.stripe_customer_id
+    sub.payment_status = PaymentStatus.APPROVED
+    sub.last_payment_date = timezone.localdate()
+    sub.past_due_since = None
+    sub.current_period_start = timezone.localdate()
+    sub.current_period_end = timezone.localdate() + timedelta(days=30)
+    sub.next_billing_date = sub.current_period_end
+    sub.save()
+
+    user.plan = plan
+    user.save(update_fields=["plan", "updated_at"])
+
+    tx = PaymentTransaction.objects.filter(
+        external_reference__startswith=f"stripe-session-{session.get('id')}"
+    ).first()
+    if tx:
+        tx.status = PaymentStatus.APPROVED
+        tx.provider_payment_id = subscription_id or ""
+        tx.paid_at = timezone.now()
+        tx.save(update_fields=["status", "provider_payment_id", "paid_at", "updated_at"])
+
+    _notify_subscription_event(
+        user=user,
+        reason="subscription_activated",
+        nome=(user.first_name or user.full_name or user.username or ""),
+        plano=plan.name,
+    )
+
+
+@transaction.atomic
+def handle_stripe_invoice_paid(invoice):
+    sub_id = invoice.get("subscription")
+    if not sub_id:
+        return
+    sub = Subscription.objects.filter(stripe_subscription_id=sub_id).first()
+    if not sub:
+        return
+
+    sub.financial_status = SubscriptionFinancialStatus.REGULAR
+    sub.past_due_since = None
+    sub.payment_status = PaymentStatus.APPROVED
+    sub.last_payment_date = timezone.localdate()
+    sub.current_period_end = timezone.localdate() + timedelta(days=30)
+    sub.next_billing_date = sub.current_period_end
+    sub.save()
+
+    _notify_subscription_event(
+        user=sub.user,
+        reason="payment_approved",
+        nome=(sub.user.first_name or sub.user.full_name or sub.user.username or ""),
+        plano=(sub.plan.name if sub.plan else ""),
+    )
+
+
+@transaction.atomic
+def handle_stripe_invoice_payment_failed(invoice):
+    sub_id = invoice.get("subscription")
+    if not sub_id:
+        return
+    sub = Subscription.objects.filter(stripe_subscription_id=sub_id).first()
+    if not sub:
+        return
+
+    if sub.financial_status != SubscriptionFinancialStatus.INADIMPLENTE:
+        sub.financial_status = SubscriptionFinancialStatus.INADIMPLENTE
+        if not sub.past_due_since:
+            sub.past_due_since = timezone.localdate()
+        sub.payment_status = PaymentStatus.PENDING
+        sub.save()
+
+        _notify_subscription_event(
+            user=sub.user,
+            reason="subscription_overdue",
+            nome=(sub.user.first_name or sub.user.full_name or sub.user.username or ""),
+            plano=(sub.plan.name if sub.plan else ""),
+        )
+
+
+@transaction.atomic
+def handle_stripe_subscription_updated(subscription_obj):
+    sub_id = subscription_obj.get("id")
+    if not sub_id:
+        return
+    sub = Subscription.objects.filter(stripe_subscription_id=sub_id).first()
+    if not sub:
+        return
+
+    stripe_status = subscription_obj.get("status", "")
+    new_financial = map_stripe_subscription_status(stripe_status)
+    previous = sub.financial_status
+    sub.financial_status = new_financial
+    sub.cancel_at_period_end = subscription_obj.get("cancel_at_period_end", False)
+
+    if new_financial == SubscriptionFinancialStatus.REGULAR:
+        sub.status = SubscriptionStatus.ACTIVE
+        sub.payment_status = PaymentStatus.APPROVED
+        sub.past_due_since = None
+    elif new_financial == SubscriptionFinancialStatus.CANCELADO:
+        sub.status = SubscriptionStatus.CANCELLED
+        sub.payment_status = PaymentStatus.CANCELLED
+        sub.cancelled_at = timezone.now()
+    elif new_financial == SubscriptionFinancialStatus.INADIMPLENTE:
+        sub.payment_status = PaymentStatus.PENDING
+        if not sub.past_due_since:
+            sub.past_due_since = timezone.localdate()
+
+    sub.save()
+
+    if new_financial == SubscriptionFinancialStatus.REGULAR and previous != SubscriptionFinancialStatus.REGULAR:
+        if sub.user:
+            _notify_subscription_event(
+                user=sub.user,
+                reason="subscription_activated",
+                nome=(sub.user.first_name or sub.user.full_name or sub.user.username or ""),
+                plano=(sub.plan.name if sub.plan else ""),
+            )
+    return sub
+
+
 @transaction.atomic
 def schedule_subscription_cancel_at_period_end(subscription):
-    # Regra de negocio: cancelamento deve ocorrer ao fim do ciclo pago.
-    # Aqui apenas agenda internamente; a cobranca pode ser retomada sem gerar nova assinatura.
     subscription.cancel_at_period_end = True
     subscription.financial_status = SubscriptionFinancialStatus.CANCELAMENTO_AGENDADO
     subscription.cancelled_at = None
     subscription.save(
         update_fields=["cancel_at_period_end", "financial_status", "cancelled_at", "updated_at"]
     )
+
+    if subscription.mp_subscription_id:
+        try:
+            update_preapproval(subscription.mp_subscription_id, {"status": "paused"})
+        except Exception:
+            pass
+
     return subscription
 
 
@@ -507,11 +750,51 @@ def apply_non_approved_status(transaction_obj, payment_payload):
 
 
 @transaction.atomic
+def _downgrade_subscription_to_free(subscription, user, free_plan):
+    subscription.status = SubscriptionStatus.EXPIRED
+    subscription.plan = free_plan
+    subscription.financial_status = SubscriptionFinancialStatus.SUSPENSO
+    subscription.save()
+
+    if user.plan_id != free_plan.id:
+        user.plan = free_plan
+        user.save(update_fields=["plan", "updated_at"])
+
+    _notify_subscription_event(
+        user=user,
+        reason="plan_downgraded_cutoff",
+        nome=(user.first_name or user.full_name or user.username or ""),
+    )
+
+
+@transaction.atomic
+def _check_tolerance_and_downgrade(subscription, user, free_plan, check_date):
+    if not subscription.past_due_since:
+        subscription.past_due_since = check_date
+        subscription.save(update_fields=["past_due_since", "updated_at"])
+        return False
+
+    tolerance_days = int(getattr(settings, "SUBSCRIPTIONS_PAST_DUE_TOLERANCE_DAYS", 5) or 5)
+    tolerance_deadline = subscription.past_due_since + timedelta(days=tolerance_days)
+
+    if check_date <= tolerance_deadline:
+        if subscription.financial_status != SubscriptionFinancialStatus.INADIMPLENTE:
+            subscription.financial_status = SubscriptionFinancialStatus.INADIMPLENTE
+            subscription.save(update_fields=["financial_status", "past_due_since", "updated_at"])
+        return False
+
+    _downgrade_subscription_to_free(subscription, user, free_plan)
+    return True
+
+
+@transaction.atomic
 def downgrade_to_free_if_overdue(today=None):
     check_date = today or timezone.localdate()
     free_plan = Plan.objects.filter(type=PlanType.FREE, is_active=True).first()
     if not free_plan:
         return 0
+
+    updated = 0
 
     overdue_transactions = (
         PaymentTransaction.objects.select_for_update()
@@ -519,35 +802,25 @@ def downgrade_to_free_if_overdue(today=None):
         .exclude(status=PaymentStatus.APPROVED)
     )
 
-    updated = 0
     for tx in overdue_transactions:
         user = tx.user
         subscription, _ = Subscription.objects.get_or_create(user=user)
         if not subscription.past_due_since:
             subscription.past_due_since = tx.grace_limit_date
-
-        tolerance_days = int(getattr(settings, "SUBSCRIPTIONS_PAST_DUE_TOLERANCE_DAYS", 5) or 5)
-        tolerance_deadline = subscription.past_due_since + timedelta(days=tolerance_days)
-        if check_date <= tolerance_deadline:
-            if subscription.financial_status != SubscriptionFinancialStatus.INADIMPLENTE:
-                subscription.financial_status = SubscriptionFinancialStatus.INADIMPLENTE
-                subscription.save(update_fields=["financial_status", "past_due_since", "updated_at"])
-            continue
-
-        subscription.status = SubscriptionStatus.EXPIRED
-        subscription.payment_status = tx.status
-        subscription.plan = free_plan
-        subscription.financial_status = SubscriptionFinancialStatus.SUSPENSO
-        subscription.save()
-
-        if user.plan_id != free_plan.id:
-            user.plan = free_plan
-            user.save(update_fields=["plan", "updated_at"])
+        if _check_tolerance_and_downgrade(subscription, user, free_plan, check_date):
             updated += 1
 
-        _notify_subscription_event(
-            user=user,
-            reason="plan_downgraded_cutoff",
-            nome=(user.first_name or user.full_name or user.username or ""),
-        )
+    overdue_stripe_subs = Subscription.objects.select_for_update().filter(
+        financial_status=SubscriptionFinancialStatus.INADIMPLENTE,
+        past_due_since__isnull=False,
+        past_due_since__lt=check_date,
+    )
+
+    for sub in overdue_stripe_subs:
+        user = sub.user
+        if not user:
+            continue
+        if _check_tolerance_and_downgrade(sub, user, free_plan, check_date):
+            updated += 1
+
     return updated

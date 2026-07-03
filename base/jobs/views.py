@@ -7,7 +7,6 @@ from django.template.loader import render_to_string
 from django.views import View
 from django.contrib import messages
 from django.utils import timezone
-import weasyprint
 
 from .models import Job, EventType, JobStatus, PaymentType, PaymentStatusJob, JobStaff, JobStaffStatus
 from base.accounts.models import ProfessionalRole, PlanType
@@ -464,6 +463,7 @@ class JobTeamPDFView(LoginRequiredMixin, View):
             },
         )
 
+        import weasyprint
         pdf = weasyprint.HTML(string=html).write_pdf()
 
         response = HttpResponse(pdf, content_type="application/pdf")

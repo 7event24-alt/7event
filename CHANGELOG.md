@@ -5,6 +5,12 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 ## [Unreleased]
 
 ### Feat
+- Integração Stripe como provedor de pagamento padrão (`PAYMENT_PROVIDER=stripe`): checkout session mode=subscription, webhooks (checkout.session.completed, invoice.paid, invoice.payment_failed, customer.subscription.updated), cancelamento agendado e retomada via Stripe API.
+- `Plan` agora possui `stripe_product_id` e `stripe_price_id` para vínculo com catálogo Stripe.
+- `Subscription` agora possui `stripe_subscription_id` e `stripe_customer_id` para rastreio de assinatura Stripe.
+- `SubscriptionFinancialStatus.PENDING` adicionado para subscriptions criadas mas não confirmadas via checkout.
+- `downgrade_to_free_if_overdue` agora avalia assinaturas Stripe inadimplentes (além das transações MP).
+- `reconcile_subscriptions` agora reconcilia assinaturas Stripe (além das MP).
 - Novo domínio de pagamentos (`base/payments`) com rastreio ponta a ponta para Checkout Pro: criação de transações mensais, referência externa única por usuário/plano/mês, webhook Mercado Pago e atualização automática de assinatura/plano.
 - Integração base com n8n para disparo de mensagens WhatsApp via webhook, com helper reutilizável (`base/core/n8n.py`) e variáveis de ambiente dedicadas.
 - Catálogo central de mensagens WhatsApp por motivo/evento (`base/core/whatsapp_messages.py`), com templates para cadastro, ativação e status de pagamento.

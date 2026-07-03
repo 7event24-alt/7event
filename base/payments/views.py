@@ -1,8 +1,11 @@
 import json
 
+import stripe
+from django.conf import settings
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from base.accounts.models import Subscription
 
@@ -11,6 +14,10 @@ from .services.billing import (
     apply_approved_payment,
     apply_non_approved_status,
     apply_preapproval_status,
+    handle_stripe_checkout_completed,
+    handle_stripe_invoice_paid,
+    handle_stripe_invoice_payment_failed,
+    handle_stripe_subscription_updated,
 )
 from .services.mercadopago_client import get_payment, get_preapproval
 
@@ -124,3 +131,53 @@ def mercadopago_webhook(request):
         event.processed_at = timezone.now()
         event.save(update_fields=["processing_status", "error_message", "processed_at"])
         return JsonResponse({"received": True, "error": "processing_failed"}, status=200)
+
+
+@csrf_exempt
+@require_POST
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except (ValueError, stripe.error.SignatureVerificationError) as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    event_id = event.get("id")
+    event_type = event.get("type", "")
+    data_object = event.get("data", {}).get("object", {})
+
+    event_obj = PaymentWebhookEvent.objects.create(
+        provider="stripe",
+        event_id=event_id,
+        topic=event_type,
+        resource_id=data_object.get("id", "") if data_object else "",
+        payload=data_object or {},
+    )
+
+    handlers = {
+        "checkout.session.completed": handle_stripe_checkout_completed,
+        "invoice.paid": handle_stripe_invoice_paid,
+        "invoice.payment_failed": handle_stripe_invoice_payment_failed,
+        "customer.subscription.updated": handle_stripe_subscription_updated,
+        "customer.subscription.deleted": handle_stripe_subscription_updated,
+    }
+
+    handler = handlers.get(event_type)
+    if handler:
+        try:
+            handler(data_object)
+            event_obj.processing_status = WebhookProcessingStatus.PROCESSED
+        except Exception as exc:
+            event_obj.processing_status = WebhookProcessingStatus.ERROR
+            event_obj.error_message = str(exc)[:2000]
+    else:
+        event_obj.processing_status = WebhookProcessingStatus.IGNORED
+        event_obj.error_message = f"evento nao mapeado: {event_type}"
+
+    event_obj.processed_at = timezone.now()
+    event_obj.save()
+    return JsonResponse({"received": True}, status=200)

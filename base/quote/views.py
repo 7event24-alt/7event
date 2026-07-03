@@ -6,7 +6,6 @@ from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from decimal import Decimal
 from urllib.parse import urlencode
-import weasyprint
 
 from .models import Quote, QuoteExpense, QuoteStatus
 from .forms import QuoteForm, QuoteExpenseForm
@@ -254,6 +253,7 @@ class QuotePDFView(LoginRequiredMixin, View):
             },
         )
 
+        import weasyprint
         pdf = weasyprint.HTML(string=html).write_pdf()
 
         response = HttpResponse(pdf, content_type="application/pdf")

@@ -11,10 +11,13 @@ from base.accounts.models import Plan, PlanType, User
 from base.payments.services.billing import (
     apply_preapproval_status,
     create_or_update_recurring_subscription,
+    create_or_update_recurring_subscription_stripe,
     ensure_checkout_for_transaction,
     get_or_create_monthly_transaction,
     resume_scheduled_subscription,
+    resume_scheduled_subscription_stripe,
     schedule_subscription_cancel_at_period_end,
+    schedule_subscription_cancel_at_period_end_stripe,
 )
 from base.payments.services.mercadopago_client import MercadoPagoIntegrationError
 from base.payments.services.mercadopago_client import get_preapproval
@@ -63,24 +66,30 @@ class PlanListView(LoginRequiredMixin, View):
         if plan.price_monthly == 0:
             return HttpResponseRedirect(reverse("plans:activate_free"))
 
-        if getattr(settings, "SUBSCRIPTIONS_RECURRING_ENABLED", False):
-            try:
-                _, _, checkout_url = create_or_update_recurring_subscription(request.user, plan, request)
-                request.session["payment_link"] = checkout_url
-                return HttpResponseRedirect(reverse("plans:waiting"))
-            except MercadoPagoIntegrationError as exc:
-                messages.error(request, str(exc))
-                return HttpResponseRedirect(reverse("plans:list"))
-            except ValueError as exc:
-                messages.error(request, str(exc))
-                return HttpResponseRedirect(reverse("plans:list"))
+        provider = getattr(settings, "PAYMENT_PROVIDER", "stripe")
 
-        transaction_obj = get_or_create_monthly_transaction(request.user, plan)
-        # Sempre gera preferencia nova para evitar reuso de link antigo/cache de checkout.
-        transaction_obj = ensure_checkout_for_transaction(transaction_obj, request, force_new=True)
-        request.session["payment_link"] = transaction_obj.checkout_url
+        try:
+            if provider == "stripe":
+                _, _, checkout_url = create_or_update_recurring_subscription_stripe(
+                    request.user, plan, request
+                )
+            elif getattr(settings, "SUBSCRIPTIONS_RECURRING_ENABLED", False):
+                _, _, checkout_url = create_or_update_recurring_subscription(
+                    request.user, plan, request
+                )
+            else:
+                tx = get_or_create_monthly_transaction(request.user, plan)
+                tx = ensure_checkout_for_transaction(tx, request, force_new=True)
+                checkout_url = tx.checkout_url
 
-        return HttpResponseRedirect(reverse("plans:waiting"))
+            request.session["payment_link"] = checkout_url
+            return HttpResponseRedirect(reverse("plans:waiting"))
+        except MercadoPagoIntegrationError as exc:
+            messages.error(request, str(exc))
+            return HttpResponseRedirect(reverse("plans:list"))
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return HttpResponseRedirect(reverse("plans:list"))
 
     def create_upgrade_support_message(self, user, plan):
         """Create support message notifying superusers about upgrade request."""
@@ -187,7 +196,11 @@ class CancelSubscriptionView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse("plans:list"))
 
         try:
-            schedule_subscription_cancel_at_period_end(subscription)
+            provider = getattr(settings, "PAYMENT_PROVIDER", "stripe")
+            if provider == "stripe":
+                schedule_subscription_cancel_at_period_end_stripe(subscription)
+            else:
+                schedule_subscription_cancel_at_period_end(subscription)
             messages.success(
                 request,
                 "Cancelamento agendado com sucesso. Seu acesso segue ativo ate o fim do ciclo pago.",
@@ -208,7 +221,11 @@ class ResumeSubscriptionView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse("plans:list"))
 
         try:
-            resume_scheduled_subscription(subscription)
+            provider = getattr(settings, "PAYMENT_PROVIDER", "stripe")
+            if provider == "stripe":
+                resume_scheduled_subscription_stripe(subscription)
+            else:
+                resume_scheduled_subscription(subscription)
             messages.success(
                 request,
                 "Assinatura retomada com sucesso. A cobranca recorrente foi mantida.",

@@ -375,7 +375,7 @@ handler500 = "base.core.error_views.server_error"
 # Email for error reports
 ERROR_REPORT_EMAIL = os.environ.get("ERROR_REPORT_EMAIL", "contato@7event.com.br")
 
-# Mercado Pago
+# Mercado Pago (legado)
 MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "")
 MP_PUBLIC_KEY = os.environ.get("MP_PUBLIC_KEY", "")
 MP_WEBHOOK_SECRET = os.environ.get("MP_WEBHOOK_SECRET", "")
@@ -385,6 +385,17 @@ MP_TEST_MODE = os.environ.get("MP_TEST_MODE", "false").lower() == "true"
 MP_CURRENCY = os.environ.get("MP_CURRENCY", "BRL")
 MP_BILLING_DUE_DAY = int(os.environ.get("MP_BILLING_DUE_DAY", "8"))
 MP_BILLING_CUTOFF_DAY = int(os.environ.get("MP_BILLING_CUTOFF_DAY", "15"))
+
+# Stripe
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_TEST_MODE = os.environ.get("STRIPE_TEST_MODE", "true").lower() == "true"
+STRIPE_CURRENCY = os.environ.get("STRIPE_CURRENCY", "brl")
+
+# Provider selection
+PAYMENT_PROVIDER = os.environ.get("PAYMENT_PROVIDER", "stripe")
+
 APP_PUBLIC_URL = os.environ.get("APP_PUBLIC_URL", "").strip().rstrip("/")
 SUBSCRIPTIONS_RECURRING_ENABLED = os.environ.get("SUBSCRIPTIONS_RECURRING_ENABLED", "true").lower() == "true"
 SUBSCRIPTIONS_ENFORCEMENT_ENABLED = os.environ.get("SUBSCRIPTIONS_ENFORCEMENT_ENABLED", "false").lower() == "true"
