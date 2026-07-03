@@ -1,3 +1,5 @@
+import stripe
+
 from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
@@ -14,6 +16,7 @@ from base.payments.services.billing import (
     create_or_update_recurring_subscription_stripe,
     ensure_checkout_for_transaction,
     get_or_create_monthly_transaction,
+    handle_stripe_checkout_completed,
     resume_scheduled_subscription,
     resume_scheduled_subscription_stripe,
     schedule_subscription_cancel_at_period_end,
@@ -266,8 +269,16 @@ class PaymentReturnView(LoginRequiredMixin, View):
                     payload = get_preapproval(preapproval_id)
                     apply_preapproval_status(subscription, payload)
             except Exception:
-                # Webhook/reconciliacao continua sendo a fonte oficial;
-                # esta sincronizacao no callback apenas acelera o refresh do plano.
+                pass
+
+        session_id = request.GET.get("session_id", "")
+        if self.flow_status == "success" and session_id.startswith("cs_"):
+            try:
+                stripe.api_key = settings.STRIPE_API_KEY
+                session = stripe.checkout.Session.retrieve(session_id)
+                if session.get("payment_status") == "paid" or session.get("status") == "complete":
+                    handle_stripe_checkout_completed(session)
+            except Exception:
                 pass
 
         payment_id = (
