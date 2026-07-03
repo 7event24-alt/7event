@@ -44,7 +44,7 @@ class PaymentTransaction(models.Model):
 
     provider_preference_id = models.CharField(max_length=100, blank=True)
     provider_payment_id = models.CharField(max_length=100, blank=True)
-    checkout_url = models.URLField(blank=True)
+    checkout_url = models.URLField(max_length=500, blank=True)
 
     due_date = models.DateField()
     grace_limit_date = models.DateField()
