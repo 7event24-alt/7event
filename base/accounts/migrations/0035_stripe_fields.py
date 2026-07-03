@@ -10,16 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='systemreminderdispatch',
-            new_name='system_remi_entity__6274df_idx',
-            old_name='system_remin_entity__6e5a5f_idx',
-        ),
-        migrations.RenameIndex(
-            model_name='systemreminderdispatch',
-            new_name='system_remi_slot_da_d65b44_idx',
-            old_name='system_remin_slot_da_8a5d64_idx',
-        ),
+        # RenameIndex removidos -- os nomes dos indices diferem entre ambientes
+        # e essas operacoes sao apenas cosmeticas (normalizacao de nomes).
         migrations.AddField(
             model_name='plan',
             name='stripe_price_id',

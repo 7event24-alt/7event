@@ -10,14 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='paymenttransaction',
-            new_name='payment_tra_billing_665db1_idx',
-            old_name='payment_tran_billing_4fcf61_idx',
-        ),
-        migrations.RenameIndex(
-            model_name='paymenttransaction',
-            new_name='payment_tra_provide_4c2167_idx',
-            old_name='payment_tran_provider_3a2163_idx',
-        ),
+        # RenameIndex removidos -- os nomes dos indices diferem entre ambientes
+        # e essas operacoes sao apenas cosmeticas (normalizacao de nomes).
     ]
