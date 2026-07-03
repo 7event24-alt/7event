@@ -544,6 +544,11 @@ def handle_stripe_subscription_updated(subscription_obj):
         sub.status = SubscriptionStatus.CANCELLED
         sub.payment_status = PaymentStatus.CANCELLED
         sub.cancelled_at = timezone.now()
+        if sub.user:
+            free_plan = Plan.objects.filter(type=PlanType.FREE, is_active=True).first()
+            if free_plan:
+                sub.user.plan = free_plan
+                sub.user.save(update_fields=["plan"])
     elif new_financial == SubscriptionFinancialStatus.INADIMPLENTE:
         sub.payment_status = PaymentStatus.PENDING
         if not sub.past_due_since:
