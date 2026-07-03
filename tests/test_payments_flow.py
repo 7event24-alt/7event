@@ -436,3 +436,114 @@ class StripePaymentsFlowTests(TestCase):
 
         resume_scheduled_subscription_stripe(sub)
         mock_stripe_resume.assert_called_once_with("sub_resume_client")
+
+
+@override_settings(
+    STRIPE_API_KEY="sk_test_fake",
+    STRIPE_PUBLISHABLE_KEY="pk_test_fake",
+    STRIPE_TEST_MODE=True,
+)
+class FullFlowStripeTests(TestCase):
+    def setUp(self):
+        self.free_plan = Plan.objects.create(type=PlanType.FREE, name="Free", price_monthly=0, is_active=True, is_visible=True)
+        self.pro_plan = Plan.objects.create(type=PlanType.PROFESSIONAL, name="Pro", price_monthly=Decimal("99.90"), is_active=True, is_visible=True)
+        self.user = User.objects.create_user(username="free_user", email="free@example.com", password="12345678", plan=self.free_plan)
+
+    @patch("base.payments.services.billing.create_checkout_session")
+    def test_user_free_adquire_plano_pro_fluxo_completo(self, mock_create_session):
+        """Usuario com plano FREE adquire plano PRO via Stripe Checkout, webhook ativa."""
+        mock_session = type("Session", (), {
+            "id": "cs_full_flow",
+            "customer": "cus_full_flow",
+            "url": "https://checkout.stripe.com/full",
+        })()
+        mock_create_session.return_value = mock_session
+
+        self.client.force_login(self.user)
+        response = self.client.post("/app/planos/", {"plan_id": self.pro_plan.id})
+
+        self.assertRedirects(response, "/app/planos/aguardo/")
+
+        sub = Subscription.objects.get(user=self.user)
+        self.assertEqual(sub.financial_status, SubscriptionFinancialStatus.PENDING)
+        self.assertEqual(sub.status, SubscriptionStatus.PENDING)
+        self.assertEqual(sub.plan_id, self.pro_plan.id)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.plan_id, self.free_plan.id)
+
+        session_data = {
+            "id": "cs_full_flow",
+            "customer": "cus_full_flow",
+            "subscription": "sub_full_flow",
+            "metadata": {"user_id": str(self.user.id), "plan_id": str(self.pro_plan.id)},
+        }
+        handle_stripe_checkout_completed(session_data)
+
+        sub.refresh_from_db()
+        self.assertEqual(sub.financial_status, SubscriptionFinancialStatus.REGULAR)
+        self.assertEqual(sub.status, SubscriptionStatus.ACTIVE)
+        self.assertEqual(sub.stripe_subscription_id, "sub_full_flow")
+        self.assertEqual(sub.stripe_customer_id, "cus_full_flow")
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.plan_id, self.pro_plan.id)
+
+    @patch("base.payments.services.billing.create_checkout_session")
+    def test_invoice_paid_mantem_regular_apos_checkout(self, mock_create_session):
+        """Apos checkout, invoice.paid mantem subscription como REGULAR."""
+        mock_session = type("Session", (), {
+            "id": "cs_invoice",
+            "customer": "cus_invoice",
+            "url": "https://checkout.stripe.com/invoice",
+        })()
+        mock_create_session.return_value = mock_session
+
+        self.client.force_login(self.user)
+        self.client.post("/app/planos/", {"plan_id": self.pro_plan.id})
+
+        session_data = {
+            "id": "cs_invoice",
+            "customer": "cus_invoice",
+            "subscription": "sub_invoice",
+            "metadata": {"user_id": str(self.user.id), "plan_id": str(self.pro_plan.id)},
+        }
+        handle_stripe_checkout_completed(session_data)
+
+        sub = Subscription.objects.get(user=self.user)
+        sub.financial_status = SubscriptionFinancialStatus.INADIMPLENTE
+        sub.past_due_since = timezone.localdate() - timedelta(days=2)
+        sub.save()
+
+        handle_stripe_invoice_paid({"subscription": "sub_invoice"})
+        sub.refresh_from_db()
+
+        self.assertEqual(sub.financial_status, SubscriptionFinancialStatus.REGULAR)
+        self.assertIsNone(sub.past_due_since)
+
+    @patch("base.payments.services.billing.create_checkout_session")
+    def test_invoice_failure_marca_inadimplencia(self, mock_create_session):
+        """Falha na cobranca marca subscription como INADIMPLENTE."""
+        mock_session = type("Session", (), {
+            "id": "cs_fail",
+            "customer": "cus_fail",
+            "url": "https://checkout.stripe.com/fail",
+        })()
+        mock_create_session.return_value = mock_session
+
+        self.client.force_login(self.user)
+        self.client.post("/app/planos/", {"plan_id": self.pro_plan.id})
+
+        session_data = {
+            "id": "cs_fail",
+            "customer": "cus_fail",
+            "subscription": "sub_fail",
+            "metadata": {"user_id": str(self.user.id), "plan_id": str(self.pro_plan.id)},
+        }
+        handle_stripe_checkout_completed(session_data)
+
+        handle_stripe_invoice_payment_failed({"subscription": "sub_fail"})
+
+        sub = Subscription.objects.get(user=self.user)
+        self.assertEqual(sub.financial_status, SubscriptionFinancialStatus.INADIMPLENTE)
+        self.assertIsNotNone(sub.past_due_since)
