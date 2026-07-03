@@ -8,8 +8,9 @@ from django.urls import reverse
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.conf import settings
+from django.utils import timezone
 
-from base.accounts.models import Plan, PlanType, User
+from base.accounts.models import Plan, PlanType, SubscriptionStatus, SubscriptionFinancialStatus, User
 from base.payments.services.billing import (
     apply_preapproval_status,
     create_or_update_recurring_subscription,
@@ -24,6 +25,7 @@ from base.payments.services.billing import (
 )
 from base.payments.services.mercadopago_client import MercadoPagoIntegrationError
 from base.payments.services.mercadopago_client import get_preapproval
+from base.payments.services.stripe_client import cancel_immediately
 from base.support.models import SupportMessage, SupportSubject
 
 
@@ -241,6 +243,30 @@ class ResumeSubscriptionView(LoginRequiredMixin, View):
         return HttpResponseRedirect(reverse("plans:list"))
 
 
+class CancelImmediatelyView(LoginRequiredMixin, View):
+    def post(self, request):
+        if request.user.username != "liprechaun":
+            messages.error(request, "Apenas usuario liprechaun pode testar isso.")
+            return HttpResponseRedirect(reverse("plans:list"))
+
+        subscription = getattr(request.user, "subscription", None)
+        if not subscription or not subscription.stripe_subscription_id:
+            messages.error(request, "Nenhuma assinatura Stripe ativa.")
+            return HttpResponseRedirect(reverse("plans:list"))
+
+        try:
+            cancel_immediately(subscription.stripe_subscription_id)
+            subscription.status = SubscriptionStatus.CANCELLED
+            subscription.financial_status = SubscriptionFinancialStatus.CANCELADO
+            subscription.cancelled_at = timezone.now()
+            subscription.save()
+            messages.success(request, "Assinatura cancelada imediatamente no Stripe.")
+        except Exception as exc:
+            messages.error(request, f"Erro no cancelamento: {exc}")
+
+        return HttpResponseRedirect(reverse("plans:list"))
+
+
 class WaitingConfirmationView(LoginRequiredMixin, View):
     """Página de aguardando confirmação do pagamento"""
 
@@ -330,3 +356,4 @@ payment_pending = PaymentPendingView.as_view()
 payment_failure = PaymentFailureView.as_view()
 cancel_subscription = CancelSubscriptionView.as_view()
 resume_subscription = ResumeSubscriptionView.as_view()
+cancel_immediately_view = CancelImmediatelyView.as_view()
