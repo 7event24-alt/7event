@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.utils import timezone
 
-from base.accounts.models import Plan, PlanType, SubscriptionStatus, SubscriptionFinancialStatus, User
+from base.accounts.models import Plan, PlanType, SubscriptionStatus, SubscriptionFinancialStatus, Subscription, User
 from base.payments.services.billing import (
     apply_preapproval_status,
     create_or_update_recurring_subscription,
@@ -259,8 +259,13 @@ class CancelImmediatelyView(LoginRequiredMixin, View):
             subscription.status = SubscriptionStatus.CANCELLED
             subscription.financial_status = SubscriptionFinancialStatus.CANCELADO
             subscription.cancelled_at = timezone.now()
+            subscription.plan = None
             subscription.save()
-            messages.success(request, "Assinatura cancelada imediatamente no Stripe.")
+            free_plan = Plan.objects.filter(type=PlanType.FREE).first()
+            if free_plan:
+                request.user.plan = free_plan
+                request.user.save(update_fields=["plan"])
+            messages.success(request, "Assinatura cancelada e downgrade para FREE.")
         except Exception as exc:
             messages.error(request, f"Erro no cancelamento: {exc}")
 
